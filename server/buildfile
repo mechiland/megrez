@@ -1,0 +1,10 @@
+require 'buildr/scala'
+
+repositories.remote << "http://www.ibiblio.org/maven2/"
+
+define "megrez-server" do
+  project.version = '1.0.0'
+  project.group = 'Megrez'
+
+  test.using :scalatest
+end
