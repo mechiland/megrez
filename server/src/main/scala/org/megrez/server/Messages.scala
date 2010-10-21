@@ -1,8 +1,5 @@
 package org.megrez.server
 
-import actors._
-import scala.actors.Actor._
-
 abstract class CommonMessage
 case class Success() extends CommonMessage
 case class Exit() extends CommonMessage

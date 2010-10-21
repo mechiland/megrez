@@ -1,12 +1,11 @@
 package org.megrez.server
 
 import actors._
-import scala.actors.Actor._
 import scala.collection.mutable._
 
-import AgentStatus._
-
 class Agent extends Actor {
+  import AgentStatus._
+
   private var _tags : HashSet[String] = new HashSet[String]()
   private var _status = Idle
 
@@ -40,6 +39,7 @@ class Agent extends Actor {
   }
 }
 
-
-
-
+object AgentStatus extends Enumeration {
+  type AgentStatus = Value
+  val Idle, Busy = Value
+}
