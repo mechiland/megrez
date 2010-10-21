@@ -6,37 +6,44 @@ import scala.collection.mutable._
 class Agent extends Actor {
   import AgentStatus._
 
-  private var _tags : HashSet[String] = new HashSet[String]()
+  private var _resources: HashSet[String] = new HashSet[String]()
   private var _status = Idle
 
   def act() {
     loop {
       react {
-        case job: Job => handleJob(job)
-        case tags : SetTags => setTags(tags)
+        case job: JobRequest => handleJob(job)
+        case tags: SetResources => setResources(tags)
         case _: Exit => exit
       }
     }
   }
 
   def status() = _status
-  def tags() = _tags.toSet
 
-  private def setTags(tags : SetTags) {
-    _tags.clear()
-    tags.tags.foreach(_tags add _)
+  def resources() = _resources.toSet
+
+  private def setResources(message: SetResources) {
+    _resources.clear()
+    message.resources.foreach(_resources add _)
     reply(Success())
   }
 
-  private def handleJob(job: Job) {
+  private def handleJob(request: JobRequest) {
     _status match {
       case Idle =>
-        _status = Busy
-        reply(JobConfirm(this))
+        if (checkResource(request.job)) {
+          _status = Busy
+          reply(JobConfirm(this))
+        } else {
+          reply(JobReject(this))
+        }
       case Busy =>
         reply(JobReject(this))
     }
   }
+
+  private def checkResource(job : Job) = job.resources.forall( _resources contains _ )
 }
 
 object AgentStatus extends Enumeration {
