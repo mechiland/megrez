@@ -6,20 +6,27 @@ import scala.actors.Actor._
 import AgentStatus._
 
 class Agent extends Actor {
-
   private var _status = Idle
-  
+
   def act() {
-    react {
-      case job : Job => handleJob(job)
+    loop {
+      react {
+        case job: Job => handleJob(job)
+        case _: Exit => exit
+      }
     }
   }
 
   def status() = _status
- 
-  private def handleJob(job : Job) {
-    _status = Busy
-    reply(JobConfirm(this))
+
+  private def handleJob(job: Job) {
+    _status match {
+      case Idle =>
+        _status = Busy
+        reply(JobConfirm(this))
+      case Busy =>
+        reply(JobReject(this))
+    }
   }
 }
 
