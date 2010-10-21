@@ -16,6 +16,6 @@ class Agent extends Actor {
 
   private def handleJob(job : Job) {
     state = "BUSY"
-    job.scheduler ! new AgentStateChange(self, state)       
+    reply(AgentStateChange(self, state))    
   }
 }
