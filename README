@@ -1,0 +1,6 @@
+To use the netty server:
+
+1. buildr package
+2. cd target, then run scala -classpath /$NETTYHOME/netty-3.2.2.Final.jar:megrez-server-1.0.0.jar org.megrez.server.Main
+
+then you can use curl to do simple test.
