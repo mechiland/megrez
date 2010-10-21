@@ -19,8 +19,20 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       }
     }
 
+    it("should confirm job if resource qualified") {
+      agent !? SetResources(Set("windows")) match {
+        case _: Success =>
+        case _ => fail
+      }
+
+      agent !? JobRequest(new Job("unit test", Set("windows"), List())) match {
+        case message: JobConfirm => message.agent.status should be === AgentStatus.Busy
+        case _ => fail
+      }      
+    }
+
     it("should reject job if resources not qualified") {
-       agent !? SetResources(Set("windows")) match {
+      agent !? SetResources(Set("windows")) match {
         case _: Success =>
         case _ => fail
       }
@@ -49,7 +61,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
   var agent: Agent = _
 
-  override def beforeEach() {    
+  override def beforeEach() {
     agent = new Agent()
     agent start
   }
