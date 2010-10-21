@@ -21,7 +21,7 @@ class Agent extends Actor {
 
   def status = _status
 
-  def resources = _resources
+  def resources = _resources.toSet
 
   private def setResources(message: SetResources) {
     _resources.clear()
