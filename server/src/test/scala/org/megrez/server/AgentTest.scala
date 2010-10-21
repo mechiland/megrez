@@ -8,26 +8,37 @@ import org.scalatest.matchers._
 class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("Agent receives job") {
     it("should confirm job if idle") {
-      agent !? new Job() match {
+      agent !? Job() match {
         case message: JobConfirm => message.agent.status should be === AgentStatus.Busy
         case _ => fail
       }
     }
-    
-    it ("should reject job if not idle") {
-      busyAgent !? new Job() match {
-        case message : JobReject => message.agent.status should be === AgentStatus.Busy
+
+    it("should reject job if not idle") {
+      busyAgent !? Job() match {
+        case message: JobReject => message.agent.status should be === AgentStatus.Busy
         case _ => fail
       }
     }
 
     def busyAgent() = {
-      agent !? new Job() match { case _ => }
+      agent !? new Job() match {case _ =>}
       agent
     }
   }
 
-  var agent : Agent = _
+  describe("Agent metadata management") {
+    it("should assign tags to agent") {
+      agent !? SetTags(Set("windows")) match {
+        case _: Success =>
+        case _ => fail
+      }
+      agent.tags should have size (1)
+      agent.tags should contain("windows") 
+    }
+  }
+
+  var agent: Agent = _
 
   override def beforeEach() {
     agent = new Agent()
@@ -35,6 +46,6 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   }
 
   override def afterEach() {
-    agent ! Exit()    
+    agent ! Exit()
   }
 }
