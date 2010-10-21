@@ -1,10 +1,16 @@
 require 'buildr/scala'
 
 repositories.remote << "http://www.ibiblio.org/maven2/"
+repositories.remote << "http://repository.jboss.org/nexus/content/groups/public/"
+
+NETTY = 'org.jboss.netty:netty:jar:3.2.2.Final'
 
 define "megrez-server" do
   project.version = '1.0.0'
   project.group = 'Megrez'
 
+  compile.with NETTY
   test.using :scalatest
+
+  package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.server.Main' }
 end
