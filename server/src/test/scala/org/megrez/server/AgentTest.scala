@@ -12,7 +12,7 @@ class AgentTest extends Spec with ShouldMatchers {
       agent start
 
       agent !? new Job() match {
-        case message: AgentStateChange => message.state should equal("BUSY")
+        case message: JobConfirm => message.agent.status should be === AgentStatus.Busy
       }
     }
   }

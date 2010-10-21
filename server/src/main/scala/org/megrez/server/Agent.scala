@@ -3,19 +3,26 @@ package org.megrez.server
 import actors._
 import scala.actors.Actor._
 
+import AgentStatus._
+
 class Agent extends Actor {
-  private var state = "IDLE"
+
+  private var _status = Idle
   
   def act() {
     react {
       case job : Job => handleJob(job)
     }
   }
- 
-  def isBusy() = state == "BUSY"
 
+  def status() = _status
+ 
   private def handleJob(job : Job) {
-    state = "BUSY"
-    reply(AgentStateChange(self, state))    
+    _status = Busy
+    reply(JobConfirm(this))
   }
 }
+
+
+
+
