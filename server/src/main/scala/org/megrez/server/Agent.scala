@@ -6,7 +6,7 @@ import scala.collection.mutable._
 class Agent extends Actor {
   import AgentStatus._
 
-  private var _resources: HashSet[String] = new HashSet[String]()
+  private var _resources: Set[String] = new HashSet[String]()
   private var _status = Idle
 
   def act() {
@@ -21,7 +21,7 @@ class Agent extends Actor {
 
   def status = _status
 
-  def resources = _resources.toSet
+  def resources = _resources
 
   private def setResources(message: SetResources) {
     _resources.clear()
