@@ -35,17 +35,16 @@ object Main {
   }
 
   class WebSocketClientHandler(val server: URI) extends SimpleChannelUpstreamHandler {
-    private var channel: Channel = _
-
+    private var worker : Worker = _
+    
     override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
-      channel = event.getChannel
-      channel.write(handshakeRequest(server))
+      event.getChannel.write(handshakeRequest(server))
       context.getPipeline.replace("encoder", "ws-encoder", new WebSocketFrameEncoder())
     }
 
-    override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
+    override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {      
       event.getMessage match {
-        case response: HttpResponse => handleHandshakeResponse(context, response)
+        case response: HttpResponse => handleHandshakeResponse(context, response, event.getChannel)
         case frame: WebSocketFrame =>
       }
     }
@@ -59,11 +58,13 @@ object Main {
       request
     }
 
-    private def handleHandshakeResponse(context: ChannelHandlerContext, response: HttpResponse) {
+    private def handleHandshakeResponse(context: ChannelHandlerContext, response: HttpResponse, channel : Channel) {
       val validStatus = response.getStatus.getCode == 101 && response.getStatus.getReasonPhrase == "Web Socket Protocol Handshake"
       val validHeaders = response.getHeader(Names.UPGRADE) == WEBSOCKET && response.getHeader(CONNECTION) == Values.UPGRADE
       if (!validStatus || !validHeaders) throw new Exception()
       context.getPipeline.replace("decoder", "ws-decoder", new WebSocketFrameDecoder())
-    }
+      worker = new Worker()
+      worker.start
+    }    
   }
 }
