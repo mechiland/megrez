@@ -1,6 +1,5 @@
 package org.megrez.agent
 
-import java.net.URL
 import java.util.concurrent.Executors
 
 import org.jboss.netty.bootstrap._
@@ -13,7 +12,7 @@ import org.jboss.netty.handler.codec.http.HttpHeaders.Values._
 import org.jboss.netty.handler.codec.http.HttpVersion._
 import org.jboss.netty.handler.codec.http.HttpMethod._
 import org.jboss.netty.handler.codec.http.websocket._
-
+import java.net.{URI, InetSocketAddress, URL}
 
 object Main {
   def main(args: Array[String]) {
@@ -21,24 +20,26 @@ object Main {
       new NioClientSocketChannelFactory(
         Executors.newCachedThreadPool(),
         Executors.newCachedThreadPool()))
+    val server = new URI(args.first)
+    bootstrap.setPipelineFactory(new ChannelPipelineFactory {
+      override def getPipeline() = {
+        val pipeline = Channels.pipeline()
+        pipeline.addLast("decoder", new HttpResponseDecoder())
+        pipeline.addLast("encoder", new HttpRequestEncoder())
+        pipeline.addLast("ws-handler", new WebSocketClientHandler(server))
+        pipeline
+      }
+    })
+
+    bootstrap.connect(new InetSocketAddress(server.getHost(), server.getPort()))
   }
 
-  object PipelineFactory extends ChannelPipelineFactory {
-    override def getPipeline() = {
-      val pipeline = Channels.pipeline();
-      pipeline.addLast("decoder", new HttpResponseDecoder());
-      pipeline.addLast("encoder", new HttpRequestEncoder());
-//      pipeline.addLast("ws-handler", WebSocketClientHandler);
-      pipeline
-    }
-  }
-
-  class WebSocketClientHandler(val url: URL) extends SimpleChannelUpstreamHandler {
-    private var channel: Channel = _    
+  class WebSocketClientHandler(val server: URI) extends SimpleChannelUpstreamHandler {
+    private var channel: Channel = _
 
     override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
       channel = event.getChannel
-      channel.write(handshakeRequest(url))
+      channel.write(handshakeRequest(server))
       context.getPipeline.replace("encoder", "ws-encoder", new WebSocketFrameEncoder())
     }
 
@@ -49,12 +50,12 @@ object Main {
       }
     }
 
-    private def handshakeRequest(url: URL): DefaultHttpRequest = {
-      val request = new DefaultHttpRequest(HTTP_1_1, GET, url.getPath)
+    private def handshakeRequest(server: URI) = {
+      val request = new DefaultHttpRequest(HTTP_1_1, GET, server.getPath)
       request.addHeader(Names.UPGRADE, WEBSOCKET)
       request.addHeader(CONNECTION, Values.UPGRADE)
-      request.addHeader(HOST, url.getHost)
-      request.addHeader(ORIGIN, "http://" + url.getHost)
+      request.addHeader(HOST,  if (server.getPort == 80) server.getHost else server.getHost + ":" + server.getPort)
+      request.addHeader(ORIGIN, "http://" + server.getHost)
       request
     }
 

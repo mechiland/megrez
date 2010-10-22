@@ -12,7 +12,7 @@ define "megrez-agent" do
   compile.with NETTY
   test.using :scalatest
 
-  package(:jar)
+  package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.agent.Main' }
   
   task :git_add_untracked => :clean do
 	status = `git status`
