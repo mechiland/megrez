@@ -1,2 +1,1 @@
-buildr package && /
 scala -classpath /$NETTY_HOME/jar/netty-3.2.2.Final.jar:target/megrez-server-1.0.0.jar org.megrez.server.Main
