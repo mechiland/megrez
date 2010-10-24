@@ -25,7 +25,7 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
 
   override def exceptionCaught(context: ChannelHandlerContext, event: ExceptionEvent) {
     event.getCause match {
-      case exception: NotMergezServerException => callback.invalidMegrezServer(exception.uri)
+      case exception: NotMergezServerException => callback.invalidServer(exception.uri)
     }
   }
 
@@ -38,8 +38,8 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
   }
 
   private def handleMegrezHandshake(context: ChannelHandlerContext, response: WebSocketFrame, channel: Channel) {
-    if (response.getTextData == "megrez-server:1.0") callback.megrezServerConnected
-    else callback.invalidMegrezServer(server)
+    if (response.getTextData != "megrez-server:1.0") throw new NotMergezServerException(server) 
+    callback.connected
   }
 
   private def handshakeRequest = {
@@ -49,6 +49,16 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
     request.addHeader(HOST, if (server.getPort == 80) server.getHost else server.getHost + ":" + server.getPort)
     request.addHeader(ORIGIN, "http://" + server.getHost)
     request
+  }
+}
+
+class AgentHandler(val callback: ServerHandler) extends SimpleChannelUpstreamHandler {
+  override def channelDisconnected(context: ChannelHandlerContext, event: ChannelStateEvent) {    
+    callback.disconnected
+  }
+
+  override def exceptionCaught(context: ChannelHandlerContext, event: ExceptionEvent) {
+    super.exceptionCaught(context, event)
   }
 }
 
@@ -65,7 +75,7 @@ class HandlerHolder(var handler: SimpleChannelUpstreamHandler) extends SimpleCha
     handler.messageReceived(context, event)
   }
 
-  override def exceptionCaught(context: ChannelHandlerContext, event: ExceptionEvent) {
+  override def exceptionCaught(context: ChannelHandlerContext, event: ExceptionEvent) {    
     handler.exceptionCaught(context, event)
   }
 }

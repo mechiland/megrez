@@ -9,9 +9,12 @@ import org.jboss.netty.handler.codec.http._
 import java.net._
 
 
-class Server(val server: URI) extends ServerHandler {
+class Server(val server: URI, val reconnectAfter : Long) extends ServerHandler {
   val handshakeHandler = new HandshakeHandler(server, this)
+  val agentHandler = new AgentHandler(this)  
   val holder = new HandlerHolder(handshakeHandler)
+
+  private var channel : ChannelFuture = _
 
   val bootstrap = new ClientBootstrap(
     new NioClientSocketChannelFactory(
@@ -29,14 +32,20 @@ class Server(val server: URI) extends ServerHandler {
   })
 
   def connect() {
-    bootstrap.connect(new InetSocketAddress(server.getHost, server.getPort))
+    channel = bootstrap.connect(new InetSocketAddress(server.getHost, server.getPort))
   }
 
-  def megrezServerConnected() {
-
+  override def connected() {    
+    holder.handler = agentHandler 
   }
 
-  def invalidMegrezServer(uri: URI) {
+  override def disconnected() {
+    holder.handler = handshakeHandler
+    Thread.sleep(reconnectAfter)
+    connect
+  }
+
+  override def invalidServer(uri: URI) {
 
   }
 }

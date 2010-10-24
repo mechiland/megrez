@@ -4,6 +4,7 @@ import java.util.concurrent.Executors
 
 import org.jboss.netty.bootstrap._
 import org.jboss.netty.channel._
+import group.DefaultChannelGroup
 import org.jboss.netty.channel.socket.nio._
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.codec.http.websocket._
@@ -19,14 +20,14 @@ import java.net.{URI, InetSocketAddress}
 import actors.Actor
 
 abstract class Behaviour
-abstract trait HttpBehaviour extends Behaviour{
+abstract trait HttpBehaviour extends Behaviour {
   def handleHttpRequest(context: ChannelHandlerContext, http: HttpRequest)
 }
 abstract trait WebSocketBehaviour extends Behaviour {
   def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame)
 }
 
-class WebSocketClient(val handler : SimpleChannelUpstreamHandler) {
+class WebSocketClient(val handler: SimpleChannelUpstreamHandler) {
   val bootstrap = new ClientBootstrap(
     new NioClientSocketChannelFactory(
       Executors.newCachedThreadPool(),
@@ -46,9 +47,8 @@ class WebSocketClient(val handler : SimpleChannelUpstreamHandler) {
 }
 
 class WebSocketServer extends SimpleChannelUpstreamHandler {
-
-  val httpBehaviours : Queue[HttpBehaviour] = Queue[HttpBehaviour]()
-  val websocketBehaviours : Queue[WebSocketBehaviour] = Queue[WebSocketBehaviour]()
+  val httpBehaviours: Queue[HttpBehaviour] = Queue[HttpBehaviour]()
+  val websocketBehaviours: Queue[WebSocketBehaviour] = Queue[WebSocketBehaviour]()
 
   val bootstrap = new ServerBootstrap(
     new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()))
@@ -64,27 +64,33 @@ class WebSocketServer extends SimpleChannelUpstreamHandler {
     }
   });
 
-  private var channel : Channel = _ 
+  private var channel: Channel = _
+//  val allConnected = new DefaultChannelGroup()
 
-  def start() {
+  def start {
     channel = bootstrap.bind(new InetSocketAddress(8080));
   }
 
-  def shutdown {    
-    channel.close
+  def shutdown {
+//    allConnected.close.awaitUninterruptibly
+    channel.close.awaitUninterruptibly
   }
 
-  def response(behaviours : Behaviour*) {
+  override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
+//    allConnected.add(context.getChannel)
+  }
+
+  def response(behaviours: Behaviour*) {
     behaviours.foreach(_ match {
-        case http : HttpBehaviour =>httpBehaviours.enqueue(http)
-        case websocket : WebSocketBehaviour => websocketBehaviours.enqueue(websocket)
-      })
+      case http: HttpBehaviour => httpBehaviours.enqueue(http)
+      case websocket: WebSocketBehaviour => websocketBehaviours.enqueue(websocket)
+    })
   }
 
   override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
     event.getMessage match {
       case http: HttpRequest => handleHttpRequest(context, http)
-      case websocket : WebSocketFrame => handleWebSocketFrame(context, websocket)
+      case websocket: WebSocketFrame => handleWebSocketFrame(context, websocket)
     }
   }
 
@@ -98,18 +104,36 @@ class WebSocketServer extends SimpleChannelUpstreamHandler {
 }
 
 trait ActorBasedServerHandlerMixin extends ServerHandler {
-  var actor : Actor = _  
-  override def megrezServerConnected() {
+  var actor: Actor = _
+
+  override def connected() {
+    super.connected
     actor ! "CONNECTED"
   }
 
-  override def invalidMegrezServer(uri : URI) {
+  override def disconnected() {
+    super.disconnected
+    actor ! "DISCONNECTED"
+  }
+
+  override def invalidServer(uri: URI) {
+    super.invalidServer(uri)
     actor ! "NOT A MERGEZ SERVER"
-  }  
+  }
 }
 
-class ActorBasedServerHandler(val _actor : Actor) extends ActorBasedServerHandlerMixin {
-  actor = _actor
+class ActorBasedServerHandler(val actor: Actor) extends ServerHandler {
+  override def connected() {
+    actor ! "CONNECTED"
+  }
+
+  override def disconnected() {
+    actor ! "DISCONNECTED"
+  }
+
+  override def invalidServer(uri: URI) {
+    actor ! "NOT A MERGEZ SERVER"
+  }
 }
 
 object WebSocketHandshake extends HttpBehaviour {
@@ -137,17 +161,24 @@ object Forbidden extends HttpBehaviour {
 
       response.setContent(ChannelBuffers.copiedBuffer(response.getStatus.toString, CharsetUtil.UTF_8))
       setContentLength(response, response.getContent.readableBytes)
-
-      val future = context.getChannel.write(response)
-      future.addListener(ChannelFutureListener.CLOSE)
+      context.getChannel.write(response)
     }
   }
 }
 
 object MegrezHandshake extends WebSocketBehaviour {
   override def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame) {
-    if (request.getTextData == "megrez-agent:1.0") {     
+    if (request.getTextData == "megrez-agent:1.0") {
       context.getChannel.write(new DefaultWebSocketFrame("megrez-server:1.0"))
+    }
+  }
+}
+
+object CloseAfterMegrezHandshake extends WebSocketBehaviour {
+  override def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame) {
+    if (request.getTextData == "megrez-agent:1.0") {
+      val future = context.getChannel.write(new DefaultWebSocketFrame("megrez-server:1.0"))
+      future.addListener(ChannelFutureListener.CLOSE)
     }
   }
 }
@@ -159,4 +190,5 @@ object Something extends WebSocketBehaviour {
     }
   }
 }
+
 

@@ -18,7 +18,7 @@ import actors.Actor
 
 object Main {
   def main(args: Array[String]) {
-    val serverConnection = new Server(new URI(args.first))
+    val serverConnection = new Server(new URI(args.head), 5000)
     serverConnection.connect
   }
 }
