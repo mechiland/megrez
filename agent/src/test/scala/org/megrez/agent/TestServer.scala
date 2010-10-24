@@ -12,12 +12,26 @@ import org.jboss.netty.handler.codec.http.HttpHeaders._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Values._
 import org.jboss.netty.handler.codec.http.HttpVersion._
+import org.jboss.netty.handler.codec.http.HttpResponseStatus._
+import collection.mutable.Queue
+import org.jboss.netty.util.CharsetUtil
+import org.jboss.netty.buffer.ChannelBuffers
 
-abstract trait WebSocketServer {
+abstract class Behaviour
+abstract trait HttpBehaviour extends Behaviour{
   def handleHttpRequest(context: ChannelHandlerContext, http: HttpRequest)
 }
 
-abstract class TestServer extends SimpleChannelUpstreamHandler with WebSocketServer {
+abstract trait WebSocketBehaviour extends Behaviour {
+  def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame)
+}
+
+
+class TestServer extends SimpleChannelUpstreamHandler {
+
+  val httpBehaviours : Queue[HttpBehaviour] = Queue[HttpBehaviour]()
+  val websocketBehaviours : Queue[WebSocketBehaviour] = Queue[WebSocketBehaviour]()
+
   val bootstrap = new ServerBootstrap(
     new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()))
 
@@ -32,22 +46,40 @@ abstract class TestServer extends SimpleChannelUpstreamHandler with WebSocketSer
     }
   });
 
+  private var channel : Channel = _ 
+
   def start() {
-    bootstrap.bind(new InetSocketAddress(8080));
+    channel = bootstrap.bind(new InetSocketAddress(8080));
   }
 
-  def shutdown {
-    bootstrap.bind.close
+  def shutdown {    
+    channel.close
+  }
+
+  def response(behaviours : Behaviour*) {
+    behaviours.foreach(_ match {
+        case http : HttpBehaviour =>httpBehaviours.enqueue(http)
+        case websocket : WebSocketBehaviour => websocketBehaviours.enqueue(websocket)
+      })
   }
 
   override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
     event.getMessage match {
       case http: HttpRequest => handleHttpRequest(context, http)
+      case websocket : WebSocketFrame => handleWebSocketFrame(context, websocket)
     }
+  }
+
+  private def handleHttpRequest(context: ChannelHandlerContext, request: HttpRequest) {
+    httpBehaviours.dequeue.handleHttpRequest(context, request)
+  }
+
+  private def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame) {
+    websocketBehaviours.dequeue.handleWebSocketFrame(context, request)
   }
 }
 
-trait ResponseHandshake extends WebSocketServer {
+object WebSocketHandshake extends HttpBehaviour {
   override def handleHttpRequest(context: ChannelHandlerContext, request: HttpRequest) {
     if (request.getHeader(CONNECTION) == Values.UPGRADE && request.getHeader(Names.UPGRADE) == WEBSOCKET) {
       val response = new DefaultHttpResponse(HTTP_1_1, new HttpResponseStatus(101, "Web Socket Protocol Handshake"))
@@ -64,3 +96,34 @@ trait ResponseHandshake extends WebSocketServer {
     }
   }
 }
+
+object Forbidden extends HttpBehaviour {
+  override def handleHttpRequest(context: ChannelHandlerContext, request: HttpRequest) {
+    if (request.getHeader(CONNECTION) == Values.UPGRADE && request.getHeader(Names.UPGRADE) == WEBSOCKET) {
+      val response = new DefaultHttpResponse(HTTP_1_1, FORBIDDEN)
+
+      response.setContent(ChannelBuffers.copiedBuffer(response.getStatus.toString, CharsetUtil.UTF_8))
+      setContentLength(response, response.getContent.readableBytes)
+
+      val future = context.getChannel.write(response)
+      future.addListener(ChannelFutureListener.CLOSE)
+    }
+  }
+}
+
+object MegrezHandshake extends WebSocketBehaviour {
+  override def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame) {
+    if (request.getTextData == "megrez-agent:1.0") {     
+      context.getChannel.write(new DefaultWebSocketFrame("megrez-server:1.0"))
+    }
+  }
+}
+
+object Something extends WebSocketBehaviour {
+  override def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame) {
+    if (request.getTextData == "megrez-agent:1.0") {
+      context.getChannel.write(new DefaultWebSocketFrame("something"))
+    }
+  }
+}
+
