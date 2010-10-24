@@ -15,15 +15,5 @@ define "megrez-rest" do
   test.using :scalatest
 
   package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.rest.Main' }
-  
-  task :git_add_untracked => :clean do
-	status = `git status`
-	untracked_lines = status.split("\n").select{|line| line =~ /^#\t/}.reject{|line| line =~ /^#\t.+:/}.map do |line|
-  		line.split("\t")
-	end.map{|pair| pair.last}
 
-	untracked_lines.each{|line| puts line}
-	cmd = "git add #{untracked_lines.join(' ')}"
-	system cmd
-  end
 end

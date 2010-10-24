@@ -3,7 +3,7 @@
 git pull && \
 buildr clean test && \
 buildr clean && \
-buildr megrez-rest:git_add_untracked && \
+git add -A && \
 git commit -a && \
 git push && \
 git status
