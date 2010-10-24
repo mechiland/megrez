@@ -1,6 +1,5 @@
 package org.megrez.agent
 
-import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 
 import org.jboss.netty.bootstrap._
@@ -16,18 +15,37 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus._
 import collection.mutable.Queue
 import org.jboss.netty.util.CharsetUtil
 import org.jboss.netty.buffer.ChannelBuffers
+import java.net.{URI, InetSocketAddress}
+import actors.Actor
 
 abstract class Behaviour
 abstract trait HttpBehaviour extends Behaviour{
   def handleHttpRequest(context: ChannelHandlerContext, http: HttpRequest)
 }
-
 abstract trait WebSocketBehaviour extends Behaviour {
   def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame)
 }
 
+class WebSocketClient(val handler : SimpleChannelUpstreamHandler) {
+  val bootstrap = new ClientBootstrap(
+    new NioClientSocketChannelFactory(
+      Executors.newCachedThreadPool(),
+      Executors.newCachedThreadPool()))
 
-class TestServer extends SimpleChannelUpstreamHandler {
+  bootstrap.setPipelineFactory(new ChannelPipelineFactory {
+    override def getPipeline() = {
+      val pipeline = Channels.pipeline
+      pipeline.addLast("decoder", new HttpResponseDecoder())
+      pipeline.addLast("encoder", new HttpRequestEncoder())
+      pipeline.addLast("ws-handler", handler)
+      pipeline
+    }
+  })
+
+  bootstrap.connect(new InetSocketAddress("localhost", 8080))
+}
+
+class WebSocketServer extends SimpleChannelUpstreamHandler {
 
   val httpBehaviours : Queue[HttpBehaviour] = Queue[HttpBehaviour]()
   val websocketBehaviours : Queue[WebSocketBehaviour] = Queue[WebSocketBehaviour]()
@@ -41,7 +59,7 @@ class TestServer extends SimpleChannelUpstreamHandler {
       pipeline.addLast("decoder", new HttpRequestDecoder)
       pipeline.addLast("aggregator", new HttpChunkAggregator(65536))
       pipeline.addLast("encoder", new HttpResponseEncoder)
-      pipeline.addLast("handler", TestServer.this);
+      pipeline.addLast("handler", WebSocketServer.this);
       pipeline
     }
   });
@@ -77,6 +95,21 @@ class TestServer extends SimpleChannelUpstreamHandler {
   private def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame) {
     websocketBehaviours.dequeue.handleWebSocketFrame(context, request)
   }
+}
+
+trait ActorBasedServerHandlerMixin extends ServerHandler {
+  var actor : Actor = _  
+  override def megrezServerConnected() {
+    actor ! "CONNECTED"
+  }
+
+  override def invalidMegrezServer(uri : URI) {
+    actor ! "NOT A MERGEZ SERVER"
+  }  
+}
+
+class ActorBasedServerHandler(val _actor : Actor) extends ActorBasedServerHandlerMixin {
+  actor = _actor
 }
 
 object WebSocketHandshake extends HttpBehaviour {

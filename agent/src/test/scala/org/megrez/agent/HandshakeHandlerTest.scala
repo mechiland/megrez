@@ -1,20 +1,20 @@
 package org.megrez.agent
 
-import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Spec
 import java.net.URI
+
 import actors.Actor
 import actors.Actor._
 
-class ServerTest extends Spec with ShouldMatchers {
-  describe("Agent Server handshake") {
-    it("should connect to server if server response ws handshake and megrez handshake") {
+
+class HandshakeHandlerTest extends Spec with ShouldMatchers {
+  describe("Agent-Server handshake") {
+    it("should notify server connected if server response websocket handshake and megrez handshake") {
       val server = new WebSocketServer
       server.response(WebSocketHandshake, MegrezHandshake)
       server.start
-      val connection = new Server(new URI("ws://localhost:8080/")) with ActorBasedServerHandlerMixin
-      connection.actor = self
-      connection.connect
+      val client = new WebSocketClient(new HandshakeHandler(new URI("ws://localhost:8080/"), new ActorBasedServerHandler(self)))
 
       receiveWithin(1000) {
         case "CONNECTED" => server.shutdown
@@ -25,40 +25,35 @@ class ServerTest extends Spec with ShouldMatchers {
       }
     }
 
-    it("should report not a megrez server if server not repsonse to websocket upgrade") {
+    it("should notify invalid server if server refuse the websocket connection") {
       val server = new WebSocketServer
       server.response(Forbidden)
       server.start
+      val client = new WebSocketClient(new HandshakeHandler(new URI("ws://localhost:8080/"), new ActorBasedServerHandler(self)))
       
-      val connection = new Server(new URI("ws://localhost:8080/")) with ActorBasedServerHandlerMixin
-      connection.actor = self
-      connection.connect
-
       receiveWithin(1000) {
         case "NOT A MERGEZ SERVER" => server.shutdown
-        case _ => {
+        case other : String => {
           server.shutdown
           fail
         }
       }
     }
 
-    it("should report not a megrez server if server not response to the megrez handshake") {
+    it("should notify invalid server if server does not response megrez handshake") {
       val server = new WebSocketServer
       server.response(WebSocketHandshake, Something)
       server.start
-
-      val connection = new Server(new URI("ws://localhost:8080/")) with ActorBasedServerHandlerMixin
-      connection.actor = self
-      connection.connect
+      val client = new WebSocketClient(new HandshakeHandler(new URI("ws://localhost:8080/"), new ActorBasedServerHandler(self)))
 
       receiveWithin(1000) {
         case "NOT A MERGEZ SERVER" => server.shutdown
-        case _ => {
+        case other : String => {
           server.shutdown
           fail
         }
       }
     }
+
   }
 }

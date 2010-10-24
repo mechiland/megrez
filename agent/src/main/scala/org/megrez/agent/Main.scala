@@ -23,36 +23,5 @@ object Main {
   }
 }
 
-class NotMergezServerException(val uri: URI) extends Exception
 
-class Server(val server: URI) extends ServerHandler {
-  val handshakeHandler = new HandshakeHandler(server, this) 
-  val holder = new HandlerHolder(handshakeHandler) 
 
-  val bootstrap = new ClientBootstrap(
-    new NioClientSocketChannelFactory(
-      Executors.newCachedThreadPool(),
-      Executors.newCachedThreadPool()))
-
-  bootstrap.setPipelineFactory(new ChannelPipelineFactory {
-    override def getPipeline() = {
-      val pipeline = Channels.pipeline
-      pipeline.addLast("decoder", new HttpResponseDecoder())
-      pipeline.addLast("encoder", new HttpRequestEncoder())
-      pipeline.addLast("ws-handler", holder)
-      pipeline
-    }
-  })
-
-  def connect() {
-    bootstrap.connect(new InetSocketAddress(server.getHost, server.getPort))
-  }
-
-  def megrezServerConnected() {
-    
-  }
-
-  def invalidMegrezServer(uri: URI) {
-
-  }
-}
