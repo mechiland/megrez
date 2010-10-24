@@ -1,0 +1,29 @@
+require 'buildr/scala'
+
+repositories.remote << "http://www.ibiblio.org/maven2/"
+repositories.remote << "http://repository.jboss.org/nexus/content/groups/public/"
+
+NETTY = 'org.jboss.netty:netty:jar:3.2.2.Final'
+RESTLET = 'lib/org.restlet.jar'
+RESTLET_NETTY_EXT = 'lib/org.restlet.ext.netty.jar'
+
+define "megrez-rest" do
+  project.version = '1.0.0'
+  project.group = 'Megrez'
+
+  compile.with NETTY, RESTLET, RESTLET_NETTY_EXT 
+  test.using :scalatest
+
+  package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.rest.Main' }
+  
+  task :git_add_untracked => :clean do
+	status = `git status`
+	untracked_lines = status.split("\n").select{|line| line =~ /^#\t/}.reject{|line| line =~ /^#\t.+:/}.map do |line|
+  		line.split("\t")
+	end.map{|pair| pair.last}
+
+	untracked_lines.each{|line| puts line}
+	cmd = "git add #{untracked_lines.join(' ')}"
+	system cmd
+  end
+end

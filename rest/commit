@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+git pull && \
+buildr clean test && \
+buildr clean && \
+buildr megrez-rest:git_add_untracked && \
+git commit -a && \
+git push && \
+git status
