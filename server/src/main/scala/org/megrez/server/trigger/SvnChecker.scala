@@ -2,6 +2,8 @@ package org.megrez.server.trigger
 
 trait SvnChecker {
   val repositoryUrl: String
+  var revision:Int = 0
+  var needTriggerSVN:Boolean=false
 
   def getLatestVersionForSvn(): Int = {
     val process: Process = Runtime.getRuntime().exec("svn info " + repositoryUrl)
@@ -9,7 +11,12 @@ trait SvnChecker {
     answers.foreach {
       item =>
         if (item.contains("Revision"))
-          return (Integer.parseInt(item.split(":")(1).trim))
+          {val latestVersion:Int = Integer.parseInt(item.split(":")(1).trim)
+           if(latestVersion>revision){
+             revision = latestVersion
+             needTriggerSVN = true
+           }
+          }
     }
     process.waitFor()
   }
