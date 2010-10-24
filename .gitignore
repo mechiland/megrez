@@ -5,3 +5,6 @@
 server/target
 agent/target
 rest/target
+server/reports
+agent/reports
+rest/reports
