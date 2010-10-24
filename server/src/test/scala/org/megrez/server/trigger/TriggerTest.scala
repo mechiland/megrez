@@ -1,7 +1,7 @@
 package scala.org.megrez.server.trigger
 
 import org.scalatest.Spec
-import main.scala.org.megrez.server.trigger.Trigger;
+import org.megrez.server.trigger.Trigger;
 import org.scalatest._
 import org.scalatest.matchers._
 

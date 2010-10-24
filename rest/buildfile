@@ -4,14 +4,16 @@ repositories.remote << "http://www.ibiblio.org/maven2/"
 repositories.remote << "http://repository.jboss.org/nexus/content/groups/public/"
 
 NETTY = 'org.jboss.netty:netty:jar:3.2.2.Final'
+RESTLET = 'lib/org.restlet.jar'
+RESTLET_NETTY_EXT = 'lib/org.restlet.ext.netty.jar'
 
-define "megrez-agent" do
+define "megrez-rest" do
   project.version = '1.0.0'
-  project.group = 'megrez'
+  project.group = 'Megrez'
 
-  compile.with NETTY
+  compile.with NETTY, RESTLET, RESTLET_NETTY_EXT 
   test.using :scalatest
 
-  package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.agent.Main' }
-  
+  package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.rest.Main' }
+
 end
