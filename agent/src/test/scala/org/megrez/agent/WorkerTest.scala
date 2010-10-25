@@ -36,7 +36,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       }
 
       verify(workingDirectory).createPipelineFolder(pipelineId)
-      verify(versionControl).initRepository(pipelineDir, workSet)
+      verify(versionControl).checkout(pipelineDir, workSet)
     }
 
     it("should checkout work set if pipeline already exist") {
@@ -64,7 +64,6 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
       verify(workingDirectory, never).createPipelineFolder(pipelineId)
       verify(versionControl).checkout(pipelineDir, workSet)
-      verify(versionControl, never).initRepository(pipelineDir, workSet)
     }
 
     it("should run tasks") {

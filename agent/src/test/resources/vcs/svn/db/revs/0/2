@@ -1,0 +1,45 @@
+id: 1-2.0.r2/0
+type: file
+count: 0
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 1-1/_3
+cpath: /agent_test/REVISION_2
+copyroot: 0 /
+
+PLAIN
+K 6
+README
+V 16
+file 2-1.0.r1/17
+K 10
+REVISION_2
+V 15
+file 1-2.0.r2/0
+END
+ENDREP
+id: 0-1.0.r2/262
+type: dir
+pred: 0-1.0.r1/239
+count: 1
+text: 2 175 74 74 ecd05bbc1a41246838d44be2cf319fe9
+cpath: /agent_test
+copyroot: 0 /
+
+PLAIN
+K 10
+agent_test
+V 16
+dir 0-1.0.r2/262
+END
+ENDREP
+id: 0.0.r2/457
+type: dir
+pred: 0.0.r1/415
+count: 2
+text: 2 402 42 42 08d5a149ab747977d0f5e4ed6ea9fbab
+cpath: /
+copyroot: 0 /
+
+_1.0.t1-1 add-file true false /agent_test/REVISION_2
+
+
+457 583

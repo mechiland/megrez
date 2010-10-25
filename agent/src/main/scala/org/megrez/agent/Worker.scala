@@ -16,7 +16,7 @@ class Worker(val workspace: Workspace) extends Actor {
     val pipelineDir = workspace.getPipelineFolder(assignment.pipelineId) match {
       case null =>
         val dir = workspace.createPipelineFolder(assignment.pipelineId)
-        assignment.versionControl.initRepository(dir, assignment.workSet)
+        assignment.versionControl.checkout(dir, assignment.workSet)
         dir
       case dir : File =>
         assignment.versionControl.checkout(dir, assignment.workSet)
