@@ -118,21 +118,7 @@ trait ActorBasedServerHandlerMixin extends ServerHandler {
 
   override def invalidServer(uri: URI) {
     super.invalidServer(uri)
-    actor ! "NOT A MERGEZ SERVER"
-  }
-}
-
-class ActorBasedServerHandler(val actor: Actor) extends ServerHandler {
-  override def connected() {
-    actor ! "CONNECTED"
-  }
-
-  override def disconnected() {
-    actor ! "DISCONNECTED"
-  }
-
-  override def invalidServer(uri: URI) {
-    actor ! "NOT A MERGEZ SERVER"
+    actor ! "NOT A MEGREZ SERVER"
   }
 }
 

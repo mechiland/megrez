@@ -46,6 +46,12 @@ class Server(val server: URI, val reconnectAfter : Long) extends ServerHandler {
   }
 
   override def invalidServer(uri: URI) {
-
+    
   }
+}
+
+trait ServerHandler {
+  def connected() {}
+  def disconnected() {}
+  def invalidServer(uri: URI) {}
 }

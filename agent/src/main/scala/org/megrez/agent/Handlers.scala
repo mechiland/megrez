@@ -25,20 +25,20 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
 
   override def exceptionCaught(context: ChannelHandlerContext, event: ExceptionEvent) {
     event.getCause match {
-      case exception: NotMergezServerException => callback.invalidServer(exception.uri)
+      case exception: NotMegrezServerException => callback.invalidServer(exception.uri)
     }
   }
 
   private def handleWebSocketHandshake(context: ChannelHandlerContext, response: HttpResponse, channel: Channel) {
     val validStatus = response.getStatus.getCode == 101 && response.getStatus.getReasonPhrase == "Web Socket Protocol Handshake"
     val validHeaders = response.getHeader(Names.UPGRADE) == WEBSOCKET && response.getHeader(CONNECTION) == Values.UPGRADE
-    if (!validStatus || !validHeaders) throw new NotMergezServerException(server)
+    if (!validStatus || !validHeaders) throw new NotMegrezServerException(server)
     context.getPipeline.replace("decoder", "ws-decoder", new WebSocketFrameDecoder())
     context.getChannel.write(new DefaultWebSocketFrame("megrez-agent:1.0"))
   }
 
   private def handleMegrezHandshake(context: ChannelHandlerContext, response: WebSocketFrame, channel: Channel) {
-    if (response.getTextData != "megrez-server:1.0") throw new NotMergezServerException(server) 
+    if (response.getTextData != "megrez-server:1.0") throw new NotMegrezServerException(server)
     callback.connected
   }
 

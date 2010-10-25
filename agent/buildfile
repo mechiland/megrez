@@ -4,13 +4,27 @@ repositories.remote << "http://www.ibiblio.org/maven2/"
 repositories.remote << "http://repository.jboss.org/nexus/content/groups/public/"
 
 NETTY = 'org.jboss.netty:netty:jar:3.2.2.Final'
+MOCKITO = 'org.mockito:mockito-all:jar:1.8.5'
+
+class Buildr::ScalaTest
+  class << self
+    alias dependencies_old dependencies
+
+    def dependencies
+      dependencies_old + [MOCKITO]
+    end
+  end
+end
+
 
 define "megrez-agent" do
   project.version = '1.0.0'
   project.group = 'megrez'
 
   compile.with NETTY
+
   test.using :scalatest
+  test.with MOCKITO
 
   package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.agent.Main' }
   

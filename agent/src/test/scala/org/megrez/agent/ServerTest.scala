@@ -3,8 +3,8 @@ package org.megrez.agent
 import org.scalatest.matchers.ShouldMatchers
 import java.net.URI
 import actors.Actor._
-import org.scalatest.{BeforeAndAfterEach, Spec}
-import actors.{TIMEOUT, Actor}
+import org.scalatest._
+import actors._
 
 class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("Agent Server handshake") {
@@ -19,14 +19,14 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       server.response(Forbidden)
       server.start
       connect
-      expect("NOT A MERGEZ SERVER", 1000)
+      expect("NOT A MEGREZ SERVER", 1000)
     }
 
     it("should report not a megrez server if server not response to the megrez handshake") {
       server.response(WebSocketHandshake, Something)
       server.start
       connect
-      expect("NOT A MERGEZ SERVER", 1000)
+      expect("NOT A MEGREZ SERVER", 1000)
     }
   }
 
