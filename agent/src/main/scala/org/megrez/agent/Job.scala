@@ -1,4 +1,7 @@
 package org.megrez.agent
 
-class Job(val tasks : List[Task])
-class Task
+class Job(val tasks : List[Task]) 
+
+abstract class Task {
+  def run()
+}
