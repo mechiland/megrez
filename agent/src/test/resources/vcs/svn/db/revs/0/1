@@ -1,0 +1,44 @@
+DELTA
+SVNENDREP
+id: 2-1.0.r1/17
+type: file
+count: 0
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_4
+cpath: /agent_test/README
+copyroot: 0 /
+
+PLAIN
+K 6
+README
+V 16
+file 2-1.0.r1/17
+END
+ENDREP
+id: 0-1.0.r1/239
+type: dir
+count: 0
+text: 1 189 37 37 f3e95c0268edcdea64b64bad3fa658b7
+cpath: /agent_test
+copyroot: 0 /
+
+PLAIN
+K 10
+agent_test
+V 16
+dir 0-1.0.r1/239
+END
+ENDREP
+id: 0.0.r1/415
+type: dir
+pred: 0.0.r0/17
+count: 1
+text: 1 360 42 42 748b1d2736edd1437a92830a620f4fac
+cpath: /
+copyroot: 0 /
+
+_2.0.t0-0 add-file true false /agent_test/README
+
+_0.0.t0-0 add-dir false false /agent_test
+
+
+415 540
