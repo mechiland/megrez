@@ -16,7 +16,6 @@ class Buildr::ScalaTest
   end
 end
 
-
 define "megrez-agent" do
   project.version = '1.0.0'
   project.group = 'megrez'
