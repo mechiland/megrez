@@ -4,6 +4,7 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Spec, BeforeAndAfterEach}
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
+import org.mockito.Matchers._
 import java.io.File
 import actors.TIMEOUT
 import actors.Actor._
@@ -109,6 +110,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val job = new Job(List(task1, task2))
 
       when(workingDirectory.getPipelineFolder(pipelineId)).thenReturn(pipelineDir)
+      when(versionControl.checkWorkingDir(pipelineDir)).thenReturn(true)
 
       val worker = new Worker(workingDirectory)
       worker.start
@@ -123,12 +125,12 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
         case _ => fail
       }
 
-      verify(task1).run
-      verify(task2).run
+      verify(task1).run(same(pipelineDir))
+      verify(task2).run(same(pipelineDir))
     }
   }
 }
 
 class EmptyTask extends Task {
-  def run() {}
+  def run(file: File) {}
 }

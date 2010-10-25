@@ -24,7 +24,7 @@ class Worker(val workspace: Workspace) extends Actor {
         } else dir
     }
     assignment.versionControl.checkout(pipelineDir, assignment.workSet)
-    assignment.job.tasks.foreach(_ run)
+    assignment.job.tasks.foreach(_ run pipelineDir)
     reply(JobCompleted(assignment.pipelineId, assignment.workSet))
   }
 }

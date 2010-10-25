@@ -6,7 +6,7 @@ import actors.Actor._
 import org.scalatest._
 import actors._
 
-class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
+class ServerTest extends ServerIntegration with ShouldMatchers {
   describe("Agent Server handshake") {
     it("should connect to server if server response ws handshake and megrez handshake") {
       server.response(WebSocketHandshake, MegrezHandshake)
@@ -39,29 +39,5 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       expect("DISCONNECTED", 1000)
       expect("CONNECTED", 2000)
     }
-  }
-
-  def connect = {
-    val connection = new Server(new URI("ws://localhost:8080/"), 500) with ActorBasedServerHandlerMixin
-    connection.actor = self
-    connection.connect
-  }
-
-  def expect(Message: String, timeout: Int) {
-    receiveWithin(timeout) {
-      case Message =>
-      case TIMEOUT => fail("Timeout expecting " + Message)
-      case _ => fail
-    }
-  }
-
-  var server: WebSocketServer = _
-
-  override def beforeEach() {
-    server = new WebSocketServer
-  }
-
-  override def afterEach() {
-    server.shutdown
-  }
+  }  
 }

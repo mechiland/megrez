@@ -17,7 +17,9 @@ import collection.mutable.Queue
 import org.jboss.netty.util.CharsetUtil
 import org.jboss.netty.buffer.ChannelBuffers
 import java.net.{URI, InetSocketAddress}
-import actors.Actor
+import actors.{TIMEOUT, Actor}
+import scala.actors.Actor._
+import org.scalatest.{Spec, Assertions, BeforeAndAfterEach}
 
 abstract class Behaviour
 abstract trait HttpBehaviour extends Behaviour {
@@ -177,4 +179,31 @@ object Something extends WebSocketBehaviour {
   }
 }
 
+
+trait ServerIntegration extends Spec with BeforeAndAfterEach {
+
+  def connect = {
+    val connection = new Server(new URI("ws://localhost:8080/"), 500) with ActorBasedServerHandlerMixin
+    connection.actor = self
+    connection.connect
+  }
+
+  def expect(Message: String, timeout: Int) {
+    receiveWithin(timeout) {
+      case Message =>
+      case TIMEOUT => fail("Timeout expecting " + Message)
+      case _ => fail
+    }
+  }
+
+  var server: WebSocketServer = _
+
+  override def beforeEach() {
+    server = new WebSocketServer
+  }
+
+  override def afterEach() {
+    server.shutdown
+  }  
+}
 
