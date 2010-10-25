@@ -24,6 +24,15 @@ class FileWorkspaceTest extends Spec with ShouldMatchers with BeforeAndAfterEach
       val workspace = new FileWorkspace(root)
       workspace.getPipelineFolder("pipeline") should be(null)      
     }
+
+    it("should remove all sub folder under pipeline dir") {
+      val workspace = new FileWorkspace(root)
+      val pipelineDir = workspace.createPipelineFolder("pipeline")
+      new File(pipelineDir, "sub").mkdir
+
+      workspace.removePipelineFolder("pipeline")
+      pipelineDir should not be ('exists)
+    }
   }
 
   val root = new File(System.getProperty("user.dir"), "root")

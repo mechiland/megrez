@@ -15,4 +15,12 @@ class Subversion(val url : String) extends VersionControl {
       case _ => 
     }
   }
+
+  def checkWorkingDir(workingDir: File) = {
+    val process = Runtime.getRuntime().exec("svn info " + workingDir.getAbsolutePath)
+    process.waitFor match {
+      case 0 => true
+      case _ => false
+    }
+  }
 }

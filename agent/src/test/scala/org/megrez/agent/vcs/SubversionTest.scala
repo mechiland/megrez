@@ -8,7 +8,7 @@ import java.lang.String
 
 class SubversionTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   var properties = Map[String, Any]()
-  describe("Subversion") {
+  describe("Subversion checkout") {
     it("should check out repository") {
       subversion.checkout(root, null)
       new File(root, "README") should be('exists)
@@ -18,6 +18,17 @@ class SubversionTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       subversion.checkout(root, 1)
       new File(root, "README") should be('exists)
       new File(root, "REVISION_2") should not be('exists)
+    }    
+  }
+
+  describe("Subversion working dir check") {
+    it("should return true if working dir is a subversion repository") {
+      subversion.checkout(root, null)
+      subversion.checkWorkingDir(root) should be(true)
+    }
+
+    it("should return false if working dir is not a subversion repository") {
+      subversion.checkWorkingDir(root) should be(false)
     }
   }
 

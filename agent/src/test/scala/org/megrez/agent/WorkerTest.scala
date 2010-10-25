@@ -48,6 +48,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val job = new Job(List(new EmptyTask))
 
       when(workingDirectory.getPipelineFolder(pipelineId)).thenReturn(pipelineDir)
+      when(versionControl.checkWorkingDir(pipelineDir)).thenReturn(true)
 
       val worker = new Worker(workingDirectory)
       worker.start
@@ -63,6 +64,36 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       }
 
       verify(workingDirectory, never).createPipelineFolder(pipelineId)
+      verify(versionControl).checkout(pipelineDir, workSet)
+    }
+
+    it("should re-create dir if pipeline dir is not a valid dir") {
+      val pipelineId = "pipeline"
+      val pipelineDir = new File("pipeline")
+      val worksapce = mock[Workspace]
+      val versionControl = mock[VersionControl]
+      val workSet : Any = 5
+      val job = new Job(List(new EmptyTask))
+
+      when(worksapce.getPipelineFolder(pipelineId)).thenReturn(pipelineDir)
+      when(worksapce.createPipelineFolder(pipelineId)).thenReturn(pipelineDir)
+      when(versionControl.checkWorkingDir(pipelineDir)).thenReturn(false)      
+
+      val worker = new Worker(worksapce)
+      worker.start
+
+      worker ! JobAssignment("pipeline", versionControl, workSet, job)
+
+      receiveWithin(1000) {
+        case complete : JobCompleted =>
+          complete.pipelineId should equal(pipelineId)
+          complete.workSet should equal(workSet)
+        case TIMEOUT => fail("Timeout")
+        case _ => fail
+      }
+
+      verify(worksapce).removePipelineFolder(pipelineId)
+      verify(worksapce).createPipelineFolder(pipelineId)
       verify(versionControl).checkout(pipelineDir, workSet)
     }
 
