@@ -30,7 +30,8 @@ class Scheduler extends Actor {
   }
 
   private def handleTrigger(trigger: TriggerMessage) {
-    triggerStage(trigger.pipeline, "stage1")
+    val job = new Job(trigger.pipelineName, Set(), List())
+    triggerStage(trigger.pipelineName, "stage1")
   }
 
   private def handleJobConfirm(message: JobConfirm) {
