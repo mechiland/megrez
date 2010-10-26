@@ -1,7 +1,7 @@
 package org.megrez.agent
 
-import util.parsing.json.JSON
 import vcs.VersionControl
+import util.parsing.json.{JSONObject, JSON}
 
 case class JobAssignment(val pipelineId: String, val versionControl: VersionControl, val workSet: Any, val job: Job)
 case class JobCompleted(val pipelineId: String, val workSet: Any)
