@@ -14,6 +14,7 @@ class Agent extends Actor {
       react {
         case job: JobRequest => handleJob(job)
         case tags: SetResources => setResources(tags)
+        case message: JobFinished => handleFinished(message)
         case _: Exit => exit
       }
     }
@@ -41,6 +42,11 @@ class Agent extends Actor {
       case Busy =>
         reply(JobReject(this))
     }
+  }
+
+  private def handleFinished(message: JobFinished) {
+    _status = Idle
+    reply(Success())
   }
 
   private def checkResource(job : Job) = job.resources.forall( _resources contains _ )

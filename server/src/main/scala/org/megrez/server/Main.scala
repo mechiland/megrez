@@ -41,7 +41,20 @@ object Main {
     }
 
     private def handleHttpRequest(context: ChannelHandlerContext, request: HttpRequest) {
-      println(request.getMethod)
+      val response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
+      response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/html; charset=UTF-8")
+
+//      HttpResponse res = new DefaultHttpResponse(HTTP_1_1, OK);
+//80
+//81              ChannelBuffer content =
+//82                  WebSocketServerIndexPage.getContent(getWebSocketLocation(req));
+//83
+//84              res.setHeader(CONTENT_TYPE, "text/html; charset=UTF-8");
+//85              setContentLength(res, content.readableBytes());
+//86
+//87              res.setContent(content);
+//88              sendHttpResponse(ctx, req, res);
+//89              return;
     }
   }
 }
