@@ -7,7 +7,6 @@ import org.scalatest._
 import java.lang.String
 
 class SubversionTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-  var properties = Map[String, Any]()
   describe("Subversion checkout") {
     it("should check out repository") {
       subversion.checkout(root, null)
@@ -58,6 +57,7 @@ class SubversionTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   }
 
   val root = new File(System.getProperty("user.dir"), "vcs_svn")
+  var properties = Map[String, Any]()
   var subversion : Subversion = _
 
   override def beforeEach() {

@@ -68,19 +68,22 @@ class WebSocketServer extends SimpleChannelUpstreamHandler {
   });
 
   private var channel: Channel = _
-//  val allConnected = new DefaultChannelGroup()
 
   def start {
     channel = bootstrap.bind(new InetSocketAddress(8080));
   }
 
   def shutdown {
-//    allConnected.close.awaitUninterruptibly
     channel.close.awaitUninterruptibly
   }
 
+  private var webSocketChannel: Channel = _
+
   override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
-//    allConnected.add(context.getChannel)
+  }
+
+  def send(socket: WebSocketFrame) {
+    webSocketChannel.write(socket)
   }
 
   def response(behaviours: Behaviour*) {
@@ -102,6 +105,7 @@ class WebSocketServer extends SimpleChannelUpstreamHandler {
   }
 
   private def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame) {
+    webSocketChannel = context.getChannel
     websocketBehaviours.dequeue.handleWebSocketFrame(context, request)
   }
 }
@@ -156,9 +160,12 @@ object Forbidden extends HttpBehaviour {
 }
 
 object MegrezHandshake extends WebSocketBehaviour {
+  var actor: Actor = _
+
   override def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame) {
     if (request.getTextData == "megrez-agent:1.0") {
       context.getChannel.write(new DefaultWebSocketFrame("megrez-server:1.0"))
+      if (actor != null) actor ! "MEGREZ HANDSHAKE"
     }
   }
 }
@@ -180,8 +187,15 @@ object Something extends WebSocketBehaviour {
   }
 }
 
-trait ServerIntegration extends Spec with BeforeAndAfterEach {
+object ReceiveResponse extends WebSocketBehaviour {
+  var actor: Actor = _
+  
+  override def handleWebSocketFrame(context: ChannelHandlerContext, request: WebSocketFrame) {
+    actor ! request.getTextData
+  }
+}
 
+trait ServerIntegration extends Spec with BeforeAndAfterEach {
   def connect = {
     val connection = new Server(new URI("ws://localhost:8080/"), 500, if (worker != null) worker else actor {}) with ActorBasedServerHandlerMixin
     connection.actor = self
@@ -205,14 +219,14 @@ trait ServerIntegration extends Spec with BeforeAndAfterEach {
 
   override def afterEach() {
     server.shutdown
-  }  
+  }
 }
 
-trait HandlerTest extends Spec with BeforeAndAfterEach with MockitoSugar  {
-  var context : ChannelHandlerContext = _
-  var pipeline : ChannelPipeline = _
-  var channel : Channel = _
-  var serverHandler : ServerHandler = _
+trait HandlerTest extends Spec with BeforeAndAfterEach with MockitoSugar {
+  var context: ChannelHandlerContext = _
+  var pipeline: ChannelPipeline = _
+  var channel: Channel = _
+  var serverHandler: ServerHandler = _
 
   override def beforeEach() {
     context = mock[ChannelHandlerContext]
@@ -224,6 +238,6 @@ trait HandlerTest extends Spec with BeforeAndAfterEach with MockitoSugar  {
     serverHandler = mock[ServerHandler]
   }
 
-  def is(string : String) = org.mockito.Matchers.eq(string)
+  def is(string: String) = org.mockito.Matchers.eq(string)
 }
 

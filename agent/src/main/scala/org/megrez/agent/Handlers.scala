@@ -10,6 +10,7 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 import org.jboss.netty.handler.codec.http.websocket._
 import java.net._
 import actors.Actor
+import actors.Actor._
 
 class HandshakeHandler(val server: URI, val callback: ServerHandler) extends SimpleChannelUpstreamHandler {
   override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
@@ -53,10 +54,17 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
   }
 }
 
-class AgentHandler(val callback: ServerHandler, val actor : Actor) extends SimpleChannelUpstreamHandler {
-  override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
+class AgentHandler(val callback: ServerHandler, val worker: Actor) extends SimpleChannelUpstreamHandler {
+  override def messageReceived(context: ChannelHandlerContext, e: MessageEvent) {
     val assignment = e.getMessage match {
-      case frame : WebSocketFrame => actor ! JobAssignment.parse(frame.getTextData)
+      case frame: WebSocketFrame =>        
+        actor {
+          worker ! JobAssignment.parse(frame.getTextData)
+          react {
+            case result: JobCompleted => context.getChannel.write(new DefaultWebSocketFrame("""{"status" : "completed"}"""))
+            case _ =>
+          }
+        }
       case _ =>
     }
   }
@@ -83,7 +91,7 @@ class HandlerHolder(var handler: SimpleChannelUpstreamHandler) extends SimpleCha
     handler.messageReceived(context, event)
   }
 
-  override def exceptionCaught(context: ChannelHandlerContext, event: ExceptionEvent) {    
+  override def exceptionCaught(context: ChannelHandlerContext, event: ExceptionEvent) {
     handler.exceptionCaught(context, event)
   }
 }
