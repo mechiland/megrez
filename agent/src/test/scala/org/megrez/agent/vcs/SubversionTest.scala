@@ -48,6 +48,13 @@ class SubversionTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       val exception : Throwable = evaluating { subversion.checkout(root, null) } should produce [VersionControlException]
       exception.getMessage should startWith("svn: Failed to add file")
     }
+
+    it("should catch all output when update and exception occurs") {
+      subversion.checkout(root, 1)
+      new File(root, "REVISION_2").createNewFile
+      val exception : Throwable = evaluating { subversion.update(root, null) } should produce [VersionControlException]
+      exception.getMessage should startWith("svn: Failed to add file")      
+    }
   }
 
   val root = new File(System.getProperty("user.dir"), "vcs_svn")

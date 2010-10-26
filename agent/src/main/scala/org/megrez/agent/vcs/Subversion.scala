@@ -1,27 +1,19 @@
 package org.megrez.agent.vcs
 
 import java.io.File
-import io.Source
 
-class Subversion(val url : String) extends VersionControl {
+class Subversion(val url : String) extends VersionControl with CommandLine {
   
   override def checkout(workingDir: File, workSet : Any) {
     val svnUrl = workSet match {
       case revision : Int => url + "@" + revision 
       case _ => url
     }
-    val process = Runtime.getRuntime().exec("svn co " + svnUrl + " " + workingDir.getAbsolutePath)
-    process.waitFor match {
-      case 0 =>
-      case _ => throw new VersionControlException(Source.fromInputStream(process.getErrorStream).mkString)
-    }
+    run("svn co " + svnUrl + " " + workingDir.getAbsolutePath)
   }
 
   def isRepository(workingDir: File) = {
-    Runtime.getRuntime().exec("svn info " + workingDir.getAbsolutePath).waitFor match {
-      case 0 => true
-      case _ => false
-    }
+    check("svn info " + workingDir.getAbsolutePath)
   }
 
 
@@ -30,9 +22,6 @@ class Subversion(val url : String) extends VersionControl {
       case revision : Int => " -r " + revision
       case _ => ""
     }
-    Runtime.getRuntime().exec("svn up " + workingDir.getAbsolutePath + revision).waitFor match {
-      case 0 =>
-      case _ =>
-    }    
+    run("svn up " + workingDir.getAbsolutePath + revision)
   }
 }
