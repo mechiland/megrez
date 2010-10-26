@@ -28,7 +28,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       agent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set("windows"), List())) match {
         case message: JobConfirm => message.agent.status should be === AgentStatus.Busy
         case _ => fail
-      }      
+      }
     }
 
     it("should reject job if resources not qualified") {
@@ -56,6 +56,16 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       }
       agent.resources should have size (1)
       agent.resources should contain("windows")
+    }
+  }
+
+  describe("Agent reporting") {
+    it("should be idle after job finished") {
+      agent !? JobFinished(agent, "pipeline1", "stage1", "#1") match {
+        case _: Success =>
+        case _ => fail
+      }
+      agent.status should be === AgentStatus.Idle
     }
   }
 
