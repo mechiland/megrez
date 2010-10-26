@@ -37,7 +37,7 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
       }
 
       receiveWithin(2000) {
-        case """{"status" : "completed"}""" => server.send(new DefaultWebSocketFrame(jobAssignment))
+        case """{"status" : "completed"}""" => 
         case TIMEOUT => fail
         case _ => fail
       }

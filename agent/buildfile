@@ -6,8 +6,6 @@ repositories.remote << "http://repository.jboss.org/nexus/content/groups/public/
 NETTY = 'org.jboss.netty:netty:jar:3.2.2.Final'
 MOCKITO = 'org.mockito:mockito-all:jar:1.8.5'
 
-ENV['agent.test.svn'] = 'haha'
-
 class Buildr::ScalaTest
   class << self
     alias dependencies_old dependencies
