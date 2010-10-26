@@ -7,11 +7,12 @@ import org.jboss.netty.channel._
 import org.jboss.netty.channel.socket.nio._
 import org.jboss.netty.handler.codec.http._
 import java.net._
+import actors.Actor
 
 
-class Server(val server: URI, val reconnectAfter : Long) extends ServerHandler {
+class Server(val server: URI, val reconnectAfter : Long, val worker : Actor) extends ServerHandler {
   val handshakeHandler = new HandshakeHandler(server, this)
-  val agentHandler = new AgentHandler(this)  
+  val agentHandler = new AgentHandler(this, worker)  
   val holder = new HandlerHolder(handshakeHandler)
 
   private var channel : ChannelFuture = _
@@ -46,6 +47,11 @@ class Server(val server: URI, val reconnectAfter : Long) extends ServerHandler {
   }
 
   override def invalidServer(uri: URI) {    
+  }
+
+  def shutdown() {
+    channel.addListener(ChannelFutureListener.CLOSE)
+    bootstrap.releaseExternalResources
   }
 }
 

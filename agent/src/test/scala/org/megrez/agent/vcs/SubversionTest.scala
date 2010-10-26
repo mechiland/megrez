@@ -7,7 +7,6 @@ import org.scalatest._
 import java.lang.String
 
 class SubversionTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-  var properties = Map[String, Any]()
   describe("Subversion checkout") {
     it("should check out repository") {
       subversion.checkout(root, null)
@@ -21,18 +20,44 @@ class SubversionTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     }    
   }
 
+  describe("Subversion update") {
+    it("should update to given revision") {
+      subversion.checkout(root, 1)
+      new File(root, "REVISION_2") should not be('exists)
+      subversion.update(root, 2)
+      new File(root, "README") should be('exists)
+      new File(root, "REVISION_2") should be('exists)      
+    }
+  }
+
   describe("Subversion working dir check") {
     it("should return true if working dir is a subversion repository") {
       subversion.checkout(root, null)
-      subversion.checkWorkingDir(root) should be(true)
+      subversion.isRepository(root) should be(true)
     }
 
     it("should return false if working dir is not a subversion repository") {
-      subversion.checkWorkingDir(root) should be(false)
+      subversion.isRepository(root) should be(false)
+    }
+  }
+
+  describe("Subversion exception") {
+    it("should catch all output when checkout and exception occurs") {
+      new File(root, "README").createNewFile
+      val exception : Throwable = evaluating { subversion.checkout(root, null) } should produce [VersionControlException]
+      exception.getMessage should startWith("svn: Failed to add file")
+    }
+
+    it("should catch all output when update and exception occurs") {
+      subversion.checkout(root, 1)
+      new File(root, "REVISION_2").createNewFile
+      val exception : Throwable = evaluating { subversion.update(root, null) } should produce [VersionControlException]
+      exception.getMessage should startWith("svn: Failed to add file")      
     }
   }
 
   val root = new File(System.getProperty("user.dir"), "vcs_svn")
+  var properties = Map[String, Any]()
   var subversion : Subversion = _
 
   override def beforeEach() {
