@@ -55,7 +55,10 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
 
 class AgentHandler(val callback: ServerHandler, val actor : Actor) extends SimpleChannelUpstreamHandler {
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-    
+    val assignment = e.getMessage match {
+      case frame : WebSocketFrame => actor ! JobAssignment.parse(frame.getTextData)
+      case _ =>
+    }
   }
 
   override def channelDisconnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
