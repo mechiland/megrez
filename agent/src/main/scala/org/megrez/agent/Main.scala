@@ -15,10 +15,13 @@ import org.jboss.netty.handler.codec.http.websocket._
 import java.net._
 
 import actors.Actor
+import java.io.File
 
 object Main {
   def main(args: Array[String]) {
-    val serverConnection = new Server(new URI(args.head), 5000)
+    val worker = new Worker(new FileWorkspace(new File(args.last)))
+    worker.start
+    val serverConnection = new Server(new URI(args.head), 5000, worker)
     serverConnection.connect
   }
 }

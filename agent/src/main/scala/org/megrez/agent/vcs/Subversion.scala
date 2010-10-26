@@ -24,4 +24,20 @@ class Subversion(val url : String) extends VersionControl with CommandLine {
     }
     run("svn up " + workingDir.getAbsolutePath + revision)
   }
+
+
+  override def toString = "svn : " + url
+}
+
+object Subversion extends VersionControlSource {
+  override def parse(json : Map[String,Any]) = json("url") match {
+    case url : String => new Subversion(url)
+    case _ => null
+  }
+
+  override def parseWorkSet(json : Map[String, Any]) = json("revision") match {
+    case revision : Number => revision.intValue
+    case revision : String => Integer.parseInt(revision)
+    case _ => null
+  }
 }

@@ -11,6 +11,18 @@ trait VersionControl {
   def update(workingDir: File, workSet: Any)
 }
 
+trait VersionControlSource {
+  def parse(json : Map[String,Any]) : VersionControl
+  def parseWorkSet(json : Map[String, Any]) : Any
+}
+
+object VersionControl {
+  def find(vcs : String) = vcs match {
+    case "svn" => Subversion
+    case _ => null
+  }
+}
+
 class VersionControlException(val message: String) extends Exception(message)
 
 trait CommandLine {

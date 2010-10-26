@@ -9,6 +9,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion._
 import org.jboss.netty.handler.codec.http.HttpMethod._
 import org.jboss.netty.handler.codec.http.websocket._
 import java.net._
+import actors.Actor
 
 class HandshakeHandler(val server: URI, val callback: ServerHandler) extends SimpleChannelUpstreamHandler {
   override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
@@ -52,8 +53,12 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
   }
 }
 
-class AgentHandler(val callback: ServerHandler) extends SimpleChannelUpstreamHandler {
-  override def channelDisconnected(context: ChannelHandlerContext, event: ChannelStateEvent) {    
+class AgentHandler(val callback: ServerHandler, val actor : Actor) extends SimpleChannelUpstreamHandler {
+  override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
+    
+  }
+
+  override def channelDisconnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
     callback.disconnected
   }
 

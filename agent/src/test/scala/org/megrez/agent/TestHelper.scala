@@ -4,7 +4,6 @@ import java.util.concurrent.Executors
 
 import org.jboss.netty.bootstrap._
 import org.jboss.netty.channel._
-import group.DefaultChannelGroup
 import org.jboss.netty.channel.socket.nio._
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.codec.http.websocket._
@@ -20,6 +19,8 @@ import java.net.{URI, InetSocketAddress}
 import actors.{TIMEOUT, Actor}
 import scala.actors.Actor._
 import org.scalatest.{Spec, Assertions, BeforeAndAfterEach}
+import org.scalatest.mock.MockitoSugar
+import org.mockito.Mockito._
 
 abstract class Behaviour
 abstract trait HttpBehaviour extends Behaviour {
@@ -179,11 +180,10 @@ object Something extends WebSocketBehaviour {
   }
 }
 
-
 trait ServerIntegration extends Spec with BeforeAndAfterEach {
 
   def connect = {
-    val connection = new Server(new URI("ws://localhost:8080/"), 500) with ActorBasedServerHandlerMixin
+    val connection = new Server(new URI("ws://localhost:8080/"), 500, if (worker != null) worker else actor {}) with ActorBasedServerHandlerMixin
     connection.actor = self
     connection.connect
   }
@@ -197,6 +197,7 @@ trait ServerIntegration extends Spec with BeforeAndAfterEach {
   }
 
   var server: WebSocketServer = _
+  var worker: Actor = _
 
   override def beforeEach() {
     server = new WebSocketServer
@@ -205,5 +206,24 @@ trait ServerIntegration extends Spec with BeforeAndAfterEach {
   override def afterEach() {
     server.shutdown
   }  
+}
+
+trait HandlerTest extends Spec with BeforeAndAfterEach with MockitoSugar  {
+  var context : ChannelHandlerContext = _
+  var pipeline : ChannelPipeline = _
+  var channel : Channel = _
+  var serverHandler : ServerHandler = _
+
+  override def beforeEach() {
+    context = mock[ChannelHandlerContext]
+    pipeline = mock[ChannelPipeline]
+    channel = mock[Channel]
+    when(context.getPipeline).thenReturn(pipeline)
+    when(context.getChannel).thenReturn(channel)
+
+    serverHandler = mock[ServerHandler]
+  }
+
+  def is(string : String) = org.mockito.Matchers.eq(string)
 }
 

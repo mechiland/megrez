@@ -3,10 +3,6 @@ package org.megrez.agent
 import org.scalatest.matchers.ShouldMatchers
 import java.net.URI
 
-import actors.Actor
-import actors.Actor._
-import org.scalatest.{BeforeAndAfterEach, Spec}
-import org.scalatest.mock.MockitoSugar
 import org.mockito._
 import org.mockito.Mockito._
 import org.mockito.Matchers._
@@ -16,7 +12,7 @@ import org.jboss.netty.handler.codec.http.HttpHeaders.{Values, Names}
 import org.jboss.netty.handler.codec.http.{HttpResponseStatus, DefaultHttpResponse, HttpMethod, HttpRequest}
 import org.jboss.netty.handler.codec.http.websocket.{DefaultWebSocketFrame, WebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEncoder}
 
-class HandshakeHandlerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
+class HandshakeHandlerTest extends HandlerTest with ShouldMatchers {
   describe("Agent-Server handshake handler") {
     it("should send handshake message after channel connected") {
       val event = mock[ChannelStateEvent]
@@ -108,25 +104,13 @@ class HandshakeHandlerTest extends Spec with ShouldMatchers with BeforeAndAfterE
       handler.exceptionCaught(context, event)
 
       verify(serverHandler).invalidServer(same(uri))
-    }    
+    }         
   }
 
-  var context : ChannelHandlerContext = _
-  var pipeline : ChannelPipeline = _
-  var channel : Channel = _
-  var serverHandler : ServerHandler = _
   var handler : HandshakeHandler = _
 
   override def beforeEach() {
-    context = mock[ChannelHandlerContext]
-    pipeline = mock[ChannelPipeline]
-    channel = mock[Channel]
-    when(context.getPipeline).thenReturn(pipeline)
-    when(context.getChannel).thenReturn(channel)
-    
-    serverHandler = mock[ServerHandler]
+    super.beforeEach
     handler = new HandshakeHandler(new URI("ws://localhost:8080/"), serverHandler)
   }
-
-  def is(string : String) = org.mockito.Matchers.eq(string)
 }
