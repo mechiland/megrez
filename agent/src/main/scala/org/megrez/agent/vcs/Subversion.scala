@@ -1,6 +1,7 @@
 package org.megrez.agent.vcs
 
 import java.io.File
+import io.Source
 
 class Subversion(val url : String) extends VersionControl {
   
@@ -9,9 +10,10 @@ class Subversion(val url : String) extends VersionControl {
       case revision : Int => url + "@" + revision 
       case _ => url
     }
-    Runtime.getRuntime().exec("svn co " + svnUrl + " " + workingDir.getAbsolutePath).waitFor match {
+    val process = Runtime.getRuntime().exec("svn co " + svnUrl + " " + workingDir.getAbsolutePath)
+    process.waitFor match {
       case 0 =>
-      case _ => 
+      case _ => throw new VersionControlException(Source.fromInputStream(process.getErrorStream).mkString)
     }
   }
 
