@@ -11,16 +11,12 @@ class Git(val pipeline: Pipeline) extends VersionControl {
   private val MonthConverter = HashMap("Jan" -> 1, "Feb" -> 2, "Mar" -> 3, "Apr" -> 4, "May" -> 5, "Jun" -> 6, "Jul" -> 7, "Aug" -> 8, "Sep" -> 9, "Oct" -> 10, "Nov" -> 11, "Dec" -> 12)
 
   private val repositoryUrl: String = pipeline.repositoryUrl
-  var commitVersion: String = pipeline.buildRevision
+  var commitVersion: String = ""
   var currentDate: Calendar = pipeline.buildDate
 
 
   def checkWorkDirectory(file: File, localRepository: String): Boolean = {
-    if (!file.exists) {
-      println("Local repository'" + localRepository + "' does not exist")
-      return false
-    }
-    else if (!new File(localRepository + "/.git").exists) {
+    if (!file.exists || !new File(localRepository + "/.git").exists) {
       val runtime: Runtime = Runtime.getRuntime()
       val process: Process = runtime.exec("git clone" + repositoryUrl, null, file)
       println("Check out code to Local repository")

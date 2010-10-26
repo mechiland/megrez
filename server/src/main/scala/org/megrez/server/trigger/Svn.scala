@@ -4,7 +4,7 @@ import main.scala.org.megrez.server.trigger.VersionControl
 import org.megrez.server.{TriggerMessage, Pipeline}
 
 class Svn(val pipeline: Pipeline) extends VersionControl {
-  var revision: String = pipeline.buildRevision
+  var revision: String = "0"
 
   def checkChange() = {
     val process: Process = Runtime.getRuntime().exec("svn info " + pipeline.repositoryUrl)

@@ -15,7 +15,7 @@ class GitTest extends Spec with ShouldMatchers {
       val userDir: String = System.getProperty("user.dir").split("/megrez")(0)
       val date: Calendar = Calendar.getInstance()
       date.set(2009, 1, 1)
-      val pipeline: Pipeline = new Pipeline("1", gitUrl, "0", date,userDir)
+      val pipeline: Pipeline = new Pipeline("1", gitUrl, date,userDir)
       val git: Git = new Git(pipeline)
 
       git.checkChange

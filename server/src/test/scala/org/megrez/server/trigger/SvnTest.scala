@@ -11,7 +11,7 @@ class SvnTest extends Spec with ShouldMatchers {
   describe("shoud get latest revision number") {
     it("when repository is SVN") {
       val svnDir: String = System.getProperty("user.dir") + "/src/test/resources/repository/svn"
-      val pipeline: Pipeline = new Pipeline("1", "file://" + svnDir, "0")
+      val pipeline: Pipeline = new Pipeline("1", "file://" + svnDir)
       val svn: Svn = new Svn(pipeline)
       svn.checkChange()
       svn.getChange.pipelineName should be === "1"
