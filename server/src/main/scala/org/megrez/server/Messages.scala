@@ -13,6 +13,7 @@ case class TriggerMessage(val pipeline : String, val revision : String)
 case class AgentConnect(val agent : Actor)
 
 abstract class JobMessage
-case class JobRequest(val job : Job) extends JobMessage
-case class JobConfirm(val agent : Agent) extends JobMessage
+case class JobRequest(val pipeline: String, val stage: String, val job : Job) extends JobMessage
+case class JobConfirm(val agent : Agent, val job: Job) extends JobMessage
 case class JobReject(val agent : Agent) extends JobMessage
+case class JobFinished(val agent : Actor, val pipeline: String, val stage: String, val revision: String) extends JobMessage

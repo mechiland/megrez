@@ -34,7 +34,7 @@ class Agent extends Actor {
       case Idle =>
         if (checkResource(request.job)) {
           _status = Busy
-          reply(JobConfirm(this))
+          reply(JobConfirm(this, request.job))
         } else {
           reply(JobReject(this))
         }

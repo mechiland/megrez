@@ -6,14 +6,14 @@ import org.scalatest.matchers._
 class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("Agent receives job") {
     it("should confirm job if idle") {
-      agent !? JobRequest(new Job("unit test", Set(), List())) match {
+      agent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set(), List())) match {
         case message: JobConfirm => message.agent.status should be === AgentStatus.Busy
         case _ => fail
       }
     }
 
     it("should reject job if not idle") {
-      busyAgent !? JobRequest(new Job("unit test", Set(), List())) match {
+      busyAgent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set(), List())) match {
         case message: JobReject => message.agent.status should be === AgentStatus.Busy
         case _ => fail
       }
@@ -25,7 +25,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         case _ => fail
       }
 
-      agent !? JobRequest(new Job("unit test", Set("windows"), List())) match {
+      agent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set("windows"), List())) match {
         case message: JobConfirm => message.agent.status should be === AgentStatus.Busy
         case _ => fail
       }      
@@ -36,14 +36,14 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         case _: Success =>
         case _ => fail
       }
-      agent !? JobRequest(new Job("unit test", Set("unix"), List())) match {
+      agent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set("unix"), List())) match {
         case message: JobReject => message.agent.status should be === AgentStatus.Idle
         case _ => fail
       }
     }
 
     def busyAgent() = {
-      agent !? JobRequest(new Job("unit test", Set(), List())) match {case _ =>}
+      agent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set(), List())) match {case _ =>}
       agent
     }
   }
