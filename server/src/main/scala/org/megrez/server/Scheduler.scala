@@ -11,7 +11,7 @@ class Scheduler extends Actor {
   def act() {
     loop {
       react {
-        case trigger: TriggerMessage => handleTrigger(trigger)
+        case message: TriggerMessage => trigger(message.pipelineName, Configuration.firstStage(message.pipelineName))
         case connection: AgentConnect => registerAgent(connection.agent)
         case message: JobConfirm => handleJobConfirm(message)
         case message: JobFinished => handleJobFinished(message)
@@ -29,11 +29,6 @@ class Scheduler extends Actor {
     reply(Success())
   }
 
-  private def handleTrigger(trigger: TriggerMessage) {
-    val job = new Job(trigger.pipelineName, Set(), List())
-    triggerStage(trigger.pipelineName, "stage1")
-  }
-
   private def handleJobConfirm(message: JobConfirm) {
     _jobs.remove(message.job)
     _agents.remove(message.agent)
@@ -42,11 +37,11 @@ class Scheduler extends Actor {
   private def handleJobFinished(message: JobFinished) {
     _agents.add(message.agent)
     if (Configuration.hasNextStage(message.pipeline, message.stage)) {
-      triggerStage(message.pipeline, Configuration.nextStage(message.pipeline, message.stage))
+      trigger(message.pipeline, Configuration.nextStage(message.pipeline, message.stage))
     }
   }
 
-  private def triggerStage(pipeline: String, stage: String) {
+  private def trigger(pipeline: String, stage: String) {
     val job = new Job(pipeline, Set(), List())
     _jobs.add(job)
     _agents.foreach(_ ! new JobRequest(pipeline, stage, job))
