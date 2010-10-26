@@ -2,7 +2,6 @@ package org.megrez.agent
 
 import actors.Actor
 import java.io.File
-import java.lang.String
 
 class Worker(val workspace: Workspace) extends Actor {
   def act() {
@@ -16,14 +15,18 @@ class Worker(val workspace: Workspace) extends Actor {
   private def handleJob(assignment: JobAssignment) {
     val pipelineDir = workspace.getPipelineFolder(assignment.pipelineId) match {
       case null =>
-        workspace.createPipelineFolder(assignment.pipelineId)        
-      case dir : File =>
-        if (!assignment.versionControl.checkWorkingDir(dir)) {
-          workspace.removePipelineFolder(assignment.pipelineId)
-          workspace.createPipelineFolder(assignment.pipelineId)
-        } else dir
+        val dir = workspace.createPipelineFolder(assignment.pipelineId)
+        assignment.versionControl.checkout(dir, assignment.workSet)
+        dir
+      case dir : File if (assignment.versionControl.isRepository(dir))=>
+        assignment.versionControl.update(dir, assignment.workSet)
+        dir
+      case _ : File =>
+        workspace.removePipelineFolder(assignment.pipelineId)
+        val dir = workspace.createPipelineFolder(assignment.pipelineId)
+        assignment.versionControl.checkout(dir, assignment.workSet)
+        dir
     }
-    assignment.versionControl.checkout(pipelineDir, assignment.workSet)
     assignment.job.tasks.foreach(_ run pipelineDir)
     reply(JobCompleted(assignment.pipelineId, assignment.workSet))
   }

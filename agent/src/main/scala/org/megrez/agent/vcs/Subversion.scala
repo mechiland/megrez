@@ -9,18 +9,28 @@ class Subversion(val url : String) extends VersionControl {
       case revision : Int => url + "@" + revision 
       case _ => url
     }
-    val process = Runtime.getRuntime().exec("svn co " + svnUrl + " " + workingDir.getAbsolutePath)    
-    process.waitFor match {
+    Runtime.getRuntime().exec("svn co " + svnUrl + " " + workingDir.getAbsolutePath).waitFor match {
       case 0 =>
       case _ => 
     }
   }
 
-  def checkWorkingDir(workingDir: File) = {
-    val process = Runtime.getRuntime().exec("svn info " + workingDir.getAbsolutePath)
-    process.waitFor match {
+  def isRepository(workingDir: File) = {
+    Runtime.getRuntime().exec("svn info " + workingDir.getAbsolutePath).waitFor match {
       case 0 => true
       case _ => false
     }
+  }
+
+
+  def update(workingDir: File, workSet: Any) {
+    val revision = workSet match {
+      case revision : Int => " -r " + revision
+      case _ => ""
+    }
+    Runtime.getRuntime().exec("svn up " + workingDir.getAbsolutePath + revision).waitFor match {
+      case 0 =>
+      case _ =>
+    }    
   }
 }

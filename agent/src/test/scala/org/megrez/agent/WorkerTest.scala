@@ -40,7 +40,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       verify(versionControl).checkout(pipelineDir, workSet)
     }
 
-    it("should checkout work set if pipeline already exist") {
+    it("should update work set if pipeline already exist") {
       val pipelineId = "pipeline"
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
@@ -49,7 +49,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val job = new Job(List(new EmptyTask))
 
       when(workingDirectory.getPipelineFolder(pipelineId)).thenReturn(pipelineDir)
-      when(versionControl.checkWorkingDir(pipelineDir)).thenReturn(true)
+      when(versionControl.isRepository(pipelineDir)).thenReturn(true)
 
       val worker = new Worker(workingDirectory)
       worker.start
@@ -65,7 +65,8 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       }
 
       verify(workingDirectory, never).createPipelineFolder(pipelineId)
-      verify(versionControl).checkout(pipelineDir, workSet)
+      verify(versionControl, never).checkout(pipelineDir, workSet)
+      verify(versionControl).update(pipelineDir, workSet)
     }
 
     it("should re-create dir if pipeline dir is not a valid dir") {
@@ -78,7 +79,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
       when(worksapce.getPipelineFolder(pipelineId)).thenReturn(pipelineDir)
       when(worksapce.createPipelineFolder(pipelineId)).thenReturn(pipelineDir)
-      when(versionControl.checkWorkingDir(pipelineDir)).thenReturn(false)      
+      when(versionControl.isRepository(pipelineDir)).thenReturn(false)
 
       val worker = new Worker(worksapce)
       worker.start
@@ -110,7 +111,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val job = new Job(List(task1, task2))
 
       when(workingDirectory.getPipelineFolder(pipelineId)).thenReturn(pipelineDir)
-      when(versionControl.checkWorkingDir(pipelineDir)).thenReturn(true)
+      when(versionControl.isRepository(pipelineDir)).thenReturn(true)
 
       val worker = new Worker(workingDirectory)
       worker.start
