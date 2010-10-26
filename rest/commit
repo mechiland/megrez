@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-git pull && \
-buildr clean test && \
-buildr clean && \
-git add -A && \
-git commit -a && \
-git push && \
-git status
