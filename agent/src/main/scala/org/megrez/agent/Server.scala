@@ -48,6 +48,11 @@ class Server(val server: URI, val reconnectAfter : Long, val worker : Actor) ext
 
   override def invalidServer(uri: URI) {    
   }
+
+  def shutdown() {
+    channel.addListener(ChannelFutureListener.CLOSE)
+    bootstrap.releaseExternalResources
+  }
 }
 
 trait ServerHandler {
