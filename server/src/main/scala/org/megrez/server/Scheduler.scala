@@ -29,7 +29,7 @@ class Scheduler extends Actor {
   }
 
   private def handleTrigger(trigger: TriggerMessage) {
-    val job = new Job(trigger.pipeline, Set(), List())
+    val job = new Job(trigger.pipelineName, Set(), List())
     _jobs.add(job)
     _agents.foreach(_ ! new JobRequest(job))
   	reply(Success())
