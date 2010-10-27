@@ -4,24 +4,22 @@ import org.jboss.netty.handler.codec.http.HttpRequest
 import actors.Actor
 
 abstract class Route(val handler : Actor) {
-  def isMatch(request: HttpRequest): Boolean 
-
-  def matchedMethod(request: HttpRequest): Method
+  def isMatch(request: HttpRequest): Boolean
 }
 
-case class Connect(val pattern: String, val methods: Set[Method], override val handler: Actor) extends Route(handler) {
+case class HttpRoute(val pattern: String, val methods: Set[Method], override val handler: Actor) extends Route(handler) {
   override def isMatch(request: HttpRequest): Boolean = {
     (request.getUri.matches(pattern)) && (matchedMethod(request) != None)
   }
 
-  override def matchedMethod(request: HttpRequest): Method = {
+  def matchedMethod(request: HttpRequest): Method = {
     methods.find(_.toString.equals(request.getMethod().getName())).get
   }
 }
 
 object Route {
   class Path(val pattern: String, val methods: Set[Method]) {
-    def ->(handler: Actor) = Connect(pattern, methods, handler)
+    def ->(handler: Actor) = HttpRoute(pattern, methods, handler)
   }
 
   def path(path: String) = new Path(path, Set(GET, PUT, DELETE, POST))

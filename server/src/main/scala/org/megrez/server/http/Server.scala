@@ -25,7 +25,7 @@ class Server(val routes : Route*) extends SimpleChannelUpstreamHandler {
     event.getMessage match {
       case request : org.jboss.netty.handler.codec.http.HttpRequest =>
         routes.find(_ isMatch request) match {
-          case Some(route : Route) =>
+          case Some(route : HttpRoute) =>
             route.handler ! Request(route matchedMethod request)
           case None =>
         }
