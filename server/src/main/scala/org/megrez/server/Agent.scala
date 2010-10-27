@@ -65,6 +65,8 @@ object Agent extends Actor {
   def act() {
     loop {
       react {
+        case message : RemoteAgentConnected =>
+          
         case _ => 
       }
     }

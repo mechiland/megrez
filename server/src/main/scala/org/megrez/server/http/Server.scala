@@ -11,7 +11,7 @@ import org.jboss.netty.handler.codec.http.HttpHeaders._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Values._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
 import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
-import org.megrez.server.{NewAgentConnected, AgentHandler}
+import org.megrez.server.{RemoteAgentConnected, AgentHandler}
 import actors.Actor
 import actors.Actor._
 
@@ -102,7 +102,7 @@ class AgentWebSocketHandler(val channel: Channel, handler: Actor) extends Simple
         frame.getTextData match {
           case MegrezAgentHandshake =>
             send("megrez-server:1.0")
-            handler ! NewAgentConnected(this, actor {
+            handler ! RemoteAgentConnected(this, actor {
               react {
                 case actor : Actor => agent = actor                
               }

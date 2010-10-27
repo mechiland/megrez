@@ -69,6 +69,12 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     }
   }
 
+  describe("Agent creation") {
+    it("should create agent and link agent with agent handler") {
+      
+    }
+  }
+
   var agent: Agent = _
 
   override def beforeEach() {
