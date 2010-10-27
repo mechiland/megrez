@@ -25,7 +25,7 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       server.messageReceived(context, event)
       
       receiveWithin(1000) {
-        case _ : HttpRequest =>
+        case _ : Request =>
         case TIMEOUT => fail
         case _ => fail
       }
@@ -42,7 +42,7 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       server.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case request : HttpRequest => request.method should be === GET
+        case request : Request => request.method should be === GET
         case TIMEOUT => fail
         case _ => fail
       }
@@ -59,7 +59,7 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       server.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case request : HttpRequest => request.method should be === POST
+        case request : Request => request.method should be === POST
         case TIMEOUT => fail
         case _ => fail
       }

@@ -27,7 +27,7 @@ class Server(val routes : Route*) extends SimpleChannelUpstreamHandler {
         routes.find(_ isMatch request) match {
           case Some(route : Route) =>
             route.getHandler match {
-              case actor : Actor => actor ! HttpRequest(route matchedMethod request) 
+              case actor : Actor => actor ! Request(route matchedMethod request)
               case _ =>
             }
           case None => 
