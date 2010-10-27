@@ -2,15 +2,15 @@ package org.megrez.server.http
 
 import org.scalatest.matchers.ShouldMatchers
 
-import Route._
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import org.scalatest.mock.MockitoSugar
 import org.jboss.netty.channel.{MessageEvent, ChannelHandlerContext, ChannelPipeline, Channel}
-import org.mockito._
 import org.mockito.Mockito._
 import org.jboss.netty.handler.codec.http.{HttpMethod, HttpVersion, DefaultHttpRequest}
 import scala.actors._
 import scala.actors.Actor._
+import Method._
+import Route._
 
 class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("HTTP Server") {
@@ -25,7 +25,7 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       server.messageReceived(context, event)
       
       receiveWithin(1000) {
-        case _ : HttpRequest =>
+        case _ : Request =>
         case TIMEOUT => fail
         case _ => fail
       }
@@ -42,7 +42,24 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       server.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case _ : HttpRequest =>
+        case request : Request => request.method should be === GET
+        case TIMEOUT => fail
+        case _ => fail
+      }
+    }
+
+	it("should delegate to handler if POST request path matched") {
+      val event = mock[MessageEvent]
+      when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/agent"), Array[Any]())
+
+      val server = new Server(
+        post("/agent") -> self
+      )
+
+      server.messageReceived(context, event)
+
+      receiveWithin(1000) {
+        case request : Request => request.method should be === POST
         case TIMEOUT => fail
         case _ => fail
       }

@@ -12,24 +12,25 @@ import org.megrez.server._
 class TriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("shoud call versionControl methods") {
     it("when build revision is setting") {
-      val versionControl: VersionControlMocker = new VersionControlMocker(new Pipeline("name", "url", "revision"))
+      val versionControl: VersionControlMocker = new VersionControlMocker(new PipelineConfig("pipeline1", new SvnMaterial("url")))
       val scheduler = self
       val trigger: Trigger = new Trigger(versionControl,scheduler)
       trigger.start
       trigger ! "haha"
       receive{
         case msg:TriggerMessage =>println("success")
+        case _ => fail
       }
     }
   }
 }
 
-class VersionControlMocker(val pipeline: Pipeline) extends VersionControl {
-  def checkChange() = {if (pipeline.buildRevision != "") needTriggerScheduler = true}
+class VersionControlMocker(val pipeline: PipelineConfig) extends VersionControl {
+  def checkChange() = { needTriggerScheduler = true}
 
   def getChange(): TriggerMessage = {
     if (needTriggerScheduler)
-      return new TriggerMessage(pipeline.name, pipeline.buildRevision)
+      return new TriggerMessage(pipeline.name, "1")
     return null
   }
 }

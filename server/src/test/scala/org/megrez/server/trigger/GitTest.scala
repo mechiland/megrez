@@ -2,11 +2,10 @@ package scala.org.megrez.server.trigger
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Spec
-import org.megrez.server.Pipeline
 import java.util.Calendar
 import org.megrez.server.trigger.Git
 import java.lang.String
-
+import org.megrez.server.{GitMaterial, SvnMaterial, PipelineConfig, Pipeline}
 
 class GitTest extends Spec with ShouldMatchers {
   describe("should get latest repository revision") {
@@ -15,11 +14,15 @@ class GitTest extends Spec with ShouldMatchers {
       val userDir: String = System.getProperty("user.dir").split("/megrez")(0)
       val date: Calendar = Calendar.getInstance()
       date.set(2009, 1, 1)
-      val pipeline: Pipeline = new Pipeline("1", gitUrl, "0", date,userDir)
+      val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new GitMaterial(gitUrl)) {
+        override def workingDir() = {
+          System.getProperty("user.dir") + "/../"
+        }
+      }
       val git: Git = new Git(pipeline)
 
       git.checkChange
-      git.getChange.pipelineName should be === "1"
+      git.getChange.pipelineName should be === "pipeline1"
     }
   }
 }
