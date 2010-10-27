@@ -26,7 +26,7 @@ class RouteTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Mo
 		
 		it("should match path and POST method"){
 			val route = post("/pipelines") -> self
-			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/pipelines")
+			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/pipelines?name=pipeline1&vcs=svn&url=url")
 			route matches(getRequest) should be === true
 		}
 		
