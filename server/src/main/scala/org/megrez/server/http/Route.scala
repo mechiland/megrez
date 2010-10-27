@@ -3,6 +3,14 @@ package org.megrez.server.http
 import org.jboss.netty.handler.codec.http.HttpRequest
 import actors.Actor
 
+object Method extends Enumeration {
+  type Method = Value
+  val GET = Value("GET")
+  val PUT = Value("PUT")
+  val DELETE = Value("DELETE")
+  val POST = Value("POST")
+}
+
 import Method._
 
 class Route(val pattern : String, val handler : Actor) {
@@ -17,7 +25,7 @@ case class HttpRoute(override val pattern: String, val methods: Set[Method], ove
   }
 }
 
-object Route {
+object Route {  
   class Path(val pattern: String, val methods: Set[Method]) {
     def ->(handler: Actor) = HttpRoute(pattern, methods, handler)
   }
