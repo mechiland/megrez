@@ -37,11 +37,11 @@ class RouteTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Mo
 			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/agent")
 			route isMatch(getRequest) should be === true 
 		}
-		
+
 		it("should knows which method is matches"){
 			val route = get("/agent") -> this
 			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/agent")
-			route.matchedMethod(getRequest) should be === GET			
+			route.matchedMethod(getRequest) should be === GET
 		}
 	}
 }

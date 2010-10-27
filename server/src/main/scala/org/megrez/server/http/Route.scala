@@ -2,24 +2,20 @@ package org.megrez.server.http
 
 import org.jboss.netty.handler.codec.http.HttpRequest
 
-trait Route {
-  def isMatch(request: HttpRequest): Boolean
+abstract class Route(val handler : Any) {
+  def isMatch(request: HttpRequest): Boolean 
 
-  def getHandler: Any
-
-  def matchedMethod(request: org.jboss.netty.handler.codec.http.HttpRequest): Method
+  def matchedMethod(request: HttpRequest): Method
 }
 
-case class Connect(val pattern: String, val methods: Set[Method], val handler: Any) extends Route {
+case class Connect(val pattern: String, val methods: Set[Method], override val handler: Any) extends Route(handler) {
   override def isMatch(request: HttpRequest): Boolean = {
     (request.getUri.matches(pattern)) && (matchedMethod(request) != None)
   }
 
-  override def matchedMethod(request: org.jboss.netty.handler.codec.http.HttpRequest): Method = {
+  override def matchedMethod(request: HttpRequest): Method = {
     methods.find(_.toString.equals(request.getMethod().getName())).get
   }
-
-  override def getHandler = handler
 }
 
 object Route {
