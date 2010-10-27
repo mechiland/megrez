@@ -11,6 +11,7 @@ import org.mockito.Mockito._
 import org.jboss.netty.handler.codec.http.{HttpMethod, HttpVersion, DefaultHttpRequest}
 import scala.actors._
 import scala.actors.Actor._
+import Method._
 
 class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("HTTP Server") {

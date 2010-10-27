@@ -3,6 +3,8 @@ package org.megrez.server.http
 import org.jboss.netty.handler.codec.http.HttpRequest
 import actors.Actor
 
+import Method._
+
 class Route(val pattern : String, val handler : Actor) {
   def matches(request: HttpRequest): Boolean = request.getUri.matches(pattern)
 }

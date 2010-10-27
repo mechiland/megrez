@@ -12,6 +12,8 @@ import org.jboss.netty.handler.codec.http.{HttpMethod, HttpVersion, DefaultHttpR
 import scala.actors._
 import scala.actors.Actor._
 
+import Method._
+
 class RouteTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
 	describe("routing"){
 		it("should match path and GET method"){
