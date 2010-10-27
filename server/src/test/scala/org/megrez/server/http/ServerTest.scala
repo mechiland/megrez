@@ -4,9 +4,13 @@ import org.scalatest.matchers.ShouldMatchers
 
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import org.scalatest.mock.MockitoSugar
-import org.jboss.netty.channel.{MessageEvent, ChannelHandlerContext, ChannelPipeline, Channel}
 import org.mockito.Mockito._
+
+import org.jboss.netty.channel.{MessageEvent, ChannelHandlerContext, ChannelPipeline, Channel}
 import org.jboss.netty.handler.codec.http.{HttpMethod, HttpVersion, DefaultHttpRequest}
+import org.jboss.netty.buffer._
+import org.jboss.netty.util._
+
 import scala.actors._
 import scala.actors.Actor._
 import Method._
@@ -53,7 +57,9 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
 	it("should delegate to handler if POST request path matched") {
       val event = mock[MessageEvent]
-      when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/pipeline"), Array[Any]())
+	  var httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/pipeline")
+	  httpRequest.setContent(ChannelBuffers.copiedBuffer("testContent", CharsetUtil.UTF_8));
+      when(event.getMessage).thenReturn(httpRequest, Array[Any]())
 
       val server = new Server(
         post("/pipeline") -> self
@@ -65,6 +71,7 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
         case request : Request => {
 			request.method should be === POST
 			request.uri should be === "/pipeline"
+			request.content should be === "testContent"
 		}
         case TIMEOUT => fail
         case _ => fail

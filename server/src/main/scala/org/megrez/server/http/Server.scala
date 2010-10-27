@@ -10,6 +10,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion._
 import org.jboss.netty.handler.codec.http.HttpHeaders._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Values._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
+import org.jboss.netty.util._
 import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
 import org.megrez.server.{RemoteAgentConnected, AgentHandler}
 import actors.Actor
@@ -35,8 +36,10 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler {
         routes.find(_ matches request) match {
           case Some(route: WebSocketRoute) =>
             handleWebSocketHandshake(request, route, context)
-          case Some(route: HttpRoute) =>
-            route.handler ! Request(route matchedMethod request, request.getUri)
+          case Some(route: HttpRoute) =>{
+				val content = request.getContent
+	            route.handler ! Request(route matchedMethod request, request.getUri, content.toString(CharsetUtil.UTF_8))
+			}
           case None =>
         }
       case frame: WebSocketFrame => println("here" + frame)
