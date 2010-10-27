@@ -26,7 +26,9 @@
 	<target name="init_classpaths" depends="make_dir">
   	  	<path id="classpath.build">
   	  	  	<pathelement location="${scala-library.jar}"/>
-  	  	  	<pathelement location="lib/netty-3.2.2.Final.jar"/>
+	  	  	<fileset dir="lib">
+				<include name="*.jar" />
+			</fileset>
   	  	</path>
 	  	<path id="classpath.test">
 			<pathelement location="${build.classes}" />
@@ -34,11 +36,11 @@
 	  	  	<fileset dir="${scala.home}/lib">
 				<include name="*.jar" />
 			</fileset>
+            <path refid="classpath.build"/>
 	  	</path>
 	</target>
 	
 	<target name="init_ant_tasks" depends="init_classpaths">
-		<echo message="${scala.home}" />
   	  	<taskdef resource="scala/tools/ant/antlib.xml">
   	  	  	<classpath>
   	  	  	  	<pathelement location="${scala.home}/lib/scala-compiler.jar"/>
@@ -56,7 +58,7 @@
 	            classpathref="classpath.build"
 				deprecation="on"
 	            force="changed">
-	    </scalac>	
+	    </scalac>
     </target>
 	
 	<target name="test" depends="compile">

@@ -5,14 +5,14 @@ import java.io.File
 import collection.mutable._
 import java.util.Calendar
 import main.scala.org.megrez.server.trigger.VersionControl
-import org.megrez.server.{TriggerMessage, Pipeline}
+import org.megrez.server.{PipelineConfig, TriggerMessage, Pipeline}
 
-class Git(val pipeline: Pipeline) extends VersionControl {
+class Git(val pipeline: PipelineConfig) extends VersionControl {
   private val MonthConverter = HashMap("Jan" -> 1, "Feb" -> 2, "Mar" -> 3, "Apr" -> 4, "May" -> 5, "Jun" -> 6, "Jul" -> 7, "Aug" -> 8, "Sep" -> 9, "Oct" -> 10, "Nov" -> 11, "Dec" -> 12)
 
-  private val repositoryUrl: String = pipeline.repositoryUrl
-  var commitVersion: String = ""
-  var currentDate: Calendar = pipeline.buildDate
+  private val repositoryUrl: String = pipeline.material.url
+  var commitVersion: String = null
+  var currentDate: Calendar = null
 
 
   def checkWorkDirectory(file: File, localRepository: String): Boolean = {
@@ -37,7 +37,7 @@ class Git(val pipeline: Pipeline) extends VersionControl {
   }
 
   def checkChange() = {
-    val localRepository: String = pipeline.workDir + repositoryUrl.substring(repositoryUrl.lastIndexOf("/")).split(".git")(0)
+    val localRepository: String = pipeline.workingDir() + repositoryUrl.substring(repositoryUrl.lastIndexOf("/")).split(".git")(0)
     val file: File = new File(localRepository)
 
     checkWorkDirectory(file, localRepository)
@@ -63,7 +63,7 @@ class Git(val pipeline: Pipeline) extends VersionControl {
         }
     }
 
-    if (latestDate.after(currentDate) && commitVersion != latestCommit) {
+    if (commitVersion != latestCommit) {
       currentDate = latestDate
       commitVersion = latestCommit
       needTriggerScheduler = true
