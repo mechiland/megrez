@@ -26,11 +26,8 @@ class Server(val routes : Route*) extends SimpleChannelUpstreamHandler {
       case request : org.jboss.netty.handler.codec.http.HttpRequest =>
         routes.find(_ isMatch request) match {
           case Some(route : Route) =>
-            route.handler match {
-              case actor : Actor => actor ! Request(route matchedMethod request)
-              case _ =>
-            }
-          case None => 
+            route.handler ! Request(route matchedMethod request)
+          case None =>
         }
       case frame   : WebSocketFrame =>
     }
