@@ -15,7 +15,7 @@ import org.jboss.netty.handler.codec.http.HttpResponse._
 import actors.Actor
 import java.net.{URI, InetSocketAddress}
 
-class WebSocketClient(val server: URI) extends SimpleChannelUpstreamHandler {
+class WebSocketClient(val server: URI, val test : Actor) extends SimpleChannelUpstreamHandler {
   val bootstrap = new ClientBootstrap(
     new NioClientSocketChannelFactory(
       Executors.newCachedThreadPool(),
@@ -36,7 +36,7 @@ class WebSocketClient(val server: URI) extends SimpleChannelUpstreamHandler {
   private var channel: Channel = _
 
   override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
-    event.getChannel.write(handshakeRequest).addListener(new ChannelFutureListener() {
+    context.getChannel.write(handshakeRequest).addListener(new ChannelFutureListener() {
       override def operationComplete(future: ChannelFuture) {
         context.getPipeline.replace("encoder", "ws-encoder", new WebSocketFrameEncoder())
       }
@@ -60,7 +60,7 @@ class WebSocketClient(val server: URI) extends SimpleChannelUpstreamHandler {
   }
 
   private def handleMegrezHandshake(context: ChannelHandlerContext, response: WebSocketFrame, channel: Channel) {
-    if (response.getTextData != "megrez-server:1.0") throw new Exception()
+    if (response.getTextData != "megrez-server:1.0") test ! (this, response.getTextData)
   }
 
   private def handshakeRequest = {
@@ -76,3 +76,4 @@ class WebSocketClient(val server: URI) extends SimpleChannelUpstreamHandler {
     future.addListener(ChannelFutureListener.CLOSE)
   }
 }
+
