@@ -10,8 +10,10 @@ import org.jboss.netty.handler.codec.http.HttpVersion._
 import org.jboss.netty.handler.codec.http.HttpHeaders._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Values._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
-import websocket.{WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
+import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
+import org.megrez.server.{NewAgentConnected, AgentHandler}
 import actors.Actor
+import actors.Actor._
 
 class Server(val routes: Route*) extends SimpleChannelUpstreamHandler {
   private val bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(newCachedThreadPool(), newCachedThreadPool()))
@@ -88,6 +90,33 @@ class WebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChann
   }
 
   handler ! channel
+}
+
+class AgentWebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChannelUpstreamHandler with AgentHandler {
+  private val MegrezAgentHandshake = "megrez-agent:1.0"
+  private var agent : Actor = _
+  
+  override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
+    event.getMessage match {
+      case frame : WebSocketFrame =>
+        frame.getTextData match {
+          case MegrezAgentHandshake =>
+            send("megrez-server:1.0")
+            handler ! NewAgentConnected(this, actor {
+              react {
+                case actor : Actor => agent = actor                
+              }
+            })
+          case message : String =>
+            agent ! message
+        }
+      case _ =>
+    }
+  }
+
+  def send(message : String) {
+    channel.write(new DefaultWebSocketFrame(message))
+  }
 }
 
 

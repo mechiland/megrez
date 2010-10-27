@@ -8,6 +8,7 @@ case class Exit() extends CommonMessage
 
 abstract class AgentMessage
 case class SetResources(val resources : Set[String]) extends AgentMessage
+case class NewAgentConnected(val handler : AgentHandler, val link : Actor) extends AgentMessage
 
 case class TriggerMessage(val pipelineName : String, val revision : String)
 case class AgentConnect(val agent : Actor)

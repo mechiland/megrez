@@ -58,7 +58,17 @@ object AgentStatus extends Enumeration {
 }
 
 trait AgentHandler {
-  def connected()
-  def disconnected()
   def send(message : String)
+}
+
+object Agent extends Actor {
+  def act() {
+    loop {
+      react {
+        case _ => 
+      }
+    }
+  }
+
+  start
 }
