@@ -5,11 +5,7 @@ import org.scalatest.matchers.ShouldMatchers
 import Route._
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import org.scalatest.mock.MockitoSugar
-import org.jboss.netty.channel.{MessageEvent, ChannelHandlerContext, ChannelPipeline, Channel}
-import org.mockito._
-import org.mockito.Mockito._
 import org.jboss.netty.handler.codec.http.{HttpMethod, HttpVersion, DefaultHttpRequest}
-import scala.actors._
 import scala.actors.Actor._
 
 import Method._
