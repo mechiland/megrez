@@ -8,10 +8,11 @@ import actors.TIMEOUT
 import java.net.URI
 
 import Route._
+import org.jboss.netty.channel.Channel
 
 class ServerWebsocketTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("Server websocket support") {
-    it("should ") {
+    it("should send message when agent connect") {
       server = new Server(
         websocket("/agent") -> self
       )
@@ -21,11 +22,19 @@ class ServerWebsocketTest extends Spec with ShouldMatchers with BeforeAndAfterEa
       client = new WebSocketClient(new URI("ws://localhost:8080/agent"))
 
       receiveWithin(1000) {
-        case "ACTOR CONNECTED" =>
+        case _ : Channel =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
+      receiveWithin(1000) {
+        case "megrez-agent:1.0" =>
         case TIMEOUT => fail
         case _ => fail
       }
     }
+
+    
   }
 
   var server : Server = _

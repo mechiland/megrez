@@ -56,3 +56,9 @@ object AgentStatus extends Enumeration {
   type AgentStatus = Value
   val Idle, Busy = Value
 }
+
+trait AgentHandler {
+  def connected()
+  def disconnected()
+  def send(message : String)
+}

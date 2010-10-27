@@ -2,6 +2,7 @@ package org.megrez.server.http
 
 import org.jboss.netty.handler.codec.http.HttpRequest
 import actors.Actor
+import org.jboss.netty.channel.{ChannelUpstreamHandler, Channel}
 
 object Method extends Enumeration {
   type Method = Value
@@ -25,15 +26,17 @@ case class HttpRoute(override val pattern: String, val methods: Set[Method], ove
   }
 }
 
-case class WebSocketRoute(override val pattern: String, override val handler: Actor) extends Route(pattern, handler)
+case class WebSocketRoute(override val pattern: String, override val handler: Actor, val factory : (Channel , Actor) => ChannelUpstreamHandler) extends Route(pattern, handler) {
+  def websocketHandler(channel : Channel) = factory(channel, handler)   
+}
 
 object Route {
   class Http(val pattern: String, val methods: Set[Method]) {
     def ->(handler: Actor) = HttpRoute(pattern, methods, handler)
   }
 
-  class WebSocket(val pattern: String) {
-    def ->(handler: Actor) = WebSocketRoute(pattern, handler)
+  class WebSocket(val pattern: String, val factory : (Channel , Actor) => ChannelUpstreamHandler) {
+    def ->(handler: Actor) = WebSocketRoute(pattern, handler, factory)
   }
 
   def path(path: String) = new Http(path, Set(GET, PUT, DELETE, POST))
@@ -46,5 +49,5 @@ object Route {
 
   def delete(path: String) = new Http(path, Set(DELETE))
 
-  def websocket(path: String) = new WebSocket(path)
+  def websocket(path: String) = new WebSocket(path, (channel, handler) => new WebSocketHandler(channel, handler))
 }

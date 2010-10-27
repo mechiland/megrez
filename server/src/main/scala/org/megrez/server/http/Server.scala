@@ -59,7 +59,7 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler {
         override def operationComplete(channelFuture: ChannelFuture) {
           pipeline.remove("aggregator")
           pipeline.replace("encoder", "ws-encoder", new WebSocketFrameEncoder)
-          pipeline.replace("handler", "ws-handler", new WebSocketHandler(channel, route.handler))
+          pipeline.replace("handler", "ws-handler", route.websocketHandler(channel))
         }
       })
     } else {
@@ -79,18 +79,17 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler {
 }
 
 class WebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChannelUpstreamHandler {
-  private val MegrezAgent = "megrez-agent:1.0"  
   override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
     event.getMessage match {
       case frame : WebSocketFrame =>
-        frame.getTextData match {
-          case MegrezAgent => handler ! "ACTOR CONNECTED"
-          case _ =>
-        }
+        if (!frame.isBinary) handler ! frame.getTextData
       case _ =>
     }
   }
+
+  handler ! channel
 }
+
 
 
 
