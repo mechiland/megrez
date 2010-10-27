@@ -2,7 +2,6 @@ package org.megrez.server.http
 
 import org.scalatest.matchers.ShouldMatchers
 
-import Route._
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import org.scalatest.mock.MockitoSugar
 import org.jboss.netty.channel.{MessageEvent, ChannelHandlerContext, ChannelPipeline, Channel}
@@ -11,6 +10,7 @@ import org.jboss.netty.handler.codec.http.{HttpMethod, HttpVersion, DefaultHttpR
 import scala.actors._
 import scala.actors.Actor._
 import Method._
+import Route._
 
 class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("HTTP Server") {
