@@ -50,4 +50,6 @@ object Route {
   def delete(path: String) = new Http(path, Set(DELETE))
 
   def websocket(path: String) = new WebSocket(path, (channel, handler) => new WebSocketHandler(channel, handler))
+
+  def websocket(path: String, factory : (Channel , Actor) => ChannelUpstreamHandler) = new WebSocket(path, factory)
 }
