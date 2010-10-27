@@ -17,25 +17,25 @@ class RouteTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Mo
 		it("should match path and GET method"){
 			val route = get("/agent") -> self
 			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/agent")
-			route isMatch(getRequest) should be === true 
+			route matches(getRequest) should be === true
 		}
 		
 		it("should match path and PUT method"){
 			val route = put("/agent") -> self
 			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, "/agent")
-			route isMatch(getRequest) should be === true 
+			route matches(getRequest) should be === true
 		}
 		
 		it("should match path and POST method"){
 			val route = post("/agent") -> self
 			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/agent")
-			route isMatch(getRequest) should be === true 
+			route matches(getRequest) should be === true
 		}
 		
 		it("should match path and DELETE method"){
 			val route = delete("/agent") -> self
 			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/agent")
-			route isMatch(getRequest) should be === true 
+			route matches(getRequest) should be === true
 		}
 
 		it("should knows which method is matches"){
