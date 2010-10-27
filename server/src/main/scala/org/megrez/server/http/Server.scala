@@ -36,7 +36,7 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler {
           case Some(route: WebSocketRoute) =>
             handleWebSocketHandshake(request, route, context)
           case Some(route: HttpRoute) =>
-            route.handler ! Request(route matchedMethod request)
+            route.handler ! Request(route matchedMethod request, request.getUri)
           case None =>
         }
       case frame: WebSocketFrame => println("here" + frame)

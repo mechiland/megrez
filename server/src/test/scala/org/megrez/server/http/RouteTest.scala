@@ -12,7 +12,7 @@ import Method._
 
 class RouteTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
 	describe("routing"){
-		it("should match path and GET method"){
+		it("should match path"){
 			val route = get("/agent") -> self
 			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/agent")
 			route matches(getRequest) should be === true
@@ -25,8 +25,8 @@ class RouteTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Mo
 		}
 		
 		it("should match path and POST method"){
-			val route = post("/agent") -> self
-			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/agent")
+			val route = post("/pipelines") -> self
+			val getRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/pipelines")
 			route matches(getRequest) should be === true
 		}
 		

@@ -42,7 +42,10 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       server.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case request : Request => request.method should be === GET
+        case request : Request => {
+			request.method should be === GET
+			request.uri should be === "/agent"
+		}
         case TIMEOUT => fail
         case _ => fail
       }
@@ -50,16 +53,19 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
 	it("should delegate to handler if POST request path matched") {
       val event = mock[MessageEvent]
-      when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/agent"), Array[Any]())
+      when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/pipeline"), Array[Any]())
 
       val server = new Server(
-        post("/agent") -> self
+        post("/pipeline") -> self
       )
 
       server.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case request : Request => request.method should be === POST
+        case request : Request => {
+			request.method should be === POST
+			request.uri should be === "/pipeline"
+		}
         case TIMEOUT => fail
         case _ => fail
       }
