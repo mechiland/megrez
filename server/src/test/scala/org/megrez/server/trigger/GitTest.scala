@@ -11,12 +11,11 @@ class GitTest extends Spec with ShouldMatchers {
   describe("should get latest repository revision") {
     it("from Git") {
       val gitUrl: String = "git@github.com/vincentx/megrez.git"
-      val userDir: String = System.getProperty("user.dir").split("/megrez")(0)
       val date: Calendar = Calendar.getInstance()
       date.set(2009, 1, 1)
       val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new GitMaterial(gitUrl), List()) {
         override def workingDir() = {
-          System.getProperty("user.dir") + "/../"
+          System.getProperty("user.dir").split("/megrez")(0)
         }
       }
       val git: Git = new Git(pipeline)
