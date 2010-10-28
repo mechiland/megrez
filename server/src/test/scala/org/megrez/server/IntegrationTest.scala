@@ -4,6 +4,10 @@ import org.scalatest.matchers.ShouldMatchers
 import java.io.File
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import trigger.{Trigger, Svn}
+import io.Source
+import actors.Actor._
+import actors.{TIMEOUT, Actor}
+
 
 class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   var trigger: Trigger = _
@@ -17,13 +21,14 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         case _: Success =>
         case _ => fail
       }
+      agent.status should be === AgentStatus.Idle
 
       trigger !? "click" match {
         case _: Success =>
         case _ => fail
       }
 
-      Thread.sleep(500)
+      expectAgentGotJob
       agent.status should be === AgentStatus.Busy
     }
 
@@ -38,7 +43,8 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         case _ => fail
       }
 
-      Thread.sleep(500)
+      expectAgentGotJob
+      svn.needTriggerScheduler should be === true
       agent.status should be === AgentStatus.Busy
 
       agent !? new JobFinished(agent, "pipeline1", "stage1", "1") match {
@@ -51,19 +57,83 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         case _ => fail
       }
 
+      svn.needTriggerScheduler should be === false
       Thread.sleep(500)
       agent.status should be === AgentStatus.Idle
     }
   }
 
+  def expectAgentGotJob: Unit = {
+    receiveWithin(2000) {
+      case "agentGotJob" =>
+      case TIMEOUT => fail
+      case _ => fail
+    }
+  }
+  
+  describe("test svn commit") {
+    it("should detected svn commit") {
+      scheduler !? AgentConnect(agent) match {
+        case _: Success =>
+        case _ => fail
+      }
+
+      trigger !? "click" match {
+        case _: Success =>
+        case _ => fail
+      }
+
+      expectAgentGotJob
+      agent.status should be === AgentStatus.Busy
+
+      agent !? new JobFinished(agent, "pipeline1", "stage1", "1") match {
+        case _: Success =>
+        case _ => fail
+      }
+      agent.status should be === AgentStatus.Idle
+
+      svnCommit
+
+      trigger !? "click" match {
+        case _: Success =>
+        case _ => fail
+      }
+
+      expectAgentGotJob
+
+    }
+  }
+
+  def run(tmpDir: File, cmd: String) = {
+    val process: Process = Runtime.getRuntime().exec(cmd, Array[String](), tmpDir)
+    val exitCode: Int = process.waitFor
+    if (exitCode != 0) {
+      Source.fromInputStream(process.getErrorStream).getLines().foreach {line => println(line)}
+    }
+  }
+
+  def svnCommit() {
+    val tmpDir = new File(System.getProperty("user.dir") + "/target/" + System.currentTimeMillis)
+    tmpDir.mkdirs
+    run(tmpDir, "svn co " + svnUrl + " .")
+    val newFile: File = new File(tmpDir, System.currentTimeMillis + ".txt")
+    newFile.createNewFile;
+    run(tmpDir, "svn add " + newFile.getName)
+    run(tmpDir, "svn ci -m 'added_file'")
+  }
+
+  var svnDir: String = _
+  var svnUrl: String = _
+  var svn: Svn = _
+
   override def beforeEach() {
-    val svnDir: String = System.getProperty("user.dir") + "/src/test/resources/repository/svn"
-    val svnUrl: String = "file://" + new File(svnDir).getAbsolutePath();
-    val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new SvnMaterial(svnUrl))
-    val svn: Svn = new Svn(pipeline)
+    svnDir = System.getProperty("user.dir") + "/src/test/resources/repository/svn"
+    svnUrl = "file://" + new File(svnDir).getAbsolutePath();
+    val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new SvnMaterial(svnUrl), List())
+    svn = new Svn(pipeline)
     scheduler = new Scheduler()
     trigger = new Trigger(svn, scheduler)
-    agent = new Agent()
+    agent = new Agent(new ActorBasedAgentHandler(self), scheduler)
 
     agent start;
     scheduler start;
@@ -74,5 +144,24 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     agent ! Exit();
     scheduler ! Exit();
     trigger ! Exit();
+  }
+
+  class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
+    def send(message: String) {
+      actor ! "agentGotJob"
+    }
+  }
+
+  class SpyActor(val target: Actor, val spy: Actor) extends Actor {
+    def act() {
+      loop {
+        react {
+          case msg: Any => {
+            target ! msg
+            spy ! msg
+          }
+        }
+      }
+    }
   }
 }

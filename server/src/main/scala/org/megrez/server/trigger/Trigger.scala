@@ -9,7 +9,7 @@ class Trigger(val versionControl: VersionControl, val target: Actor) extends Act
     loop {
       react {
         case _: Exit => exit
-        case _ => {
+        case "click" => {
           versionControl.checkChange()
           val buildChange: TriggerMessage = versionControl.getChange
           if (buildChange != null) {

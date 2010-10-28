@@ -3,7 +3,7 @@ package org.megrez.server
 import actors._
 import scala.collection.mutable._
 
-class Agent extends Actor {
+class Agent(handler: AgentHandler, scheduler: Actor) extends Actor {
   import AgentStatus._
 
   private var _resources = new HashSet[String]()
@@ -35,6 +35,8 @@ class Agent extends Actor {
       case Idle =>
         if (checkResource(request.job)) {
           _status = Busy
+          if(handler != null)
+            handler.send("received a job")
           reply(JobConfirm(this, request.job))
         } else {
           reply(JobReject(this))
@@ -46,6 +48,7 @@ class Agent extends Actor {
 
   private def handleFinished(message: JobFinished) {
     _status = Idle
+    scheduler ! message
     reply(Success())
   }
 

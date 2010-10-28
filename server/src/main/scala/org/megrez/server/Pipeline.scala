@@ -1,6 +1,7 @@
 package org.megrez.server
 
-import java.util.Calendar
+import java.util.{ArrayList, Calendar}
+import collection.immutable.HashSet
 
 class Material(val url: String)
 class SvnMaterial(override val url: String) extends Material(url)
@@ -32,7 +33,7 @@ object Material {
   }
 }
 
-class PipelineConfig(val name: String, val material: Material) {
+class PipelineConfig(val name: String, val material: Material, val stages: List[String]) {
   def workingDir() = {
     System.getProperty("user.dir") + "/pipelines" + name
   }
@@ -45,8 +46,9 @@ class Job(val name: String, val resources: Set[String], val tasks: List[Task])
 class Task
 
 object Configuration {
+
   def hasNextStage(pipeline: String, stage: String) = {
-    true
+    false
   }
 
   def firstStage(pipeline: String) = {

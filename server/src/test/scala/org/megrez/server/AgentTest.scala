@@ -2,6 +2,7 @@ package org.megrez.server
 
 import org.scalatest._
 import org.scalatest.matchers._
+import actors.Actor._
 
 class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("Agent receives job") {
@@ -78,7 +79,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   var agent: Agent = _
 
   override def beforeEach() {
-    agent = new Agent()
+    agent = new Agent(null, self)
     agent start
   }
 

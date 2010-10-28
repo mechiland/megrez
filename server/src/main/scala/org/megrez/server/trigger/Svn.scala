@@ -17,6 +17,8 @@ class Svn(val pipeline: PipelineConfig) extends VersionControl {
             if (latestVersion != revision) {
               revision = latestVersion
               needTriggerScheduler = true
+            } else {
+              needTriggerScheduler = false
             }
           }
     }
