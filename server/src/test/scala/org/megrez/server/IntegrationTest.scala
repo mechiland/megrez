@@ -9,7 +9,7 @@ import actors.Actor._
 import actors.{TIMEOUT, Actor}
 
 
-class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
+class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   var trigger: Trigger = _
   var scheduler: Scheduler = _
   var agent: Agent = _
@@ -60,14 +60,6 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       svn.needTriggerScheduler should be === false
       Thread.sleep(500)
       agent.status should be === AgentStatus.Idle
-    }
-  }
-
-  def expectAgentGotJob: Unit = {
-    receiveWithin(2000) {
-      case "agentGotJob" =>
-      case TIMEOUT => fail
-      case _ => fail
     }
   }
   
@@ -144,12 +136,6 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     agent ! Exit();
     scheduler ! Exit();
     trigger ! Exit();
-  }
-
-  class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
-    def send(message: String) {
-      actor ! "agentGotJob"
-    }
   }
 
   class SpyActor(val target: Actor, val spy: Actor) extends Actor {

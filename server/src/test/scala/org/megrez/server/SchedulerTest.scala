@@ -3,8 +3,10 @@ package org.megrez.server
 import org.scalatest._
 import org.scalatest.matchers._
 import actors.Actor
+import actors.Actor._
+import scala.concurrent.TIMEOUT
 
-class SchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
+class SchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   describe("Scheduler receives trigger") {
 
     it("should assign job to agent if there is idle agent") {
@@ -18,9 +20,7 @@ class SchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         case _ => fail
       }
 
-      Thread.sleep(500)
-      agent.status should be === AgentStatus.Busy
-      agent.job.stage should be === "stage1"
+      expectAgentGotJob
     }
   }
 
@@ -29,12 +29,9 @@ class SchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       scheduler !? AgentConnect(agent) match {case _ =>}
       scheduler !? TriggerMessage("pipeline1", "#1") match {case _ =>}
 
-      agent.finishJob
-      scheduler !? JobFinished(agent, "pipeline1", "stage1", "#1") match {case _ =>}
+      agent !? JobFinished(agent, "pipeline1", "stage1", "#1") match {case _ =>}
 
-      Thread.sleep(500)
-      agent.status should be === AgentStatus.Busy
-      agent.job.stage should be === "stage2"
+      expectAgentGotJob
     }
   }
 
@@ -62,12 +59,12 @@ class SchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     def finishJob = _status = Idle
   }
 
-  var agent: AgentStub = _
+  var agent: Agent = _
   var scheduler: Scheduler = _
 
   override def beforeEach() {
-    agent = new AgentStub()
     scheduler = new Scheduler();
+    agent = new Agent(new ActorBasedAgentHandler(self), scheduler)
     agent start;
     scheduler start;
   }

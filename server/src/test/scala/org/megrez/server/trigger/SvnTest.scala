@@ -13,7 +13,7 @@ class SvnTest extends Spec with ShouldMatchers {
       val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new SvnMaterial("file://" + svnDir), List())
       val svn: Svn = new Svn(pipeline)
       svn.checkChange()
-      // svn.getChange.pipelineName should be === "1"
+      svn.getChange.pipelineName should be === "pipeline1"
     }
   }
 }
