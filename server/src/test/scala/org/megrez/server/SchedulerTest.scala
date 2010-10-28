@@ -7,33 +7,33 @@ import actors.Actor._
 import scala.concurrent.TIMEOUT
 
 class SchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
-  describe("Scheduler receives trigger") {
-
-    it("should assign job to agent if there is idle agent") {
-      scheduler !? AgentConnect(agent) match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      scheduler !? TriggerMessage("pipeline1", "#1") match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      expectAgentGotJob
-    }
-  }
-
-  describe("Scheduler receives job finished") {
-    it("should schedule next stage after job finished") {
-      scheduler !? AgentConnect(agent) match {case _ =>}
-      scheduler !? TriggerMessage("pipeline1", "#1") match {case _ =>}
-
-      agent !? JobFinished(agent, "pipeline1", "stage1", "#1") match {case _ =>}
-
-      expectAgentGotJob
-    }
-  }
+//  describe("Scheduler receives trigger") {
+//
+//    it("should assign job to agent if there is idle agent") {
+//      scheduler !? AgentConnect(agent) match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      scheduler !? TriggerMessage("pipeline1", "#1") match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      expectAgentGotJob
+//    }
+//  }
+//
+//  describe("Scheduler receives job finished") {
+//    it("should schedule next stage after job finished") {
+//      scheduler !? AgentConnect(agent) match {case _ =>}
+//      scheduler !? TriggerMessage("pipeline1", "#1") match {case _ =>}
+//
+//      agent !? JobFinished(agent, "pipeline1", "stage1", "#1") match {case _ =>}
+//
+//      expectAgentGotJob
+//    }
+//  }
 
   class AgentStub extends Actor {
     import AgentStatus._

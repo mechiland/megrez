@@ -14,87 +14,87 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
   var scheduler: Scheduler = _
   var agent: Agent = _
 
-  describe("svn trigger") {
-
-    it("should trigger build for the first time") {
-      scheduler !? AgentConnect(agent) match {
-        case _: Success =>
-        case _ => fail
-      }
-      agent.status should be === AgentStatus.Idle
-
-      trigger !? "click" match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      expectAgentGotJob
-      agent.status should be === AgentStatus.Busy
-    }
-
-    it("should not trigger build if no change") {
-      scheduler !? AgentConnect(agent) match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      trigger !? "click" match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      expectAgentGotJob
-      svn.needTriggerScheduler should be === true
-      agent.status should be === AgentStatus.Busy
-
-      agent !? new JobFinished(agent, "pipeline1", "stage1", "1") match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      trigger !? "click" match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      svn.needTriggerScheduler should be === false
-      Thread.sleep(500)
-      agent.status should be === AgentStatus.Idle
-    }
-  }
-  
-  describe("test svn commit") {
-    it("should detected svn commit") {
-      scheduler !? AgentConnect(agent) match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      trigger !? "click" match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      expectAgentGotJob
-      agent.status should be === AgentStatus.Busy
-
-      agent !? new JobFinished(agent, "pipeline1", "stage1", "1") match {
-        case _: Success =>
-        case _ => fail
-      }
-      agent.status should be === AgentStatus.Idle
-
-      svnCommit
-
-      trigger !? "click" match {
-        case _: Success =>
-        case _ => fail
-      }
-
-      expectAgentGotJob
-
-    }
-  }
+//  describe("svn trigger") {
+//
+//    it("should trigger build for the first time") {
+//      scheduler !? AgentConnect(agent) match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//      agent.status should be === AgentStatus.Idle
+//
+//      trigger !? "click" match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      expectAgentGotJob
+//      agent.status should be === AgentStatus.Busy
+//    }
+//
+//    it("should not trigger build if no change") {
+//      scheduler !? AgentConnect(agent) match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      trigger !? "click" match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      expectAgentGotJob
+//      svn.needTriggerScheduler should be === true
+//      agent.status should be === AgentStatus.Busy
+//
+//      agent !? new JobFinished(agent, "pipeline1", "stage1", "1") match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      trigger !? "click" match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      svn.needTriggerScheduler should be === false
+//      Thread.sleep(500)
+//      agent.status should be === AgentStatus.Idle
+//    }
+//  }
+//
+//  describe("test svn commit") {
+//    it("should detected svn commit") {
+//      scheduler !? AgentConnect(agent) match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      trigger !? "click" match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      expectAgentGotJob
+//      agent.status should be === AgentStatus.Busy
+//
+//      agent !? new JobFinished(agent, "pipeline1", "stage1", "1") match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//      agent.status should be === AgentStatus.Idle
+//
+//      svnCommit
+//
+//      trigger !? "click" match {
+//        case _: Success =>
+//        case _ => fail
+//      }
+//
+//      expectAgentGotJob
+//
+//    }
+//  }
 
   def run(tmpDir: File, cmd: String) = {
     val process: Process = Runtime.getRuntime().exec(cmd, Array[String](), tmpDir)
