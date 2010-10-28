@@ -4,7 +4,7 @@ import actors._
 import scala.collection.mutable._
 import scala.collection.immutable.Set
 
-class Scheduler extends Actor {
+class Dispatcher extends Actor {
   private val _jobs = new HashSet[Job]()
   private val _agents = new HashSet[Actor]()
 

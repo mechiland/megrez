@@ -13,18 +13,18 @@ import org.scalatest.{BeforeAndAfterEach, Spec}
 
 class AgentWebSocketHandlerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("Agent WebSocket handler") {
-    it("should notify agent connected") {      
+    it("should notify agent connected") {
       val handler = new AgentWebSocketHandler(channel, self)
 
       val event = mock[MessageEvent]
       when(event.getMessage).thenReturn(new DefaultWebSocketFrame("megrez-agent:1.0"), Array[Any]())
-      
+
       handler.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case message : RemoteAgentConnected =>
+        case message: RemoteAgentConnected =>
           message.handler should be === (handler)
-          message.link ! self
+          message.handler.assignAgent(self)
         case TIMEOUT => fail
         case _ => fail
       }
@@ -39,11 +39,11 @@ class AgentWebSocketHandlerTest extends Spec with ShouldMatchers with BeforeAndA
       handler.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case message : RemoteAgentConnected =>
+        case message: RemoteAgentConnected =>
           message.handler should be === (handler)
-          message.link ! self
+          message.handler.assignAgent(self)
         case TIMEOUT => fail
-        case _ => fail
+        case other: Any => println(other); fail
       }
 
       val newMessage = mock[MessageEvent]
@@ -70,5 +70,5 @@ class AgentWebSocketHandlerTest extends Spec with ShouldMatchers with BeforeAndA
     when(context.getPipeline).thenReturn(pipeline)
     when(context.getChannel).thenReturn(channel)
   }
-  
+
 }

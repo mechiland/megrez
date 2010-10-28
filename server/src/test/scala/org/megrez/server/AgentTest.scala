@@ -93,6 +93,8 @@ class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
   def send(message: String) {
     actor ! "agentGotJob"
   }
+
+  def assignAgent(agent : Actor) {}
 }
 
 trait AgentTestSuite extends Spec {

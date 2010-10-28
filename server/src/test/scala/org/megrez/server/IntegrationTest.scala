@@ -11,7 +11,7 @@ import actors.{TIMEOUT, Actor}
 
 class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   var trigger: Trigger = _
-  var scheduler: Scheduler = _
+  var scheduler: Dispatcher = _
   var agent: Agent = _
 
 //  describe("svn trigger") {
@@ -123,7 +123,7 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
     svnUrl = "file://" + new File(svnDir).getAbsolutePath();
     val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new SvnMaterial(svnUrl), List())
     svn = new Svn(pipeline)
-    scheduler = new Scheduler()
+    scheduler = new Dispatcher()
     trigger = new Trigger(svn, scheduler)
     agent = new Agent(new ActorBasedAgentHandler(self), scheduler)
 

@@ -1,6 +1,5 @@
 package org.megrez.server
 
-import java.util.{ArrayList, Calendar}
 import collection.mutable.HashSet
 
 class Material(val url: String)
@@ -47,36 +46,49 @@ object PipelineConfig {
 class Pipeline(val config: PipelineConfig) {
   case class Stage(val stage: PipelineConfig.Stage, val pipeline: Pipeline) {
     private val completedJobs = HashSet[Job]()
+    private val failedJobs = HashSet[Job]()
 
-    def jobs : Option[Set[Job]] = Some(stage.jobs)
+    def jobs: Option[Set[Job]] = if (failedJobs.isEmpty) Some(stage.jobs) else None
 
     def complete(job: Job) {
       completedJobs.add(job)
       if (completedJobs == stage.jobs)
         pipeline.complete(this)
     }
+
+    def fail(job: Job) {
+      failedJobs.add(job)
+      pipeline.fail(this)
+    }
   }
 
   object Finish extends Stage(null, null) {
-    override def jobs : Option[Set[Job]]= None
+    override def jobs: Option[Set[Job]] = None
 
     override def complete(job: Job) {}
+
+    override def fail(job: Job) {}
   }
 
   private val stageIterator = config.stages.iterator
   private var currentStage = nextStage
 
-  def next() : Option[Set[Job]] = {
+  def next(): Option[Set[Job]] = {
     currentStage.jobs
   }
 
-  def complete(any: Any) =
-    any match {
-      case job: Job => currentStage.complete(job)
-      case stage: Stage => currentStage = nextStage
-    }
+  def complete(any: Any) = any match {
+    case job: Job => currentStage.complete(job)
+    case stage: Stage => currentStage = nextStage
+    case _ =>
+  }
 
-  private def nextStage = if (stageIterator.hasNext) Stage(stageIterator.next, this) else  Finish
+  def fail(any: Any) = any match {
+    case job: Job => currentStage.fail(job)
+    case _ =>
+  }
+
+  private def nextStage = if (stageIterator.hasNext) Stage(stageIterator.next, this) else Finish
 }
 
 

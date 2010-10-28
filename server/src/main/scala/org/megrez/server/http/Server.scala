@@ -98,18 +98,18 @@ class WebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChann
 class AgentWebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChannelUpstreamHandler with AgentHandler {
   private val MegrezAgentHandshake = "megrez-agent:1.0"
   private var agent : Actor = _
-  
+
+  override def assignAgent(actor : Actor) {
+    agent = actor
+  }
+
   override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
     event.getMessage match {
       case frame : WebSocketFrame =>
         frame.getTextData match {
           case MegrezAgentHandshake =>
             send("megrez-server:1.0")
-            handler ! RemoteAgentConnected(this, actor {
-              react {
-                case actor : Actor => agent = actor                
-              }
-            })
+            handler ! RemoteAgentConnected(this)
           case message : String =>
             agent ! message
         }

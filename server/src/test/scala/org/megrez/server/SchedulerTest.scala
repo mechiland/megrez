@@ -7,7 +7,7 @@ import actors.Actor._
 import scala.concurrent.TIMEOUT
 
 class SchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
-//  describe("Scheduler receives trigger") {
+//  describe("Dispatcher receives trigger") {
 //
 //    it("should assign job to agent if there is idle agent") {
 //      scheduler !? AgentConnect(agent) match {
@@ -24,7 +24,7 @@ class SchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterEach wit
 //    }
 //  }
 //
-//  describe("Scheduler receives job finished") {
+//  describe("Dispatcher receives job finished") {
 //    it("should schedule next stage after job finished") {
 //      scheduler !? AgentConnect(agent) match {case _ =>}
 //      scheduler !? TriggerMessage("pipeline1", "#1") match {case _ =>}
@@ -60,10 +60,10 @@ class SchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterEach wit
   }
 
   var agent: Agent = _
-  var scheduler: Scheduler = _
+  var scheduler: Dispatcher = _
 
   override def beforeEach() {
-    scheduler = new Scheduler();
+    scheduler = new Dispatcher();
     agent = new Agent(new ActorBasedAgentHandler(self), scheduler)
     agent start;
     scheduler start;

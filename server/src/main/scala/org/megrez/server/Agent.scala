@@ -61,6 +61,7 @@ object AgentStatus extends Enumeration {
 }
 
 trait AgentHandler {
+  def assignAgent(agent : Actor)
   def send(message : String)
 }
 
