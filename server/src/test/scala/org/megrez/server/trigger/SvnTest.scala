@@ -4,7 +4,7 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Spec
 import org.megrez.server.trigger.Svn
 import java.lang.String
-import org.megrez.server.{SvnMaterial, PipelineConfig, Pipeline}
+import org.megrez.server.{SvnMaterial, PipelineConfig}
 
 class SvnTest extends Spec with ShouldMatchers {
   describe("shoud get latest revision number") {

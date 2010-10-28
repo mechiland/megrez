@@ -1,7 +1,7 @@
 package org.megrez.server.trigger
 
 import main.scala.org.megrez.server.trigger.VersionControl
-import org.megrez.server.{PipelineConfig, TriggerMessage, Pipeline}
+import org.megrez.server.{PipelineConfig, TriggerMessage}
 
 class Svn(val pipeline: PipelineConfig) extends VersionControl {
   var revision: String = null
