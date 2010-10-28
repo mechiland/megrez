@@ -3,6 +3,7 @@ package org.megrez.server
 import org.scalatest._
 import org.scalatest.matchers._
 import actors.Actor._
+import actors.{TIMEOUT, Actor}
 
 class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("Agent receives job") {
@@ -72,7 +73,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
   describe("Agent creation") {
     it("should create agent and link agent with agent handler") {
-      
+
     }
   }
 
@@ -85,5 +86,21 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
   override def afterEach() {
     agent ! Exit()
+  }
+}
+
+class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
+  def send(message: String) {
+    actor ! "agentGotJob"
+  }
+}
+
+trait AgentTestSuite extends Spec {
+  def expectAgentGotJob: Unit = {
+    receiveWithin(2000) {
+      case "agentGotJob" =>
+      case TIMEOUT => fail
+      case _ => fail
+    }
   }
 }
