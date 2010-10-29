@@ -18,3 +18,6 @@ case class JobRequest(val pipeline: String, val stage: String, val job : Job) ex
 case class JobConfirm(val agent : Agent, val job: Job) extends JobMessage
 case class JobReject(val agent : Agent) extends JobMessage
 case class JobFinished(val agent : Actor, val pipeline: String, val stage: String, val revision: String) extends JobMessage
+
+case class AddPipeline(config : PipelineConfig)
+case class PipelineChanged(config : PipelineConfig)

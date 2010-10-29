@@ -5,8 +5,8 @@ import scala.collection.mutable._
 import scala.collection.immutable.Set
 
 class Dispatcher extends Actor {
-  private val _jobs = new HashSet[Job]()
-  private val _agents = new HashSet[Actor]()
+  private val jobQueue = new HashSet[Job]()
+  private val idleAgents = new HashSet[Actor]()
 
   def act() {
     loop {
@@ -20,22 +20,22 @@ class Dispatcher extends Actor {
     }
   }
 
-  def jobs = _jobs.toSet
+  def jobs = jobQueue.toSet
 
-  def agents = _agents.toSet
+  def agents = idleAgents.toSet
 
   private def registerAgent(agent: Actor) {
-    _agents add agent
+    idleAgents add agent
     reply(Success())
   }
 
   private def handleJobConfirm(message: JobConfirm) {
-    _jobs.remove(message.job)
-    _agents.remove(message.agent)
+    jobQueue.remove(message.job)
+    idleAgents.remove(message.agent)
   }
 
   private def handleJobFinished(message: JobFinished) {
-    _agents.add(message.agent)
+    idleAgents.add(message.agent)
     if (Configuration.hasNextStage(message.pipeline, message.stage)) {
       trigger(message.pipeline, Configuration.nextStage(message.pipeline, message.stage))
     }
@@ -43,8 +43,8 @@ class Dispatcher extends Actor {
 
   private def trigger(pipeline: String, stage: String) {
     val job = new Job(pipeline, Set(), List())
-    _jobs.add(job)
-    _agents.foreach(_ ! new JobRequest(pipeline, stage, job))
+    jobQueue.add(job)
+    idleAgents.foreach(_ ! new JobRequest(pipeline, stage, job))
     reply(Success())
   }
 

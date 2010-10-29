@@ -119,23 +119,23 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
   var svn: Svn = _
 
   override def beforeEach() {
-    svnDir = System.getProperty("user.dir") + "/src/test/resources/repository/svn"
-    svnUrl = "file://" + new File(svnDir).getAbsolutePath();
-    val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new SvnMaterial(svnUrl), List())
-    svn = new Svn(pipeline)
-    scheduler = new Dispatcher()
-    trigger = new Trigger(svn, scheduler)
-    agent = new Agent(new ActorBasedAgentHandler(self), scheduler)
-
-    agent start;
-    scheduler start;
-    trigger start;
+//    svnDir = System.getProperty("user.dir") + "/src/test/resources/repository/svn"
+//    svnUrl = "file://" + new File(svnDir).getAbsolutePath();
+//    val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new SvnMaterial(svnUrl), List())
+//    svn = new Svn(pipeline)
+//    scheduler = new Dispatcher()
+//    trigger = new Trigger(svn, scheduler)
+//    agent = new Agent(new ActorBasedAgentHandler(self), scheduler)
+//
+//    agent start;
+//    scheduler start;
+//    trigger start;
   }
 
   override def afterEach() {
-    agent ! Exit();
-    scheduler ! Exit();
-    trigger ! Exit();
+//    agent ! Exit();
+//    scheduler ! Exit();
+//    trigger ! Exit();
   }
 
   class SpyActor(val target: Actor, val spy: Actor) extends Actor {
