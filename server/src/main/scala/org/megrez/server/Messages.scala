@@ -26,3 +26,4 @@ case class PipelineChanged(config : PipelineConfig)
 case class TriggerBuild(config : PipelineConfig)
 
 case class JobScheduled(build : UUID, jobs : Set[Job])
+case class JobCompleted(build : UUID, job : Job)

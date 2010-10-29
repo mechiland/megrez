@@ -1,6 +1,6 @@
 package org.megrez.server
 
-import collection.mutable.HashSet
+import collection.mutable.{HashMap, HashSet}
 
 class Material(val url: String)
 class SvnMaterial(override val url: String) extends Material(url)
@@ -43,52 +43,55 @@ object PipelineConfig {
 
 }
 
-class Build(val config: PipelineConfig) {
-  case class Stage(val stage: PipelineConfig.Stage, val pipeline: Build) {
+class Build(val pipeline: PipelineConfig) {
+  import Build._
+  private val stageIterator = pipeline.stages.iterator
+  private var currentStage = nextStage
+
+  def current = currentStage
+
+  def complete(stage: Build.Stage) {
+    currentStage = nextStage
+  }
+
+  def fail(stage: Build.Stage) {
+    currentStage = Build.Failed
+  }
+
+  private def nextStage = if (stageIterator.hasNext) Build.Stage(stageIterator.next, this) else Completed
+}
+
+object Build {
+  
+  case class Stage(val stage: PipelineConfig.Stage, val build: Build) {
     private val completedJobs = HashSet[Job]()
     private val failedJobs = HashSet[Job]()
 
     def jobs: Option[Set[Job]] = if (failedJobs.isEmpty) Some(stage.jobs) else None
 
-    def complete(job: Job) {
+    def complete(job: Job) = {
       completedJobs.add(job)
       if (completedJobs == stage.jobs)
-        pipeline.complete(this)
+        build.complete(this)
+      (completedJobs.size + failedJobs.size) == stage.jobs.size
     }
 
     def fail(job: Job) {
       failedJobs.add(job)
-      pipeline.fail(this)
+      build.fail(this)
     }
   }
-
-  object Finish extends Stage(null, null) {
+  object Completed extends Stage(null, null) {
     override def jobs: Option[Set[Job]] = None
-
-    override def complete(job: Job) {}
-
+    override def complete(job: Job) = false
     override def fail(job: Job) {}
   }
 
-  private val stageIterator = config.stages.iterator
-  private var currentStage = nextStage
-
-  def next(): Option[Set[Job]] = {
-    currentStage.jobs
+  object Failed extends Stage(null, null) {
+    override def jobs: Option[Set[Job]] = None
+    override def complete(job: Job) = false
+    override def fail(job: Job) {}    
   }
-
-  def complete(any: Any) = any match {
-    case job: Job => currentStage.complete(job)
-    case stage: Stage => currentStage = nextStage
-    case _ =>
-  }
-
-  def fail(any: Any) = any match {
-    case job: Job => currentStage.fail(job)
-    case _ =>
-  }
-
-  private def nextStage = if (stageIterator.hasNext) Stage(stageIterator.next, this) else Finish
 }
 
 

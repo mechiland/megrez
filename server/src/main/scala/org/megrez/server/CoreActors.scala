@@ -51,13 +51,29 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
           val id = UUID.randomUUID
           val build = new Build(config)
           builds.put(id, build)
-          build.next match {
-            case Some(jobs: Set[Job]) =>
-              dispatcher ! JobScheduled(id, jobs)
+          triggerJobs(id, build)
+        case JobCompleted(id: UUID, job: Job) =>
+          builds.get(id) match {
+            case Some(build: Build) =>
+              if (build.current.complete(job)) {
+                build.current match {
+                  case Build.Completed =>
+                  case Build.Failed =>
+                  case _ => triggerJobs(id, build)
+                }                
+              }
             case None =>
           }
         case _ =>
       }
+    }
+  }
+
+  private def triggerJobs(id: UUID, build: Build): Unit = {
+    build.current.jobs match {
+      case Some(jobs: Set[Job]) =>
+        dispatcher ! JobScheduled(id, jobs)
+      case None =>
     }
   }
 
