@@ -1,6 +1,7 @@
 package org.megrez.server
 
 import actors._
+import java.util.UUID
 
 abstract class CommonMessage
 case class Success() extends CommonMessage
@@ -21,3 +22,7 @@ case class JobFinished(val agent : Actor, val pipeline: String, val stage: Strin
 
 case class AddPipeline(config : PipelineConfig)
 case class PipelineChanged(config : PipelineConfig)
+
+case class TriggerBuild(config : PipelineConfig)
+
+case class JobScheduled(build : UUID, jobs : Set[Job])

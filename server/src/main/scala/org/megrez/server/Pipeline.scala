@@ -43,8 +43,8 @@ object PipelineConfig {
 
 }
 
-class Pipeline(val config: PipelineConfig) {
-  case class Stage(val stage: PipelineConfig.Stage, val pipeline: Pipeline) {
+class Build(val config: PipelineConfig) {
+  case class Stage(val stage: PipelineConfig.Stage, val pipeline: Build) {
     private val completedJobs = HashSet[Job]()
     private val failedJobs = HashSet[Job]()
 
