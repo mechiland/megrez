@@ -1,10 +1,10 @@
-*.iml
-*.ipr
 *.iws
 .idea
+target
 server/target
 agent/target
 rest/target
 server/reports
 agent/reports
 rest/reports
+server/src/test/resources/repository/svn
