@@ -2,16 +2,14 @@ package scala.org.megrez.server.trigger
 
 import scala.actors._
 import Actor._
-import main.scala.org.megrez.server.trigger.VersionControl
 import org.scalatest.Spec
-import org.megrez.server.trigger.Trigger
 import org.scalatest._
 import org.scalatest.matchers._
 import org.megrez.server._
 import org.megrez.server.Exit
+import main.scala.org.megrez.server.trigger.{ManualTrigger, VersionControl}
 
-class TriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-  
+class ManualTriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("shoud call versionControl methods") {
     it("when build revision is setting") {
       trigger ! "click"
@@ -26,7 +24,7 @@ class TriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
   override def beforeEach() {
     val vc: VersionControlMocker = new VersionControlMocker(new PipelineConfig("pipeline1", new SvnMaterial("url"), List()))
-    trigger = new Trigger(vc, self)
+    trigger = new ManualTrigger(vc, self)
     trigger start
   }
 

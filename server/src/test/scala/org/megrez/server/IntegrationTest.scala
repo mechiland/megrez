@@ -1,21 +1,22 @@
 package org.megrez.server
 
+import _root_.main.scala.org.megrez.server.trigger.ManualTrigger
 import org.scalatest.matchers.ShouldMatchers
 import java.io.File
 import org.scalatest.{BeforeAndAfterEach, Spec}
-import trigger.{Trigger, Svn}
+import trigger.Svn
 import io.Source
 import actors.Actor._
 import actors.{TIMEOUT, Actor}
 
 
 class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
-  var trigger: Trigger = _
+  var trigger: ManualTrigger = _
   var scheduler: Dispatcher = _
   var agent: Agent = _
 
-//  describe("svn trigger") {
-//
+  describe("svn trigger") {
+
 //    it("should trigger build for the first time") {
 //      scheduler !? AgentConnect(agent) match {
 //        case _: Success =>
@@ -51,7 +52,8 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
 //        case _: Success =>
 //        case _ => fail
 //      }
-//
+//      expectAgentFinishedJob
+//      agent.status should be === AgentStatus.Idle
 //      trigger !? "click" match {
 //        case _: Success =>
 //        case _ => fail
@@ -62,7 +64,7 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
 //      agent.status should be === AgentStatus.Idle
 //    }
 //  }
-//
+
 //  describe("test svn commit") {
 //    it("should detected svn commit") {
 //      scheduler !? AgentConnect(agent) match {
@@ -83,7 +85,6 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
 //        case _ => fail
 //      }
 //      agent.status should be === AgentStatus.Idle
-//
 //      svnCommit
 //
 //      trigger !? "click" match {
@@ -94,7 +95,7 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
 //      expectAgentGotJob
 //
 //    }
-//  }
+  }
 
   def run(tmpDir: File, cmd: String) = {
     val process: Process = Runtime.getRuntime().exec(cmd, Array[String](), tmpDir)
@@ -119,23 +120,23 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
   var svn: Svn = _
 
   override def beforeEach() {
-//    svnDir = System.getProperty("user.dir") + "/src/test/resources/repository/svn"
-//    svnUrl = "file://" + new File(svnDir).getAbsolutePath();
-//    val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new SvnMaterial(svnUrl), List())
-//    svn = new Svn(pipeline)
-//    scheduler = new Dispatcher()
-//    trigger = new Trigger(svn, scheduler)
-//    agent = new Agent(new ActorBasedAgentHandler(self), scheduler)
-//
-//    agent start;
-//    scheduler start;
-//    trigger start;
+    svnDir = System.getProperty("user.dir") + "/src/test/resources/repository/svn"
+    svnUrl = "file://" + new File(svnDir).getAbsolutePath();
+    val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new SvnMaterial(svnUrl), List())
+    svn = new Svn(pipeline)
+    scheduler = new Dispatcher()
+    trigger = new ManualTrigger(svn, scheduler)
+    agent = new Agent(new ActorBasedAgentHandler(self), scheduler)
+
+    agent start;
+    scheduler start;
+    trigger start;
   }
 
   override def afterEach() {
-//    agent ! Exit();
-//    scheduler ! Exit();
-//    trigger ! Exit();
+    agent ! Exit();
+    scheduler ! Exit();
+    trigger ! Exit();
   }
 
   class SpyActor(val target: Actor, val spy: Actor) extends Actor {

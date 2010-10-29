@@ -105,4 +105,9 @@ trait AgentTestSuite extends Spec {
       case _ => fail
     }
   }
+  def expectAgentFinishedJob: Unit = {
+    receive {
+      case _ =>
+    }
+  }
 }
