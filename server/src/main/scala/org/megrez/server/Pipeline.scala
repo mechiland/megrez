@@ -22,14 +22,6 @@ class Build(val pipeline: Pipeline) {
 
   private def nextStage = if (stageIterator.hasNext) new JobStage(stageIterator.next) else Completed
 
-  private def next() {
-    currentStage = nextStage
-  }
-
-  private def fail() {
-    currentStage = Build.Failed
-  }
-
   def complete(job: Job): Option[Stage] = {
     currentStage.complete(job)
     currentStage.status match {

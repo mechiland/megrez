@@ -60,11 +60,28 @@ class BuildTest extends Spec with ShouldMatchers {
         case _ => fail
       }
     }
+
+    it("should wait all job finish if any of the job failed") {
+      val job1 = createJob("job1")
+      val job2 = createJob("job2")
+      val job3 = createJob("job3")
+      val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job1, job2), createStage("stage1", job3)))
+
+      val build = new Build(pipeline)
+      build.fail(job1) match {
+        case None =>
+        case _ => fail
+      }
+      build.complete(job2) match {
+        case Some(Build.Failed) =>
+        case _ => fail
+      }
+    }
   }
 
   def createJob(name: String): Job = new Job(name, Set[String](), List[Task]())
 
   def createStage(name: String): Stage = Stage(name, Set(createJob(name + " job")))
 
-  def createStage(name: String, job: Job): Stage = Stage(name, Set(job))
+  def createStage(name: String, job: Job*): Stage = Stage(name, job.toSet)
 }
