@@ -11,12 +11,12 @@ import actors.Actor._
 class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
   describe("Pipeline manager") {
     it("should launch trigger when new pipeline added") {
-      val factory = mock[PipelineConfig => Trigger]
+      val factory = mock[Pipeline => Trigger]
 
-      when(factory.apply(any(classOf[PipelineConfig]))).thenReturn(new ActorBasedTrigger("pipeline", self))
+      when(factory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline", self))
 
       val manager = new PipelineManager(factory)
-      manager ! AddPipeline(new PipelineConfig("pipeline", null, List[PipelineConfig.Stage]()))
+      manager ! AddPipeline(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
 
       receiveWithin(1000) {
         case "TRIGGER START pipeline" =>
@@ -27,13 +27,13 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
 
     it("should shutdown trigger and start new one when pipeline config changed") {
 
-      val factory = mock[PipelineConfig => Trigger]
+      val factory = mock[Pipeline => Trigger]
 
-      when(factory.apply(any(classOf[PipelineConfig]))).thenReturn(new ActorBasedTrigger("pipeline1", self),
+      when(factory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline1", self),
         new ActorBasedTrigger("pipeline2", self))
 
       val manager = new PipelineManager(factory)
-      manager ! AddPipeline(new PipelineConfig("pipeline", null, List[PipelineConfig.Stage]()))
+      manager ! AddPipeline(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
 
       receiveWithin(1000) {
         case "TRIGGER START pipeline1" =>
@@ -41,7 +41,7 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
         case _ => fail
       }
       
-      manager ! PipelineChanged(new PipelineConfig("pipeline", null, List[PipelineConfig.Stage]()))
+      manager ! PipelineChanged(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
 
       receiveWithin(1000) {
         case "TRIGGER STOP pipeline1" =>

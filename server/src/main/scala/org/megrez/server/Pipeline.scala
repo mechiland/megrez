@@ -1,49 +1,21 @@
 package org.megrez.server
 
+import org.megrez.server.VCSConfig
+
 import collection.mutable.{HashMap, HashSet}
 
-class Material(val url: String)
-class SvnMaterial(override val url: String) extends Material(url)
-class GitMaterial(override val url: String) extends Material(url)
-
-trait MaterialSource {
-  def parse(json: Map[String, Any]): Material
-}
-
-object SvnMaterial extends MaterialSource {
-  def parse(json: Map[String, Any]) = json("url") match {
-    case url: String => new SvnMaterial(url)
-    case _ => null
-  }
-}
-object GitMaterial extends MaterialSource {
-  def parse(json: Map[String, Any]) = json("url") match {
-    case url: String => new GitMaterial(url)
-    case _ => null
-  }
-}
-
-
-object Material {
-  def find(vcs: String) = vcs match {
-    case "svn" => SvnMaterial
-    case "git" => GitMaterial
-    case _ => null
-  }
-}
-
-class PipelineConfig(val name: String, val material: Material, val stages: List[PipelineConfig.Stage]) {
+class Pipeline(val name: String, val material: Material, val stages: List[Pipeline.Stage]) {
   def workingDir() = {
     System.getProperty("user.dir") + "/pipelines" + name
   }
 }
 
-object PipelineConfig {
+object Pipeline {
   case class Stage(val name: String, val jobs: Set[Job])
 
 }
 
-class Build(val pipeline: PipelineConfig) {
+class Build(val pipeline: Pipeline) {
   import Build._
   private val stageIterator = pipeline.stages.iterator
   private var currentStage = nextStage
@@ -71,7 +43,7 @@ object Build {
   object Completed extends Stage
   object Failed extends Stage
 
-  class JobStage(val stage: PipelineConfig.Stage, val complete : () => Unit, val fail : () => Unit) extends Stage {
+  class JobStage(val stage: Pipeline.Stage, val complete : () => Unit, val fail : () => Unit) extends Stage {
     private val completedJobs = HashSet[Job]()
     private val failedJobs = HashSet[Job]()
 

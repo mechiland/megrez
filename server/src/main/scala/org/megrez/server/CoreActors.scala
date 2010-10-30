@@ -4,8 +4,8 @@ import actors.Actor
 import java.util.UUID
 import collection.mutable.{HashSet, HashMap}
 
-class PipelineManager(val triggerFactory: PipelineConfig => Trigger) extends Actor {
-  private val pipelines = HashMap[String, Pair[PipelineConfig, Trigger]]()
+class PipelineManager(val triggerFactory: Pipeline => Trigger) extends Actor {
+  private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
 
   def act {
     loop {
@@ -20,12 +20,12 @@ class PipelineManager(val triggerFactory: PipelineConfig => Trigger) extends Act
     }
   }
 
-  private def addPipeline(config: PipelineConfig): Option[(PipelineConfig, Trigger)] = {
+  private def addPipeline(config: Pipeline): Option[(Pipeline, Trigger)] = {
     pipelines.put(config.name, Pair(config, launchTrigger(config)))
   }
 
 
-  private def launchTrigger(config: PipelineConfig): Trigger = {
+  private def launchTrigger(config: Pipeline): Trigger = {
     val trigger = triggerFactory(config)
     trigger.start
     trigger
@@ -47,7 +47,7 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
   def act {
     loop {
       react {
-        case TriggerBuild(config: PipelineConfig) =>
+        case TriggerBuild(config: Pipeline) =>
           val id = UUID.randomUUID
           val build = new Build(config)
           builds.put(id, build)

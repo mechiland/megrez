@@ -5,9 +5,9 @@ import java.io.File
 import collection.mutable._
 import java.util.Calendar
 import main.scala.org.megrez.server.trigger.VersionControl
-import org.megrez.server.{PipelineConfig, TriggerMessage}
+import org.megrez.server.{Pipeline, TriggerMessage}
 
-class Git(val pipeline: PipelineConfig) extends VersionControl {
+class Git(val pipeline: Pipeline) extends VersionControl {
   private val MonthConverter = HashMap("Jan" -> 1, "Feb" -> 2, "Mar" -> 3, "Apr" -> 4, "May" -> 5, "Jun" -> 6, "Jul" -> 7, "Aug" -> 8, "Sep" -> 9, "Oct" -> 10, "Nov" -> 11, "Dec" -> 12)
 
   private val repositoryUrl: String = pipeline.material.url

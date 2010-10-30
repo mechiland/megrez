@@ -20,10 +20,10 @@ case class JobConfirm(val agent : Agent, val job: Job) extends JobMessage
 case class JobReject(val agent : Agent) extends JobMessage
 case class JobFinished(val agent : Actor, val pipeline: String, val stage: String, val revision: String) extends JobMessage
 
-case class AddPipeline(config : PipelineConfig)
-case class PipelineChanged(config : PipelineConfig)
+case class AddPipeline(config : Pipeline)
+case class PipelineChanged(config : Pipeline)
 
-case class TriggerBuild(config : PipelineConfig)
+case class TriggerBuild(config : Pipeline)
 
 case class JobScheduled(build : UUID, jobs : Set[Job])
 case class JobCompleted(build : UUID, job : Job)

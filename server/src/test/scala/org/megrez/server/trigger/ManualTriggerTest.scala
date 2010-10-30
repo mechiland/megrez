@@ -23,7 +23,7 @@ class ManualTriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach
   var trigger: Actor = _
 
   override def beforeEach() {
-    val vc: VersionControlMocker = new VersionControlMocker(new PipelineConfig("pipeline1", new SvnMaterial("url"), List()))
+    val vc: VersionControlMocker = new VersionControlMocker(new Pipeline("pipeline1", new SvnMaterial("url"), List()))
     trigger = new ManualTrigger(vc, self)
     trigger start
   }
@@ -33,7 +33,7 @@ class ManualTriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach
   }
 }
 
-class VersionControlMocker(val pipeline: PipelineConfig) extends VersionControl {
+class VersionControlMocker(val pipeline: Pipeline) extends VersionControl {
   def checkChange() = {needTriggerScheduler = true}
 
   def getChange(): TriggerMessage = {

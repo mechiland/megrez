@@ -5,7 +5,7 @@ import org.scalatest.Spec
 import java.util.Calendar
 import org.megrez.server.trigger.Git
 import java.lang.String
-import org.megrez.server.{GitMaterial, SvnMaterial, PipelineConfig}
+import org.megrez.server.{GitMaterial, SvnMaterial, Pipeline}
 import org.megrez.server.TestHelper
 
 class GitTest extends Spec with ShouldMatchers with TestHelper {
@@ -15,7 +15,7 @@ class GitTest extends Spec with ShouldMatchers with TestHelper {
       val gitUrl: String = "git@github.com/vincentx/megrez.git"
       val date: Calendar = Calendar.getInstance()
       date.set(2009, 1, 1)
-      val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new GitMaterial(gitUrl), List()) {
+      val pipeline: Pipeline = new Pipeline("pipeline1", new GitMaterial(gitUrl), List()) {
         override def workingDir() = {
           megrezParentFolder
         }

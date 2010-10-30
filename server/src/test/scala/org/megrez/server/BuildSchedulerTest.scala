@@ -5,7 +5,7 @@ import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 import actors.Actor._
 import actors.TIMEOUT
-import org.megrez.server.PipelineConfig.Stage
+import org.megrez.server.Pipeline.Stage
 import java.util.UUID
 
 class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
@@ -14,7 +14,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
   describe("Build scheduler") {
     it("should send the first job in pipeline to dispatcher") {
       val job = new Job("job1", Set[String](), List[Task]())
-      val config = new PipelineConfig("pipeline", null, List(createStage("unit test", job)))
+      val config = new Pipeline("pipeline", null, List(createStage("unit test", job)))
 
       val scheduler = new BuildScheduler(self)
       scheduler ! TriggerBuild(config)
@@ -31,7 +31,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     it("should send jobs from next stage if first stage completed") {
       val job1 = new Job("job1", Set[String](), List[Task]())
       val job2 = new Job("job2", Set[String](), List[Task]())
-      val config = new PipelineConfig("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
+      val config = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
       val scheduler = new BuildScheduler(self)
       scheduler ! TriggerBuild(config)

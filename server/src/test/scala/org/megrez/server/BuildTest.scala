@@ -2,14 +2,14 @@ package org.megrez.server
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Spec
-import org.megrez.server.PipelineConfig.Stage
+import org.megrez.server.Pipeline.Stage
 import java.lang.String
 import collection.immutable.Set
 
 class BuildTest extends Spec with ShouldMatchers {
   describe("Build") {
     it("should return job from stage") {
-      val pipeline = new PipelineConfig("pipeline", null, List(createStage("stage1")))
+      val pipeline = new Pipeline("pipeline", null, List(createStage("stage1")))
 
       new Build(pipeline).current.jobs match {
         case Some(jobs: Set[Job]) =>
@@ -20,7 +20,7 @@ class BuildTest extends Spec with ShouldMatchers {
     }
 
     it("should return same job if previous job not complet") {
-      val pipeline = new PipelineConfig("pipeline", null, List(createStage("stage1"), createStage("stage2")))
+      val pipeline = new Pipeline("pipeline", null, List(createStage("stage1"), createStage("stage2")))
       val build = new Build(pipeline)
       build.current.jobs.get should have size (1)
       build.current.jobs.get should be === build.current.jobs.get
@@ -29,7 +29,7 @@ class BuildTest extends Spec with ShouldMatchers {
     it("should return job from next stage when first stage successful") {
       val job1 = createJob("job1")
       val job2 = createJob("job2")
-      val pipeline = new PipelineConfig("pipeline", null, List(createStage("stage1", job1),
+      val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job1),
         createStage("stage1", job2)))
       val build = new Build(pipeline)
       build.current.complete(job1) should be === true
@@ -40,7 +40,7 @@ class BuildTest extends Spec with ShouldMatchers {
 
     it("should return Completed if all stage finished") {
       val job = createJob("job1")
-      val pipeline = new PipelineConfig("pipeline", null, List(createStage("stage1", job)))
+      val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job)))
       val build = new Build(pipeline)
       build.current.complete(job)
       build.current should be === Build.Completed
@@ -49,7 +49,7 @@ class BuildTest extends Spec with ShouldMatchers {
     it("should return Failed if any job failed") {
       val job1 = createJob("job1")
       val job2 = createJob("job2")
-      val pipeline = new PipelineConfig("pipeline", null, List(createStage("stage1", job1), createStage("stage1", job2)))
+      val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job1), createStage("stage1", job2)))
       val build = new Build(pipeline)
       build.current.fail(job1)
       build.current should be === Build.Failed

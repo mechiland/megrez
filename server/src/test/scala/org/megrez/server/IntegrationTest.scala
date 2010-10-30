@@ -122,7 +122,7 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
   override def beforeEach() {
     svnDir = System.getProperty("user.dir") + "/src/test/resources/repository/svn"
     svnUrl = "file://" + new File(svnDir).getAbsolutePath();
-    val pipeline: PipelineConfig = new PipelineConfig("pipeline1", new SvnMaterial(svnUrl), List())
+    val pipeline: Pipeline = new Pipeline("pipeline1", new SvnMaterial(svnUrl), List())
     svn = new Svn(pipeline)
     scheduler = new Dispatcher()
     trigger = new ManualTrigger(svn, scheduler)
