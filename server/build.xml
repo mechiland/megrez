@@ -1,79 +1,70 @@
 <?xml version="1.0"?>
 
 <project name="scala_sample_project" default="test" basedir=".">
-  	
-	<property environment="env" />
-	<property name="scala.home"        	value="${env.SCALA_HOME}"/>	
-  	  
-  	<property name="src.dir"           	value="src/main/scala"/>
-	<property name="test.dir"			value="src/test/scala"/>
-	
-  	<property name="build.dir"         	value="target"/>
-  	<property name="build.test" 		value="${build.dir}/test" />
-  	<property name="build.classes" 		value="${build.dir}/classes" />
-	
-  	<property name="scala-library.jar" value="${scala.home}/lib/scala-library.jar"/>
-  	
-	<target name="clean" description="Removes previous build">
-	   	<delete quiet="true" verbose="false" dir="${build.dir}"/>
-	</target>
-	
-  	<target name="make_dir" depends="clean">
-		<mkdir dir="${build.classes}"/>
-		<mkdir dir="${build.test}"/>
-  	</target>
 
-	<target name="init_classpaths" depends="make_dir">
-  	  	<path id="classpath.build">
-  	  	  	<pathelement location="${scala-library.jar}"/>
-	  	  	<fileset dir="lib">
-				<include name="*.jar" />
-			</fileset>
-  	  	</path>
-	  	<path id="classpath.test">
-			<pathelement location="${build.classes}" />
-	  	  	<pathelement location="lib/scalatest-1.2.jar" />
-	  	  	<fileset dir="${scala.home}/lib">
-				<include name="*.jar" />
-			</fileset>
-            <path refid="classpath.build"/>
-	  	</path>
-	</target>
-	
-	<target name="init_ant_tasks" depends="init_classpaths">
-  	  	<taskdef resource="scala/tools/ant/antlib.xml">
-  	  	  	<classpath>
-  	  	  	  	<pathelement location="${scala.home}/lib/scala-compiler.jar"/>
-  	  	  	  	<pathelement location="${scala-library.jar}"/>
-  	  	  	</classpath>
-  	  	</taskdef>
-	    <taskdef name="scalatest" classname="org.scalatest.tools.ScalaTestAntTask">
-	      <classpath refid="classpath.test"/>
-	    </taskdef>
-	</target>
+    <property environment="env"/>
+    <property name="scala.home" value="${env.SCALA_HOME}"/>
 
-    <target name="compile" depends="init_ant_tasks">
-	 	<scalac srcdir="${src.dir}"
-	            destdir="${build.classes}"
-	            classpathref="classpath.build"
-				deprecation="on"
-	            force="changed">
-	    </scalac>
+    <property name="src.dir" value="src/main/scala"/>
+    <property name="test.dir" value="src/test/scala"/>
+
+    <property name="build.dir" value="target"/>
+    <property name="build.test" value="${build.dir}/test"/>
+    <property name="build.classes" value="${build.dir}/classes"/>
+
+    <property name="scala-library" value="${scala.home}/lib/scala-library.jar"/>
+
+    <path id="classpath.build">
+        <pathelement location="${scala-library}"/>
+        <fileset dir="lib">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+    <path id="classpath.test">
+        <pathelement location="${build.classes}"/>
+        <path refid="classpath.build"/>
+    </path>
+
+    <target name="clean" description="Removes previous build">
+        <delete quiet="true" verbose="false" dir="${build.dir}"/>
     </target>
-	
-	<target name="test" depends="compile">
-		<scalac srcdir="${test.dir}"
-				destdir="${build.test}"
-				classpathref="classpath.test"
-				force="changed">
-		</scalac>
-		<scalatest>
-			<runpath>
-				<pathelement location="${build.test}"/>
-			</runpath>
-			<reporter type="stdout"/>
-			<wildcard package="org.megrez.server"/>
-		</scalatest>
-	</target>
+
+    <target name="make_dir" depends="clean">
+        <mkdir dir="${build.classes}"/>
+        <mkdir dir="${build.test}"/>
+    </target>
+
+    <target name="compile" depends="make_dir">
+        <taskdef resource="scala/tools/ant/antlib.xml">
+            <classpath>
+                <pathelement location="${scala.home}/lib/scala-compiler.jar"/>
+                <pathelement location="${scala-library}"/>
+            </classpath>
+        </taskdef>
+        <fsc srcdir="${src.dir}"
+                destdir="${build.classes}"
+                classpathref="classpath.build"
+                deprecation="on"
+                force="changed">
+        </fsc>
+    </target>
+
+    <target name="test" depends="compile">
+        <taskdef name="scalatest" classname="org.scalatest.tools.ScalaTestAntTask">
+            <classpath refid="classpath.test"/>
+        </taskdef>
+        <scalac srcdir="${test.dir}"
+                destdir="${build.test}"
+                classpathref="classpath.test"
+                force="changed">
+        </scalac>
+        <scalatest haltonfailure="true">
+            <runpath>
+                <pathelement location="${build.test}"/>
+            </runpath>
+            <reporter type="stdout"/>
+            <wildcard package="org.megrez.server"/>
+        </scalatest>
+    </target>
 </project>
 
