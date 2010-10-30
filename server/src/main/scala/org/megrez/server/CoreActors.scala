@@ -55,12 +55,12 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
         case JobCompleted(id: UUID, job: Job) =>
           builds.get(id) match {
             case Some(build: Build) =>
-              if (build.current.complete(job)) {
-                build.current match {
-                  case Build.Completed =>
-                  case Build.Failed =>
-                  case _ => triggerJobs(id, build)
-                }
+              build.complete(job) match {
+                case Some(Build.Completed) =>
+                case Some(Build.Failed) =>
+                case Some(stage: Build.Stage) =>
+                  triggerJobs(id, build)
+                case None =>
               }
             case None =>
           }
@@ -69,12 +69,8 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
     }
   }
 
-  private def triggerJobs(id: UUID, build: Build): Unit = {
-    build.current.jobs match {
-      case Some(jobs: Set[Job]) =>
-        dispatcher ! JobScheduled(id, jobs)
-      case None =>
-    }
+  private def triggerJobs(id: UUID, build: Build) {
+    dispatcher ! JobScheduled(id, build.current.jobs)
   }
 
   start

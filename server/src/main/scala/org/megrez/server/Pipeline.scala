@@ -20,7 +20,7 @@ class Build(val pipeline: Pipeline) {
 
   def current = currentStage
 
-  private def nextStage = if (stageIterator.hasNext) new JobStage(stageIterator.next, next, fail) else Completed
+  private def nextStage = if (stageIterator.hasNext) new JobStage(stageIterator.next) else Completed
 
   private def next() {
     currentStage = nextStage
@@ -29,36 +29,75 @@ class Build(val pipeline: Pipeline) {
   private def fail() {
     currentStage = Build.Failed
   }
+
+  def complete(job: Job): Option[Stage] = {
+    currentStage.complete(job)
+    currentStage.status match {
+      case Build.Stage.Status.Completed =>
+        currentStage = nextStage
+        Some(currentStage)
+      case Build.Stage.Status.Failed =>
+        Some(Build.Failed)
+      case Build.Stage.Status.Ongoing =>
+        None
+    }
+  }
+
+  def fail(job: Job): Option[Stage] = {
+    currentStage.fail(job)
+    currentStage.status match {
+      case Build.Stage.Status.Failed =>
+        Some(Build.Failed)
+      case Build.Stage.Status.Ongoing =>
+        None
+    }    
+  }
 }
 
 object Build {
   trait Stage {
-    def jobs: Option[Set[Job]] = None
-
-    def complete(job: Job) = false
-
+    import Stage.Status._
+    def jobs: Set[Job] = Set[Job]()
+    def status: Status
+    def complete(job: Job) {}    
     def fail(job: Job) {}
   }
 
-  object Completed extends Stage
-  object Failed extends Stage
+  object Stage {
+    object Status extends Enumeration {
+      type Status = Value
+      val Completed, Failed, Ongoing = Value
+    }
+  }
 
-  class JobStage(val stage: Pipeline.Stage, val complete: () => Unit, val fail: () => Unit) extends Stage {
+  object Completed extends Stage {
+    override def status = Stage.Status.Completed
+  }
+  object Failed extends Stage {
+    override def status = Stage.Status.Failed
+  }
+
+  class JobStage(val stage: Pipeline.Stage) extends Stage {
     private val completedJobs = HashSet[Job]()
     private val failedJobs = HashSet[Job]()
+    private var stageStatus = Stage.Status.Ongoing
 
-    override def jobs: Option[Set[Job]] = if (failedJobs.isEmpty) Some(stage.jobs) else None
+    override def jobs: Set[Job] = stage.jobs    
 
-    override def complete(job: Job) = {
+    override def status = stageStatus
+
+    override def complete(job : Job) {
       completedJobs.add(job)
-      val completed = completedJobs == stage.jobs
-      if (completed) complete()
-      completed
+      if (completedJobs == stage.jobs)
+        stageStatus = Stage.Status.Completed
+      else if (failedJobs.size + completedJobs.size == stage.jobs.size)
+        stageStatus = Stage.Status.Failed
     }
 
-    override def fail(job: Job) {
-      failedJobs.add(job)
-      fail()
+    override def fail(job : Job) {
+      failedJobs.add(job)      
+      if (failedJobs.size + completedJobs.size == stage.jobs.size)
+        stageStatus = Stage.Status.Failed
     }
   }
 }

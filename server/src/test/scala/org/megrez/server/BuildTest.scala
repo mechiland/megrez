@@ -11,39 +11,43 @@ class BuildTest extends Spec with ShouldMatchers {
     it("should return job from stage") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("stage1")))
 
-      new Build(pipeline).current.jobs match {
-        case Some(jobs: Set[Job]) =>
-          jobs should have size (1)
-          jobs.head.name should equal("stage1 job")
-        case None => fail
-      }
+      val build = new Build(pipeline)
+
+      val jobs = build.current.jobs
+      jobs should have size (1)
+      jobs.head.name should equal("stage1 job")
     }
 
     it("should return same job if previous job not complet") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("stage1"), createStage("stage2")))
       val build = new Build(pipeline)
-      build.current.jobs.get should have size (1)
-      build.current.jobs.get should be === build.current.jobs.get
+      build.current.jobs should have size (1)
+      build.current.jobs should be === build.current.jobs
     }
 
     it("should return job from next stage when first stage successful") {
       val job1 = createJob("job1")
       val job2 = createJob("job2")
-      val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job1),
-        createStage("stage1", job2)))
+      val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job1), createStage("stage1", job2)))
       val build = new Build(pipeline)
-      build.current.complete(job1) should be === true
-      val jobs = build.current.jobs.get
-      jobs should have size (1)
-      jobs.head.name should equal("job2")
+      build.complete(job1) match {
+        case Some(stage : Build.Stage) =>
+          build.current should be === stage
+          val jobs = stage.jobs
+          jobs should have size (1)
+          jobs.head.name should equal("job2")        
+        case _ => fail
+      }
     }
 
     it("should return Completed if all stage finished") {
       val job = createJob("job1")
       val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job)))
       val build = new Build(pipeline)
-      build.current.complete(job)
-      build.current should be === Build.Completed
+      build.complete(job) match {
+        case Some(Build.Completed) =>
+        case _ => fail
+      }
     }
 
     it("should return Failed if any job failed") {
@@ -51,14 +55,16 @@ class BuildTest extends Spec with ShouldMatchers {
       val job2 = createJob("job2")
       val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job1), createStage("stage1", job2)))
       val build = new Build(pipeline)
-      build.current.fail(job1)
-      build.current should be === Build.Failed
+      build.fail(job1) match {
+        case Some(Build.Failed) =>
+        case _ => fail
+      }
     }
   }
 
   def createJob(name: String): Job = new Job(name, Set[String](), List[Task]())
 
-  def createStage(name: String): Stage =  Stage(name, Set(createJob(name + " job")))  
+  def createStage(name: String): Stage = Stage(name, Set(createJob(name + " job")))
 
-  def createStage(name: String, job : Job): Stage = Stage(name, Set(job))  
+  def createStage(name: String, job: Job): Stage = Stage(name, Set(job))
 }
