@@ -102,7 +102,7 @@ trait AgentTestSuite extends Spec {
     receiveWithin(2000) {
       case "agentGotJob" =>
       case TIMEOUT => fail
-      case _ => fail
+      case msg: Any => println(msg); fail
     }
   }
   def expectAgentFinishedJob: Unit = {

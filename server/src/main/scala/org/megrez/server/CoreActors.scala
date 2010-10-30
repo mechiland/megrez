@@ -87,13 +87,20 @@ class Dispatcher extends Actor {
   def act() {
     loop {
       react {
-        case message: TriggerMessage => trigger(message.pipelineName, Configuration.firstStage(message.pipelineName))
+        case message: JobScheduled =>
+          message.jobs.forall( jobQueue.add _ )
+          jobQueue.foreach(assignJob _)
+          reply(Success())
         case connection: AgentConnect => registerAgent(connection.agent)
         case message: JobConfirm => handleJobConfirm(message)
         case message: JobFinished => handleJobFinished(message)
         case _: Exit => exit
       }
     }
+  }
+
+  private def assignJob(job: Job) {
+    idleAgents.foreach( _ ! new JobRequest(null, null, job))
   }
 
   def jobs = jobQueue.toSet
