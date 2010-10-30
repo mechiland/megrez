@@ -18,8 +18,8 @@ case class Request(val method : Method, val uri: String, val content: String){
 	        }
 
 			val _type = vcs("type").asInstanceOf[String]
-	        val material = Material.find(_type)
-	        new Pipeline(pipeline("name").asInstanceOf[String], material.parse(vcs), List())
+	        val material = Material.parse(_type, vcs)
+	        new Pipeline(pipeline("name").asInstanceOf[String], material, List())
 	      case None => null
 		}
 	}
