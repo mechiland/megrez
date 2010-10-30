@@ -79,9 +79,9 @@ object Build {
 
     override def complete(job: Job) = {
       completedJobs.add(job)
-      if (completedJobs == stage.jobs)
-        complete()
-      (completedJobs.size + failedJobs.size) == stage.jobs.size
+      val completed = completedJobs == stage.jobs
+      if (completed) complete()
+      completed
     }
 
     override def fail(job: Job) {
