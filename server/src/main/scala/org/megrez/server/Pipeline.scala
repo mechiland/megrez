@@ -50,50 +50,46 @@ class Build(val pipeline: PipelineConfig) {
 
   def current = currentStage
 
-  def complete(stage: Build.Stage) {
+  private def nextStage = if (stageIterator.hasNext) new JobStage(stageIterator.next, next, fail) else Completed
+
+  private def next() {
     currentStage = nextStage
   }
 
-  def fail(stage: Build.Stage) {
+  private def fail() {
     currentStage = Build.Failed
-  }
-
-  private def nextStage = if (stageIterator.hasNext) Build.Stage(stageIterator.next, this) else Completed
+  }  
 }
 
 object Build {
-  
-  case class Stage(val stage: PipelineConfig.Stage, val build: Build) {
+  trait Stage {
+    def jobs: Option[Set[Job]] = None
+    def complete(job: Job) = false
+    def fail(job: Job) {}
+  }
+
+  object Completed extends Stage
+  object Failed extends Stage
+
+  class JobStage(val stage: PipelineConfig.Stage, val complete : () => Unit, val fail : () => Unit) extends Stage {
     private val completedJobs = HashSet[Job]()
     private val failedJobs = HashSet[Job]()
 
-    def jobs: Option[Set[Job]] = if (failedJobs.isEmpty) Some(stage.jobs) else None
+    override def jobs: Option[Set[Job]] = if (failedJobs.isEmpty) Some(stage.jobs) else None
 
-    def complete(job: Job) = {
+    override def complete(job: Job) = {
       completedJobs.add(job)
       if (completedJobs == stage.jobs)
-        build.complete(this)
+        complete()
       (completedJobs.size + failedJobs.size) == stage.jobs.size
     }
 
-    def fail(job: Job) {
+    override def fail(job: Job) {
       failedJobs.add(job)
-      build.fail(this)
+      fail()
     }
-  }
-  object Completed extends Stage(null, null) {
-    override def jobs: Option[Set[Job]] = None
-    override def complete(job: Job) = false
-    override def fail(job: Job) {}
-  }
-
-  object Failed extends Stage(null, null) {
-    override def jobs: Option[Set[Job]] = None
-    override def complete(job: Job) = false
-    override def fail(job: Job) {}    
-  }
+  }  
 }
-
 
 class Job(val name: String, val resources: Set[String], val tasks: List[Task])
 
