@@ -60,7 +60,7 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
                   case Build.Completed =>
                   case Build.Failed =>
                   case _ => triggerJobs(id, build)
-                }                
+                }
               }
             case None =>
           }
@@ -80,55 +80,47 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
   start
 }
 
-class Dispatcher extends Actor {
+class Dispatcher(scheduler: Actor) extends Actor {
   private val jobQueue = new HashSet[Job]()
   private val idleAgents = new HashSet[Actor]()
 
   def act() {
     loop {
       react {
-        case message: JobScheduled =>
-          message.jobs.forall( jobQueue.add _ )
-          jobQueue.foreach(assignJob _)
+        case message: AgentConnect => {
+          idleAgents.add(message.agent)
           reply(Success())
-        case connection: AgentConnect => registerAgent(connection.agent)
-        case message: JobConfirm => handleJobConfirm(message)
-        case message: JobFinished => handleJobFinished(message)
+        }
+
+        case message: JobScheduled => {
+          message.jobs.forall(jobQueue.add _)
+          jobQueue.foreach(assignJob(message.build, _))
+          reply(Success())
+        }
+
+        case message: JobConfirm => {
+          jobQueue.remove(message.job)
+          idleAgents.remove(message.agent)
+          reply(Success())
+        }
+
+        case message: JobFinished => {
+          idleAgents.add(message.agent)
+          scheduler ! new JobCompleted(message.buildId, message.job)
+          reply(Success())
+        }
+
         case _: Exit => exit
       }
     }
   }
 
-  private def assignJob(job: Job) {
-    idleAgents.foreach( _ ! new JobRequest(null, null, job))
+  private def assignJob(buildId: UUID, job: Job) {
+    idleAgents.foreach(_ ! new JobRequest(buildId, null, null, job))
   }
 
   def jobs = jobQueue.toSet
 
   def agents = idleAgents.toSet
-
-  private def registerAgent(agent: Actor) {
-    idleAgents add agent
-    reply(Success())
-  }
-
-  private def handleJobConfirm(message: JobConfirm) {
-    jobQueue.remove(message.job)
-    idleAgents.remove(message.agent)
-  }
-
-  private def handleJobFinished(message: JobFinished) {
-    idleAgents.add(message.agent)
-    if (Configuration.hasNextStage(message.pipeline, message.stage)) {
-      trigger(message.pipeline, Configuration.nextStage(message.pipeline, message.stage))
-    }
-  }
-
-  private def trigger(pipeline: String, stage: String) {
-    val job = new Job(pipeline, Set(), List())
-    jobQueue.add(job)
-    idleAgents.foreach(_ ! new JobRequest(pipeline, stage, job))
-    reply(Success())
-  }
 
 }

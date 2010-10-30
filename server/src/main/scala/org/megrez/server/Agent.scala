@@ -3,7 +3,7 @@ package org.megrez.server
 import actors._
 import scala.collection.mutable._
 
-class Agent(handler: AgentHandler, scheduler: Actor) extends Actor {
+class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
   import AgentStatus._
 
   private var _resources = new HashSet[String]()
@@ -48,7 +48,7 @@ class Agent(handler: AgentHandler, scheduler: Actor) extends Actor {
 
   private def handleFinished(message: JobFinished) {
     _status = Idle
-    scheduler ! message
+    dispatcher ! message
     reply(Success())
   }
 

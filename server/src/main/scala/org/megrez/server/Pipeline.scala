@@ -1,8 +1,6 @@
 package org.megrez.server
 
-import org.megrez.server.VCSConfig
-
-import collection.mutable.{HashMap, HashSet}
+import collection.mutable.HashSet
 
 class Pipeline(val name: String, val material: Material, val stages: List[Pipeline.Stage]) {
   def workingDir() = {
@@ -30,20 +28,22 @@ class Build(val pipeline: Pipeline) {
 
   private def fail() {
     currentStage = Build.Failed
-  }  
+  }
 }
 
 object Build {
   trait Stage {
     def jobs: Option[Set[Job]] = None
+
     def complete(job: Job) = false
+
     def fail(job: Job) {}
   }
 
   object Completed extends Stage
   object Failed extends Stage
 
-  class JobStage(val stage: Pipeline.Stage, val complete : () => Unit, val fail : () => Unit) extends Stage {
+  class JobStage(val stage: Pipeline.Stage, val complete: () => Unit, val fail: () => Unit) extends Stage {
     private val completedJobs = HashSet[Job]()
     private val failedJobs = HashSet[Job]()
 
@@ -60,7 +60,7 @@ object Build {
       failedJobs.add(job)
       fail()
     }
-  }  
+  }
 }
 
 class Job(val name: String, val resources: Set[String], val tasks: List[Task])
