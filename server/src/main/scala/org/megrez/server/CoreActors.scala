@@ -41,7 +41,7 @@ class PipelineManager(val triggerFactory: Pipeline => Trigger) extends Actor {
   start
 }
 
-class BuildScheduler(val dispatcher: Actor) extends Actor {
+class BuildScheduler(val dispatcher: Actor, val buildManager: Actor) extends Actor {
   private val builds = HashMap[UUID, Build]()
 
   def act {
@@ -57,9 +57,24 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
             case Some(build: Build) =>
               build.complete(job) match {
                 case Some(Build.Completed) =>
+                  buildManager ! BuildCompleted(build)
+                  builds.remove(id)
                 case Some(Build.Failed) =>
+                  buildManager ! BuildFailed(build)
+                  builds.remove(id)
                 case Some(stage: Build.Stage) =>
                   triggerJobs(id, build)
+                case None =>
+              }
+            case None =>
+          }
+        case JobFailed(id: UUID, job: Job) =>
+          builds.get(id) match {
+            case Some(build: Build) =>
+              build.fail(job) match {
+                case Some(Build.Failed) =>
+                  buildManager ! BuildFailed(build)
+                  builds.remove(id)
                 case None =>
               }
             case None =>
