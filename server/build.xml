@@ -53,11 +53,11 @@
         <taskdef name="scalatest" classname="org.scalatest.tools.ScalaTestAntTask">
             <classpath refid="classpath.test"/>
         </taskdef>
-        <scalac srcdir="${test.dir}"
+        <fsc srcdir="${test.dir}"
                 destdir="${build.test}"
                 classpathref="classpath.test"
                 force="changed">
-        </scalac>
+        </fsc>
         <scalatest haltonfailure="true">
             <runpath>
                 <pathelement location="${build.test}"/>

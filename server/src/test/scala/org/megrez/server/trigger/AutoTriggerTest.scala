@@ -11,7 +11,7 @@ class AutoTriggerTest  extends Spec with ShouldMatchers with BeforeAndAfterEach{
   describe("should trigger schedule automatically"){
     it("when default delay time"){
       receiveWithin(2000) {
-        case msg: TriggerMessage => println("success")
+        case msg: TriggerMessage => 
         case _ => fail
       }
     }
@@ -29,11 +29,7 @@ class AutoTriggerTest  extends Spec with ShouldMatchers with BeforeAndAfterEach{
 }
 
 class VersionControlMocker(val pipeline: Pipeline) extends VersionControl {
-  def checkChange() = {needTriggerScheduler = true}
+  def checkChange() = {true}
 
-  def getChange(): TriggerMessage = {
-    if (needTriggerScheduler)
-      return new TriggerMessage(pipeline.name, "1")
-    return null
-  }
+  def getChange() = new TriggerMessage(pipeline.name, "1")
 }

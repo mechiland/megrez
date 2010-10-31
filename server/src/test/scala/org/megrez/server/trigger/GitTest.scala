@@ -1,29 +1,43 @@
-package scala.org.megrez.server.trigger
+package org.megrez.server.trigger
 
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.Spec
 import java.util.Calendar
-import org.megrez.server.trigger.Git
 import java.lang.String
-import org.megrez.server.{GitMaterial, SvnMaterial, Pipeline}
-import org.megrez.server.TestHelper
+import org.megrez.server.{GitMaterial, Pipeline}
+import org.megrez.server.trigger.{GitTestRepo, Git}
+import org.scalatest.{BeforeAndAfterEach, Spec}
+import java.io.File
+import org.megrez.server.util.{Utils, EnvUtil}
 
-class GitTest extends Spec with ShouldMatchers with TestHelper {
-  
-  describe("should get latest repository revision") {
-    it("from Git") {
-      val gitUrl: String = "git@github.com/vincentx/megrez.git"
-      val date: Calendar = Calendar.getInstance()
-      date.set(2009, 1, 1)
-      val pipeline: Pipeline = new Pipeline("pipeline1", new GitMaterial(gitUrl), List()) {
-        override def workingDir() = {
-          megrezParentFolder
-        }
-      }
-      val git: Git = new Git(pipeline)
-
-      git.checkChange
-      git.getChange.pipelineName should be === "pipeline1"
+class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with GitTestRepo {
+  describe("Git") {
+    it("should detect change for the first time") {
+      git.checkChange should be === true
     }
+    it("should not detect change if no new check in") {
+      git.checkChange
+      git.checkChange should be === false
+    }
+    it("should detect change given new check in") {
+      git.checkChange
+      makeNewCommit
+      git.checkChange should be === true
+    }
+  }
+
+  var git: Git = _
+
+  override def beforeEach() {
+    setupGitRepo
+    val pipeline: Pipeline = new Pipeline("pipeline1", new GitMaterial(gitUrl), List()) {
+      override def workingDir() = {
+        new File(EnvUtil.tempDir(), Utils.aRandomName)
+      }
+    }
+    git = new Git(pipeline)
+  }
+
+  override def afterEach() {
+    teardownGitRepo
   }
 }

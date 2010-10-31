@@ -1,20 +1,36 @@
-package scala.org.megrez.server.trigger
+package org.megrez.server.trigger
 
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.Spec
-import org.megrez.server.trigger.Svn
-import java.lang.String
 import org.megrez.server.{SvnMaterial, Pipeline}
-import org.megrez.server.TestHelper
+import org.scalatest.{BeforeAndAfterEach, Spec}
 
-class SvnTest extends Spec with ShouldMatchers with TestHelper {
-  describe("shoud get latest revision number") {
-    it("when repository is SVN") {
-      val svnDir: String = megrezParentFolder() + "/megrez/server/src/test/resources/repository/svn"
-      val pipeline: Pipeline = new Pipeline("pipeline1", new SvnMaterial("file://" + svnDir), List())
-      val svn: Svn = new Svn(pipeline)
-      svn.checkChange()
-      svn.getChange.pipelineName should be === "pipeline1"
+class SvnTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnTestRepo {
+  describe("Svn") {
+    it("should detect change for the first time") {
+      svn.checkChange should be === true
+      svn.currentRevision should be === "0"
     }
+    it("should not detect change if no new check in") {
+      svn.checkChange
+      svn.checkChange should be === false
+    }
+    it("should detect change given new check in") {
+      svn.checkChange
+      makeNewCommit
+      svn.checkChange should be === true
+      svn.currentRevision should be === "1"
+    }
+  }
+
+  var svn: Svn = _
+
+  override def beforeEach() {
+    setupSvnRepo
+    val pipeline: Pipeline = new Pipeline("pipeline1", new SvnMaterial(svnUrl), List())
+    svn = new Svn(pipeline)
+  }
+
+  override def afterEach() {
+    teardownSvnRepo
   }
 }

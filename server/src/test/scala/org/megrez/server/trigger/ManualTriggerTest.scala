@@ -34,11 +34,6 @@ class ManualTriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach
 }
 
 class VersionControlMocker(val pipeline: Pipeline) extends VersionControl {
-  def checkChange() = {needTriggerScheduler = true}
-
-  def getChange(): TriggerMessage = {
-    if (needTriggerScheduler)
-      return new TriggerMessage(pipeline.name, "1")
-    return null
-  }
+  def checkChange() = {true}
+  def getChange() = new TriggerMessage(pipeline.name, "1")
 }

@@ -9,10 +9,9 @@ trait Trigger {
   val target: Actor
 
   def triggerRevision = {
-    versionControl.checkChange()
-    val buildChange: TriggerMessage = versionControl.getChange
-    if (buildChange != null) {
-      target ! buildChange
+    val changed = versionControl.checkChange()
+    if (changed) {
+      target ! versionControl.getChange
     }
   }
 }
