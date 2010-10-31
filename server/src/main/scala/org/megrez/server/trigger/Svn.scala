@@ -1,10 +1,8 @@
 package org.megrez.server.trigger
 
 import main.scala.org.megrez.server.trigger.VersionControl
-import io.Source
 import org.megrez.server.util.CommandUtil
 import org.megrez.server.{SvnMaterial, Pipeline, TriggerMessage}
-
 class Svn(val pipeline: Pipeline) extends VersionControl {
   private var revision: String = _
 
