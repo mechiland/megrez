@@ -4,10 +4,10 @@ import java.lang.String
 import java.io.File
 import main.scala.org.megrez.server.trigger.VersionControl
 import org.megrez.server.util.CommandUtil
-import org.megrez.server.{TriggerMessage, Pipeline}
+import org.megrez.server.{GitMaterial, TriggerMessage, Pipeline}
 
 class Git(val pipeline: Pipeline) extends VersionControl {
-  private val gitUrl: String = pipeline.material.url
+  private val gitUrl: String = pipeline.material.asInstanceOf[GitMaterial].url
   private var revision: String = _
 
   def currentRevision = revision

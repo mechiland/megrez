@@ -1,10 +1,11 @@
 package org.megrez.server
 
 import collection.mutable.{HashMap, HashSet}
+import vcs.VersionControl
 
-class Material(val url: String)
-class SvnMaterial(override val url: String) extends Material(url)
-class GitMaterial(override val url: String) extends Material(url)
+class Material(val url: String) extends VersionControl
+class SvnMaterial(val url: String) extends VersionControl
+class GitMaterial(val url: String) extends VersionControl
 
 object Material {
   def parse(vcs: String, json: Map[String, Any]) = vcs match {

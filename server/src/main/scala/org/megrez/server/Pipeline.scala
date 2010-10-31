@@ -2,8 +2,9 @@ package org.megrez.server
 
 import collection.mutable.HashSet
 import java.io.File
+import vcs.VersionControl
 
-class Pipeline(val name: String, val material: Material, val stages: List[Pipeline.Stage]) {
+class Pipeline(val name: String, val material: VersionControl, val stages: List[Pipeline.Stage]) {
   def workingDir() = {
     new File(System.getProperty("user.dir") + "/pipelines/" + name)
   }
