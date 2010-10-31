@@ -1,35 +1,33 @@
 package org.megrez.server.trigger
 
-import main.scala.org.megrez.server.trigger.VersionControl
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{BeforeAndAfterEach, Spec}
-import org.megrez.server.{SvnMaterial, Pipeline, TriggerMessage}
 import scala.actors._
 import Actor._
+import org.megrez.server.{TriggerBuild, Pipeline}
+import org.scalatest.mock.MockitoSugar
 
-class AutoTriggerTest  extends Spec with ShouldMatchers with BeforeAndAfterEach{
-  describe("should trigger schedule automatically"){
-    it("when default delay time"){
+import org.mockito.Mockito._
+
+class AutoTriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
+  describe("Auto trigger") {
+    it("should send trigger message after started") {
       receiveWithin(2000) {
-        case msg: TriggerMessage => 
+        case msg: TriggerBuild =>
         case _ => fail
       }
     }
   }
 
-  var trigger:AutoTrigger =_
-   override def beforeEach() {
-    val vnc: VersionControlMocker = new VersionControlMocker(new Pipeline("pipeline1", new SvnMaterial("url"), List()))
-    trigger = new AutoTrigger(vnc, self)
+  var trigger: AutoTrigger = _
+
+  override def beforeEach() {
+    val pipeline: Pipeline = mock[Pipeline]
+    when(pipeline.checkChange).thenReturn(true)
+    trigger = new AutoTrigger(pipeline, self)
   }
 
   override def afterEach() {
     trigger = null
   }
-}
-
-class VersionControlMocker(val pipeline: Pipeline) extends VersionControl {
-  def checkChange() = {true}
-
-  def getChange() = new TriggerMessage(pipeline.name, "1")
 }

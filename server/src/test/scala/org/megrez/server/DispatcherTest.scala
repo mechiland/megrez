@@ -63,7 +63,8 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
   var dispatcher: Dispatcher = _
 
   override def beforeEach() {
-    dispatcher = new Dispatcher(self);
+    dispatcher = new Dispatcher();
+    dispatcher.buildScheduler = self
     agent = new Agent(new ActorBasedAgentHandler(self), dispatcher)
     agent start;
     dispatcher start;

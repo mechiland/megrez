@@ -4,19 +4,14 @@ import java.lang.String
 import java.io.File
 import main.scala.org.megrez.server.trigger.VersionControl
 import org.megrez.server.util.CommandUtil
-import org.megrez.server.{GitMaterial, TriggerMessage, Pipeline}
-
-class Git(val pipeline: Pipeline) extends VersionControl {
-  private val gitUrl: String = pipeline.material.asInstanceOf[GitMaterial].url
+class Git(val url: String, val workingDir: File) extends VersionControl {
   private var revision: String = _
 
   def currentRevision = revision
-  def getChange() = new TriggerMessage(pipeline.name, revision)
 
   def checkChange() = {
     var changed = false
 
-    val workingDir: File = pipeline.workingDir()
     checkWorkDirectory(workingDir)
 
     CommandUtil.run("git pull", workingDir)
@@ -36,7 +31,7 @@ class Git(val pipeline: Pipeline) extends VersionControl {
       workingDir.mkdirs
     }
     if (!new File(workingDir + "/.git").exists) {
-      CommandUtil.run(String.format("git clone %s .", gitUrl), workingDir)
+      CommandUtil.run(String.format("git clone %s .", url), workingDir)
     }
   }
 }

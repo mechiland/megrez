@@ -1,21 +1,27 @@
-package scala.org.megrez.server.trigger
+package org.megrez.server.trigger
 
 import scala.actors._
 import Actor._
 import org.scalatest.Spec
 import org.scalatest._
+import mock.MockitoSugar
 import org.scalatest.matchers._
 import org.megrez.server._
 import org.megrez.server.Exit
-import main.scala.org.megrez.server.trigger.{ManualTrigger, VersionControl}
+import main.scala.org.megrez.server.trigger.ManualTrigger
+import org.mockito.Mockito._
 
-class ManualTriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-  describe("shoud call versionControl methods") {
-    it("when build revision is setting") {
-      trigger ! "click"
-      receive {
-        case msg: TriggerMessage => println("success")
-        case _ => fail
+class ManualTriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
+  describe("Manual trigger") {
+    it("should send trigger message after clicked") {
+      trigger !? "click" match {
+        case _: Success =>
+        case msg: Any => println(msg); fail
+      }
+      receiveWithin(2000) {
+        case _: TriggerBuild =>
+        case TIMEOUT => fail
+        case msg: Any => println(msg); fail
       }
     }
   }
@@ -23,17 +29,13 @@ class ManualTriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach
   var trigger: Actor = _
 
   override def beforeEach() {
-    val vc: VersionControlMocker = new VersionControlMocker(new Pipeline("pipeline1", new SvnMaterial("url"), List()))
-    trigger = new ManualTrigger(vc, self)
+    val pipeline: Pipeline = mock[Pipeline]
+    when(pipeline.checkChange).thenReturn(true)
+    trigger = new ManualTrigger(pipeline, self)
     trigger start
   }
 
   override def afterEach() {
     trigger ! Exit()
   }
-}
-
-class VersionControlMocker(val pipeline: Pipeline) extends VersionControl {
-  def checkChange() = {true}
-  def getChange() = new TriggerMessage(pipeline.name, "1")
 }

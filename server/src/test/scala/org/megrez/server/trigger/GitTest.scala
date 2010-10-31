@@ -1,10 +1,6 @@
 package org.megrez.server.trigger
 
 import org.scalatest.matchers.ShouldMatchers
-import java.util.Calendar
-import java.lang.String
-import org.megrez.server.{GitMaterial, Pipeline}
-import org.megrez.server.trigger.{GitTestRepo, Git}
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import java.io.File
 import org.megrez.server.util.{Utils, EnvUtil}
@@ -29,12 +25,7 @@ class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with GitT
 
   override def beforeEach() {
     setupGitRepo
-    val pipeline: Pipeline = new Pipeline("pipeline1", new GitMaterial(gitUrl), List()) {
-      override def workingDir() = {
-        new File(EnvUtil.tempDir(), Utils.aRandomName)
-      }
-    }
-    git = new Git(pipeline)
+    git = new Git(gitUrl, new File(EnvUtil.tempDir(), Utils.aRandomName))
   }
 
   override def afterEach() {
