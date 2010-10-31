@@ -1,7 +1,6 @@
 package org.megrez.server.trigger
 
 import org.scalatest.matchers.ShouldMatchers
-import org.megrez.server.{SvnMaterial, Pipeline}
 import org.scalatest.{BeforeAndAfterEach, Spec}
 
 class SvnTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnTestRepo {
@@ -26,8 +25,7 @@ class SvnTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnT
 
   override def beforeEach() {
     setupSvnRepo
-    val pipeline: Pipeline = new Pipeline("pipeline1", new SvnMaterial(svnUrl), List())
-    svn = new Svn(pipeline)
+    svn = new Svn(svnUrl)
   }
 
   override def afterEach() {

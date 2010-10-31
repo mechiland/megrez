@@ -4,10 +4,11 @@ import collection.mutable.HashSet
 import java.io.File
 import vcs.VersionControl
 
-class Pipeline(val name: String, val material: VersionControl, val stages: List[Pipeline.Stage]) {
-  def workingDir() = {
+class Pipeline(val name: String, val material: Material, val stages: List[Pipeline.Stage]) {
+  private def workingDir() = {
     new File(System.getProperty("user.dir") + "/pipelines/" + name)
   }
+  def checkChange() = material.versionControl(workingDir()).checkChange
 }
 
 object Pipeline {

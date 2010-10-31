@@ -91,9 +91,10 @@ class BuildScheduler(val dispatcher: Actor, val buildManager: Actor) extends Act
   start
 }
 
-class Dispatcher(scheduler: Actor) extends Actor {
+class Dispatcher() extends Actor {
   private val jobQueue = new HashSet[Job]()
   private val idleAgents = new HashSet[Actor]()
+  var buildScheduler: Actor = _
 
   def act() {
     loop {
@@ -117,7 +118,7 @@ class Dispatcher(scheduler: Actor) extends Actor {
 
         case message: JobFinished => {
           idleAgents.add(message.agent)
-          scheduler ! new JobCompleted(message.buildId, message.job)
+          buildScheduler ! new JobCompleted(message.buildId, message.job)
           reply(Success())
         }
 
@@ -134,4 +135,5 @@ class Dispatcher(scheduler: Actor) extends Actor {
 
   def agents = idleAgents.toSet
 
+  start
 }
