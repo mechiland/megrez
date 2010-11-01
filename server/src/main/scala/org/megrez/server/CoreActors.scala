@@ -15,6 +15,7 @@ class PipelineManager(val triggerFactory: Pipeline => Trigger) extends Actor {
         case message: PipelineChanged =>
           removePipeline(message.config.name)
           addPipeline(message.config)
+        case _: Exit => exit
         case _ =>
       }
     }
@@ -79,6 +80,7 @@ class BuildScheduler(val dispatcher: Actor, val buildManager: Actor) extends Act
               }
             case None =>
           }
+        case _: Exit => exit
         case _ =>
       }
     }
