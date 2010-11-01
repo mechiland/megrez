@@ -2,48 +2,25 @@ package org.megrez.vcs
 
 import java.io.File
 import xml.XML
+import org.megrez.runtime.ShellCommand
 
-class Subversion(val url: String) extends VersionControl {
-  def changes(workingDir: File): Option[Any] = {
-    val process = Runtime.getRuntime().exec("svn info " + url + " --xml")
-    process.waitFor match {
-      case 0 =>
-        val svnInfo = XML.load(process.getInputStream)
-        Some(Integer.parseInt(((svnInfo \\ "entry")(0) \ "@revision").text))
-      case _ => None
-    }
-  }
+class Subversion(val url: String) extends VersionControl with ShellCommand {
+  def changes(workingDir: File): Option[Any] =
+    Some(Integer.parseInt(((XML.load(run("svn info " + url + " --xml").getInputStream) \\ "entry")(0) \ "@revision").text))
 
-  def isRepository(workingDir: File): Boolean = {
-    val process = Runtime.getRuntime().exec("svn info " + workingDir.getAbsolutePath)
-    process.waitFor match {
-      case 0 => true
-      case _ => false
-    }
-  }
+  def isRepository(workingDir: File): Boolean = check("svn info " + workingDir.getAbsolutePath)
 
   def checkout(workingDir: File, workSet: Option[Any]) {
-    val svnUrl = workSet match {
-      case Some(revision : Int) => url + "@" + revision 
+    run("svn co " + (workSet match {
+      case Some(revision: Int) => url + "@" + revision
       case _ => url
-    }    
-    val process = Runtime.getRuntime().exec("svn co " + svnUrl + " " + workingDir.getAbsolutePath)
-    process.waitFor match {
-      case 0 =>
-      case _ =>  
-    }
+    }) + " " + workingDir.getAbsolutePath)
   }
 
   def update(workingDir: File, workSet: Option[Any]) {
-    val revision = workSet match {
-      case Some(revision : Int) => " -r " + revision
+    run("svn up " + workingDir.getAbsolutePath + (workSet match {
+      case Some(revision: Int) => " -r " + revision
       case _ => ""
-    }
-
-    val process = Runtime.getRuntime().exec("svn up " + workingDir.getAbsolutePath + revision)
-    process.waitFor match {
-      case 0 =>
-      case _ =>
-    }
+    }))
   }
 }
