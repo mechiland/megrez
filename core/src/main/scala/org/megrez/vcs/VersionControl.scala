@@ -1,11 +1,10 @@
 package org.megrez.vcs
 
 import java.io.File
+import org.megrez.Material
 
-trait VersionControl {
+trait VersionControl extends Material {
   def isRepository(workingDir: File): Boolean
-
-  def changes(workingDir: File): Option[Any]
 
   def checkout(workingDir: File, workSet: Option[Any])
 
