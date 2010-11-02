@@ -1,31 +1,26 @@
 package org.megrez.server.trigger
 
 import main.scala.org.megrez.server.trigger.VersionControl
-import org.megrez.server.{PipelineConfig, TriggerMessage, Pipeline}
+import org.megrez.server.util.CommandUtil
 
-class Svn(val pipeline: PipelineConfig) extends VersionControl {
-  var revision: String = null
+class Svn(val url: String) extends VersionControl {
+  private var revision: String = _
+
+  def currentRevision() = revision
 
   def checkChange() = {
-    val process: Process = Runtime.getRuntime().exec("svn info " + pipeline.material.url)
-    val answers: Iterator[String] = scala.io.Source.fromInputStream(process.getInputStream).getLines()
-    answers.foreach {
-      item =>
-        if (item.contains("Revision"))
-          {
-            val latestVersion: String = item.split(":")(1).trim
-            if (latestVersion != revision) {
-              revision = latestVersion
-              needTriggerScheduler = true
-            }
+    var changed = false
+    val outputs: Iterator[String] = CommandUtil.run("svn info " + url)
+    outputs.foreach {
+      line =>
+        if (line.contains("Revision")) {
+          val latestVersion: String = line.split(":")(1).trim
+          if (latestVersion != revision) {
+            revision = latestVersion
+            changed = true
           }
+        }
     }
-    process.waitFor()
-  }
-
-  def getChange(): TriggerMessage = {
-    if (needTriggerScheduler == true)
-      return new TriggerMessage(pipeline.name, revision)
-    return null
+    changed
   }
 }

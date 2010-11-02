@@ -10,8 +10,11 @@ import org.jboss.netty.handler.codec.http.HttpVersion._
 import org.jboss.netty.handler.codec.http.HttpHeaders._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Values._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
-import websocket.{WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
+import org.jboss.netty.util._
+import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
+import org.megrez.server.{RemoteAgentConnected, AgentHandler}
 import actors.Actor
+import actors.Actor._
 
 class Server(val routes: Route*) extends SimpleChannelUpstreamHandler {
   private val bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(newCachedThreadPool(), newCachedThreadPool()))
@@ -33,8 +36,10 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler {
         routes.find(_ matches request) match {
           case Some(route: WebSocketRoute) =>
             handleWebSocketHandshake(request, route, context)
-          case Some(route: HttpRoute) =>
-            route.handler ! Request(route matchedMethod request)
+          case Some(route: HttpRoute) =>{
+				val content = request.getContent
+	            route.handler ! Request(route matchedMethod request, request.getUri, content.toString(CharsetUtil.UTF_8))
+			}
           case None =>
         }
       case frame: WebSocketFrame => println("here" + frame)
@@ -88,6 +93,33 @@ class WebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChann
   }
 
   handler ! channel
+}
+
+class AgentWebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChannelUpstreamHandler with AgentHandler {
+  private val MegrezAgentHandshake = "megrez-agent:1.0"
+  private var agent : Actor = _
+
+  override def assignAgent(actor : Actor) {
+    agent = actor
+  }
+
+  override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
+    event.getMessage match {
+      case frame : WebSocketFrame =>
+        frame.getTextData match {
+          case MegrezAgentHandshake =>
+            send("megrez-server:1.0")
+            handler ! RemoteAgentConnected(this)
+          case message : String =>
+            agent ! message
+        }
+      case _ =>
+    }
+  }
+
+  def send(message : String) {
+    channel.write(new DefaultWebSocketFrame(message))
+  }
 }
 
 

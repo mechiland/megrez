@@ -15,7 +15,7 @@ object Method extends Enumeration {
 import Method._
 
 class Route(val pattern: String, val handler: Actor) {
-  def matches(request: HttpRequest): Boolean = request.getUri.matches(pattern)
+  def matches(request: HttpRequest): Boolean = (pattern.r findFirstIn request.getUri) != None
 }
 
 case class HttpRoute(override val pattern: String, val methods: Set[Method], override val handler: Actor) extends Route(pattern, handler) {
