@@ -1,4 +1,15 @@
 *.iws
+*.ipr
+*.iml
+server/*.iml
+server/*.ipr
+server/*.iws
+core/*.iml
+core/*.ipr
+core/*.iws
+agent/*.iml
+agent/*ipr
+agent/*.iws
 .idea
 target
 server/target
