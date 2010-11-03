@@ -22,10 +22,7 @@ object Initializer {
   }
 
   private def triggerFactory(pipeline: Pipeline): Trigger = {
-    new AutoTrigger(pipeline, scheduler) with Trigger {
-      def start() {}
-      def stop() {}
-    }
+    new AutoTrigger(pipeline, scheduler)
   }
 
 }

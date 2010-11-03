@@ -37,6 +37,7 @@ class InitializerTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
   }
 
   override def afterEach() {
+    Initializer.pipelineManager ! new RemovePipeline(pipeline)
     teardownSvnRepo
     agent ! Exit();
     Initializer.stopApp

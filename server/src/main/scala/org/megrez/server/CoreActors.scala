@@ -15,6 +15,7 @@ class PipelineManager(val triggerFactory: Pipeline => Trigger) extends Actor {
         case message: PipelineChanged =>
           removePipeline(message.config.name)
           addPipeline(message.config)
+        case message: RemovePipeline => removePipeline(message.config.name)
         case _: Exit => exit
         case _ =>
       }
@@ -130,7 +131,7 @@ class Dispatcher() extends Actor {
   }
 
   private def assignJob(buildId: UUID, job: Job) {
-    idleAgents.foreach(_ ! new JobRequest(buildId, null, null, job))
+    idleAgents.foreach(_ ! new JobRequest(buildId, job))
   }
 
   def jobs = jobQueue.toSet
