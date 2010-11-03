@@ -104,13 +104,11 @@ class Dispatcher() extends Actor {
       react {
         case message: AgentConnect => {
           idleAgents.add(message.agent)
-          reply(Success())
         }
 
         case message: JobScheduled => {
           message.jobs.forall(jobQueue.add _)
           jobQueue.foreach(assignJob(message.build, _))
-          reply(Success())
         }
 
         case message: JobConfirm => {
