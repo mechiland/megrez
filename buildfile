@@ -30,6 +30,7 @@ define "megrez" do
   test.with MOCKITO
 
   define "core" do
+	package(:jar)
   end
 
   define "agent" do
@@ -40,6 +41,7 @@ define "megrez" do
 
   define "server" do
     compile.with NETTY
+	compile.with project("core").package
     test.resources
     package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.server.Main' }
   end
