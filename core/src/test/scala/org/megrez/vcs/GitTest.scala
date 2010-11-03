@@ -4,6 +4,7 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Spec, BeforeAndAfterEach}
 import org.megrez.runtime.ShellCommand
 import java.io.File
+import io.Source
 
 class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with ShellCommand {
   describe("Subversion") {
@@ -17,16 +18,28 @@ class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Shel
       }
     }
 
-    //    it("should return false if given dir not a directory") {
-    //      val git = new Git(repositoryURL)
-    //      git.isRepository(workingDir) should equal(false)
-    //    }
-    //
-    //    it("should return true if given dir is a directory") {
-    //      val git = new Git(repositoryURL)
-    //      git.checkout(workingDir, None)
-    //      git.isRepository(workingDir) should equal(true)
-    //    }
+    it("should return false if given dir not a directory") {
+      val git = new Git(repositoryURL)
+      makeNewCommit(repositoryURL)
+      git.changes(workingDir) match {
+        case Some(revision: String) =>
+        case _ => fail
+      }
+    }
+    it("should check out specified commit") {
+      val git = new Git(repositoryURL)
+      makeNewCommit(repositoryURL)
+      val changes: Option[Any] = git.changes(workingDir)
+      git.update(workingDir, changes)
+      println(Source.fromInputStream(run("git log --pretty=%H -1", workingDir).getInputStream).mkString)
+    }
+
+    it("should return true if given dir is a directory") {
+      val git = new Git(repositoryURL)
+      makeNewCommit(repositoryURL)
+      git.checkout(workingDir, None)
+      git.isRepository(workingDir) should equal(true)
+    }
   }
 
   private var root: File = _
