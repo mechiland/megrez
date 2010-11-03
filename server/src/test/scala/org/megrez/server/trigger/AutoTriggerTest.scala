@@ -25,9 +25,10 @@ class AutoTriggerTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
     val pipeline: Pipeline = mock[Pipeline]
     when(pipeline.checkChange).thenReturn(true)
     trigger = new AutoTrigger(pipeline, self)
+    trigger.start
   }
 
   override def afterEach() {
-    trigger = null
+    trigger.stop
   }
 }

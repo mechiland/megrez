@@ -58,6 +58,9 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
   }
 
   class ActorBasedTrigger(val name: String, val actor : Actor) extends Trigger {
+    val pipeline: Pipeline = null
+    val target: Actor = null
+    
     def start {
       actor ! ("TRIGGER START " + name)
     }

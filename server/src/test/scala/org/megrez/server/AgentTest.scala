@@ -4,83 +4,73 @@ import org.scalatest._
 import org.scalatest.matchers._
 import actors.Actor._
 import actors.{TIMEOUT, Actor}
+import java.util.UUID
 
-class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-//  describe("Agent receives job") {
-//    it("should confirm job if idle") {
-//      agent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set(), List())) match {
-//        case message: JobConfirm => message.agent.status should be === AgentStatus.Busy
-//        case _ => fail
-//      }
-//    }
-//
-//    it("should reject job if not idle") {
-//      busyAgent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set(), List())) match {
-//        case message: JobReject => message.agent.status should be === AgentStatus.Busy
-//        case _ => fail
-//      }
-//    }
-//
-//    it("should confirm job if resource qualified") {
-//      agent !? SetResources(Set("windows")) match {
-//        case _: Success =>
-//        case _ => fail
-//      }
-//
-//      agent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set("windows"), List())) match {
-//        case message: JobConfirm => message.agent.status should be === AgentStatus.Busy
-//        case _ => fail
-//      }
-//    }
-//
-//    it("should reject job if resources not qualified") {
-//      agent !? SetResources(Set("windows")) match {
-//        case _: Success =>
-//        case _ => fail
-//      }
-//      agent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set("unix"), List())) match {
-//        case message: JobReject => message.agent.status should be === AgentStatus.Idle
-//        case _ => fail
-//      }
-//    }
-//
-//    def busyAgent() = {
-//      agent !? JobRequest("pipeline1", "stage1", new Job("unit test", Set(), List())) match {case _ =>}
-//      agent
-//    }
-//  }
-//
-//  describe("Agent metadata management") {
-//    it("should assign resources to agent") {
-//      agent !? SetResources(Set("windows")) match {
-//        case _: Success =>
-//        case _ => fail
-//      }
-//      agent.resources should have size (1)
-//      agent.resources should contain("windows")
-//    }
-//  }
-//
-//  describe("Agent reporting") {
-//    it("should be idle after job finished") {
-//      agent !? JobFinished(agent, "pipeline1", "stage1", "#1") match {
-//        case _: Success =>
-//        case _ => fail
-//      }
-//      agent.status should be === AgentStatus.Idle
-//    }
-//  }
-//
-//  describe("Agent creation") {
-//    it("should create agent and link agent with agent handler") {
-//
-//    }
-//  }
+class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
+  describe("Agent") {
+    it("should confirm job when job has no resources") {
+      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set(), List()))
+      expectAgentConfirmedJob
+      agentHandler.sent should be === true
+    }
+
+    it("should accept job if succeed to match resource") {
+      agent ! SetResources(Set("LINUX", "FIREFOX", "JAVA"))
+      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set("LINUX", "FIREFOX"), List()))
+      expectAgentConfirmedJob
+    }
+
+    it("should reject job if failed to match resource") {
+      agent ! SetResources(Set("LINUX"))
+      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set("LINUX", "FIREFOX"), List()))
+      expectAgentRejectedJob
+    }
+
+    it("should reject job if the agent is busy") {
+      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set(), List()))
+      expectAgentConfirmedJob
+      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set(), List()))
+      expectAgentRejectedJob
+    }
+
+    it("should send job finish message to dispatcher") {
+      agent ! JobFinished(UUID.randomUUID, null, null)
+      expectDispatcherReceivedJobFinished
+    }
+
+
+  }
+
+  def expectAgentConfirmedJob {
+    receiveWithin(2000) {
+      case _: JobConfirm =>
+      case TIMEOUT => fail
+      case msg: Any => println(msg); fail
+    }
+  }
+
+  def expectAgentRejectedJob {
+    receiveWithin(2000) {
+      case _: JobReject =>
+      case TIMEOUT => fail
+      case msg: Any => println(msg); fail
+    }
+  }
+
+  def expectDispatcherReceivedJobFinished {
+    receiveWithin(2000) {
+      case _: JobFinished =>
+      case TIMEOUT => fail
+      case msg: Any => println(msg); fail
+    }
+  }
 
   var agent: Agent = _
+  var agentHandler: AgentHandlerStub = _
 
   override def beforeEach() {
-    agent = new Agent(null, self)
+    agentHandler = new AgentHandlerStub()
+    agent = new Agent(agentHandler, self)
     agent start
   }
 
@@ -89,22 +79,25 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   }
 }
 
-class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
+class AgentHandlerStub() extends AgentHandler {
+  var sent = false
+
   def send(message: String) {
-    actor ! "agentGotJob"
+    sent = true
   }
 
-  def assignAgent(agent : Actor) {}
+  def assignAgent(agent: Actor) {}
 }
 
 trait AgentTestSuite extends Spec {
-  def expectAgentGotJob: Unit = {
+  def expectAgentGotJob {
     receiveWithin(2000) {
       case "agentGotJob" =>
       case TIMEOUT => fail
       case msg: Any => println(msg); fail
     }
   }
+
   def expectAgentFinishedJob: Unit = {
     receive {
       case _ =>

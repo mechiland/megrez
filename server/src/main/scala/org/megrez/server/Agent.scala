@@ -27,7 +27,6 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
   private def setResources(message: SetResources) {
     _resources.clear()
     message.resources.foreach(_resources add _)
-    reply(Success())
   }
 
   private def handleJob(request: JobRequest) {
@@ -49,7 +48,6 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
   private def handleFinished(message: JobFinished) {
     _status = Idle
     dispatcher ! message
-    reply(Success())
   }
 
   private def checkResource(job : Job) = job.resources.forall( _resources contains _ )
