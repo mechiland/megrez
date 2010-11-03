@@ -30,18 +30,12 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
     new Job("unit test", Set(), List())
   }
 
-  def agentConnect: Unit = {
-    dispatcher !? AgentConnect(agent) match {
-      case _: Success =>
-      case msg: Any => println(msg); fail
-    }
+  def agentConnect {
+    dispatcher ! AgentConnect(agent)
   }
 
   def scheduleJob(id: UUID): Unit = {
-    dispatcher !? JobScheduled(id, Set(newJob)) match {
-      case _: Success =>
-      case msg: Any => println(msg); fail
-    }
+    dispatcher ! JobScheduled(id, Set(newJob))
   }
 
   def jobFinishedOnAgent(id: UUID): Unit = {
@@ -77,6 +71,5 @@ class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
   def send(message: String) {
     actor ! "agentGotJob"
   }
-
   def assignAgent(agent : Actor) {}
 }
