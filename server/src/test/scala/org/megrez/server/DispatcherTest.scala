@@ -4,7 +4,7 @@ import org.scalatest._
 import org.scalatest.matchers._
 import actors.Actor._
 import java.util.UUID
-import actors.TIMEOUT
+import actors.{Actor, TIMEOUT}
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   describe("Dispatcher") {
@@ -45,10 +45,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
   }
 
   def jobFinishedOnAgent(id: UUID): Unit = {
-    agent !? JobFinished(id, newJob, agent) match {
-      case _: Success =>
-      case msg: Any => println(msg); fail
-    }
+    agent ! JobFinished(id, newJob, agent)
   }
 
   def expectJobCompleted: Unit = {
@@ -74,4 +71,12 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
     agent ! Exit();
     dispatcher ! Exit();
   }
+}
+
+class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
+  def send(message: String) {
+    actor ! "agentGotJob"
+  }
+
+  def assignAgent(agent : Actor) {}
 }
