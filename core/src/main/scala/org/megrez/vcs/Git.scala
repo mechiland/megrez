@@ -14,7 +14,7 @@ class Git(val url: String) extends VersionControl with ShellCommand {
 
   def checkout(workingDir: File, workSet: Option[Any]) {
     run("git clone " + url + " .", workingDir)
-    update(workingDir, workSet)
+    if(!workSet.eq(None))update(workingDir, workSet)
   }
 
   def update(workingDir: File, workSet: Option[Any]) {
