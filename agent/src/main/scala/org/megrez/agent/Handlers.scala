@@ -12,6 +12,7 @@ import java.net._
 import actors.Actor
 import actors.Actor._
 import org.megrez.io.JSON
+import org.megrez.{JobCompleted, JobAssignment}
 
 class HandshakeHandler(val server: URI, val callback: ServerHandler) extends SimpleChannelUpstreamHandler {
   override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
@@ -63,9 +64,9 @@ class AgentHandler(val callback: ServerHandler, val worker: Actor) extends Simpl
           val json = scala.util.parsing.json.JSON.parseFull(frame.getTextData)
           json match {
             case Some(json: Any) =>
-              worker ! JSON.read[org.megrez.JobAssignment](json)
+              worker ! JSON.read[JobAssignment](json)
               react {
-                case result: org.megrez.JobCompleted =>                  
+                case result: JobCompleted =>                  
                   context.getChannel.write(new DefaultWebSocketFrame("""{"status" : "completed"}"""))
                 case _ =>
               }

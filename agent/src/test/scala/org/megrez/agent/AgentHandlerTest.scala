@@ -9,6 +9,7 @@ import actors._
 import org.mockito._
 import org.jboss.netty.handler.codec.http.websocket.{WebSocketFrame, DefaultWebSocketFrame}
 import org.megrez.vcs.Subversion
+import org.megrez.{JobCompleted, JobAssignment}
 
 class AgentHandlerTest extends HandlerTest with ShouldMatchers {
   describe("Agent handler") {
@@ -20,7 +21,7 @@ class AgentHandlerTest extends HandlerTest with ShouldMatchers {
       handler.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case assignment : org.megrez.JobAssignment =>
+        case assignment : JobAssignment =>
           assignment.pipeline should equal("pipeline")
           assignment.materials should have size(1)
           val (material, workset) = assignment.materials.head
@@ -30,7 +31,7 @@ class AgentHandlerTest extends HandlerTest with ShouldMatchers {
             case _ => fail
           }
           workset should equal(Some(1))
-          reply(new org.megrez.JobCompleted)
+          reply(new JobCompleted)
         case TIMEOUT => fail
         case _ => fail
       }

@@ -7,8 +7,7 @@ import org.mockito.Mockito._
 import java.io.File
 import actors.TIMEOUT
 import actors.Actor._
-import org.megrez.Material
-
+import org.megrez.{Job, JobCompleted, JobAssignment, Material}
 
 class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   
@@ -18,7 +17,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val version = mock[org.megrez.vcs.VersionControl]
       val task = mock[org.megrez.Task]
 
-      val assignment = org.megrez.JobAssignment(pipeline, Map(new Material(version, "dest") -> Some(5)), new org.megrez.Job("test", List(task)))
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "dest") -> Some(5)), new Job("test", List(task)))
 
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
@@ -32,7 +31,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       worker ! assignment
 
       receiveWithin(1000) {
-        case completed : org.megrez.JobCompleted =>
+        case completed : JobCompleted =>
           verify(workingDirectory).createPipelineFolder(pipeline)
           verify(version).checkout(pipelineDir, Some(5))
           verify(task).execute(pipelineDir)
@@ -47,7 +46,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val version = mock[org.megrez.vcs.VersionControl]
       val task = mock[org.megrez.Task]
 
-      val assignment = org.megrez.JobAssignment(pipeline, Map(new Material(version, "dest") -> Some(5)), new org.megrez.Job("test", List(task)))
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "dest") -> Some(5)), new Job("test", List(task)))
 
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
@@ -60,7 +59,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       worker ! assignment
 
       receiveWithin(1000) {
-        case completed : org.megrez.JobCompleted =>
+        case completed : JobCompleted =>
           verify(workingDirectory, never).createPipelineFolder(pipeline)
           verify(version, never).checkout(pipelineDir, Some(5))
           verify(version).update(pipelineDir, Some(5))
@@ -75,7 +74,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val version = mock[org.megrez.vcs.VersionControl]
       val task = mock[org.megrez.Task]
 
-      val assignment = org.megrez.JobAssignment(pipeline, Map(new Material(version, "dest") -> Some(5)), new org.megrez.Job("test", List(task)))
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "dest") -> Some(5)), new Job("test", List(task)))
 
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
@@ -89,7 +88,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       worker ! assignment
 
       receiveWithin(1000) {
-        case complete : org.megrez.JobCompleted =>
+        case complete : JobCompleted =>
           verify(workingDirectory).removePipelineFolder(pipeline)
           verify(workingDirectory).createPipelineFolder(pipeline)
           verify(version).checkout(pipelineDir, Some(5))

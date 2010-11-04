@@ -3,18 +3,18 @@ package org.megrez.agent
 import actors.Actor
 import java.io.File
 import org.megrez.vcs.VersionControl
+import org.megrez.{JobCompleted, JobAssignment}
 
 class Worker(val workspace: Workspace) extends Actor {
   def act() {
     loop {
       react {
-        case assignment: JobAssignment => handleJob(assignment)
-        case assignment: org.megrez.JobAssignment => handleAssignment(assignment)
+        case assignment: JobAssignment => handleAssignment(assignment)
       }
     }
   }
 
-  private def handleAssignment(assignment: org.megrez.JobAssignment) {
+  private def handleAssignment(assignment: JobAssignment) {
     val (material, workset) = assignment.materials.head
     material.source match {
       case versionControl: VersionControl =>
@@ -33,28 +33,9 @@ class Worker(val workspace: Workspace) extends Actor {
             dir
         }
         assignment.job.tasks.foreach(_ execute pipelineDir)
-        reply(new org.megrez.JobCompleted())
+        reply(new JobCompleted())
       case _ =>
     }
-  }
-
-  private def handleJob(assignment: JobAssignment) {
-    val pipelineDir = workspace.getPipelineFolder(assignment.pipelineId) match {
-      case null =>
-        val dir = workspace.createPipelineFolder(assignment.pipelineId)
-        assignment.versionControl.checkout(dir, assignment.workSet)
-        dir
-      case dir: File if (assignment.versionControl.isRepository(dir)) =>
-        assignment.versionControl.update(dir, assignment.workSet)
-        dir
-      case _: File =>
-        workspace.removePipelineFolder(assignment.pipelineId)
-        val dir = workspace.createPipelineFolder(assignment.pipelineId)
-        assignment.versionControl.checkout(dir, assignment.workSet)
-        dir
-    }
-    assignment.job.tasks.foreach(_ run pipelineDir)
-    reply(JobCompleted(assignment.pipelineId, assignment.workSet))
   }
 }
 
