@@ -25,10 +25,13 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
       serverConnection = new Server(new URI("ws://localhost:8080/"), 5000, worker)
       serverConnection.connect
       
+//      val jobAssignment =
+//                 """{"pipeline" : {"id" : "pipeline", "vcs" : {"type" : "svn", "url" : """ + '"' + subversion + '"' + """}},
+//                     "workSet"  : {"revision" : "2"},
+//                     "job"      : {"tasks" : [] } }"""
+
       val jobAssignment =
-                 """{"pipeline" : {"id" : "pipeline", "vcs" : {"type" : "svn", "url" : """ + '"' + subversion + '"' + """}},
-                     "workSet"  : {"revision" : "2"},
-                     "job"      : {"tasks" : [] } }"""
+      """{"pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + subversion + '"' + """, "dest" : "$main"}, "workset" : {"revision" : "2"} }], "job" : {"name" : "unit test", "tasks" : [] } }"""
 
       receiveWithin(1000) {
         case "MEGREZ HANDSHAKE" => server.send(new DefaultWebSocketFrame(jobAssignment))
