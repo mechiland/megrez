@@ -11,7 +11,7 @@ class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Shel
     it("should detect change if working dir empty") {
       val git = new Git(repositoryURL)
       git.checkout(workingDir, None)
-      makeNewCommit(workingDir.getAbsolutePath)
+      makeNewCommit(repositoryURL)
       git.changes(workingDir) match {
         case Some(revision: String) =>
         case _ => fail
