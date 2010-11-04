@@ -16,7 +16,7 @@ class Worker(val workspace: Workspace) extends Actor {
 
   private def handleAssignment(assignment: org.megrez.JobAssignment) {
     val (material, workset) = assignment.materials.head
-    material match {
+    material.source match {
       case versionControl: VersionControl =>
         val pipelineDir = workspace.getPipelineFolder(assignment.pipeline) match {
           case null =>

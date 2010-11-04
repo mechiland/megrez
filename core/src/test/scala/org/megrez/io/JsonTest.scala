@@ -11,9 +11,10 @@ class JsonTest extends Spec with ShouldMatchers {
 
   describe("Domain object json serialization") {
     it("should parse material from json") {
-      val json = """{"type" : "svn", "url" : "svn_url"}"""
+      val json = """{"type" : "svn", "url" : "svn_url", "dest" : "dest"}"""
       val material = JSON.read[Material](JsonParser.parseFull(json).get)
-      material match {
+      material.destination should equal("dest")
+      material.source match {
         case subversion : Subversion =>
           subversion.url should equal("svn_url")
         case _ => fail
@@ -33,7 +34,7 @@ class JsonTest extends Spec with ShouldMatchers {
     }
 
     it("should parse pipeline from json") {
-      val json = """{"name" : "pipeline", "materials" : [{"type" : "svn", "url" : "svn_url"}] }"""
+      val json = """{"name" : "pipeline", "materials" : [{"type" : "svn", "url" : "svn_url", "dest" : "dest"}] }"""
       val pipeline = JSON.read[Pipeline](JsonParser.parseFull(json).get)
       pipeline.isInstanceOf[Pipeline] should equal(true)
     }
@@ -41,12 +42,12 @@ class JsonTest extends Spec with ShouldMatchers {
 
   describe("Message json serialization") {
     it("should parse job assignment from json") {
-      val json = """{"pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url"}, "workset" : {"revision" : "1"} }], "job" : {"name" : "unit test", "tasks" : [{ "type" : "cmd", "command": "ls"}] } }"""      
+      val json = """{"pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}, "workset" : {"revision" : "1"} }], "job" : {"name" : "unit test", "tasks" : [{ "type" : "cmd", "command": "ls"}] } }"""      
       val assignment = JSON.read[JobAssignment](JsonParser.parseFull(json).get)
       assignment.pipeline should equal("pipeline")
       assignment.materials should have size(1)
       val (material, workSet) = assignment.materials.head
-      material match {
+      material.source match {
         case subversion : Subversion =>
           subversion.url should equal("svn_url")
         case _ => fail

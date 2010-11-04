@@ -16,6 +16,12 @@ trait Task {
   def cancel() 
 }
 
+trait ChangeSource {
+  def changes(workingDir: File): Option[Any]
+}
+
+class Material(val source : ChangeSource, val destination : String)
+
 trait Reader[Resource, Format] {
   def read(representation: Format): Resource
 }
