@@ -11,10 +11,7 @@ class InitializerTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
 
       Initializer.pipelineManager ! new AddPipeline(pipeline)
 
-      Initializer.dispatcher !? AgentConnect(agent) match {
-        case _: Success =>
-        case msg: Any => println(msg); fail
-      }
+      Initializer.dispatcher ! AgentConnect(agent)
 
       expectAgentGotJob
     }
