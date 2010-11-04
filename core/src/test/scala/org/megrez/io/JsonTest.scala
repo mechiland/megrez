@@ -5,6 +5,7 @@ import org.scalatest.Spec
 import org.megrez.vcs.Subversion
 import org.megrez._
 import java.util.UUID
+import task.CommandLineTask
 
 class JsonTest extends Spec with ShouldMatchers {
   val JsonParser = scala.util.parsing.json.JSON
@@ -16,6 +17,18 @@ class JsonTest extends Spec with ShouldMatchers {
       material match {
         case subversion : Subversion =>
           subversion.url should equal("svn_url")
+        case _ => fail
+      }
+    }
+
+    it("should parse job from json") {
+      val json = """{"name" : "unit test", "tasks" : [{ "type" : "cmd", "command": "ls"}] }"""
+      val job = JSON.read[Job](JsonParser.parseFull(json).get)
+      job.name should equal("unit test")
+      job.tasks should have size(1)
+      job.tasks.head match {
+        case cmd : CommandLineTask =>
+          cmd.command should equal("ls")
         case _ => fail
       }
     }
