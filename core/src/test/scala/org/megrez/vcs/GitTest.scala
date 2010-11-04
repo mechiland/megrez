@@ -3,7 +3,7 @@ package org.megrez.vcs
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Spec, BeforeAndAfterEach}
 import org.megrez.runtime.ShellCommand
-import java.io.File
+import java.io.File                                  
 import io.Source
 
 class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with ShellCommand {
@@ -62,9 +62,10 @@ class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Shel
   }
 
   private def makeNewCommit(repoDir: String) {
+    val repository: File = new File(repoDir)
     new File(repoDir, String.valueOf(System.currentTimeMillis) + ".txt").createNewFile
-    run("git add --all")
-    run("git commit -m 'added_new_file'")
+    run("git add --all",repository)
+    run("git commit -m 'added_new_file'",repository)
   }
 
   private def delete(file: File) {
