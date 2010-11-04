@@ -9,37 +9,34 @@ import actors.{Actor, TIMEOUT}
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   describe("Dispatcher") {
     it("should assign job to idle agent") {
-      agentConnect
-      scheduleJob(UUID.randomUUID)
-      expectAgentGotJob
+      agentConnect(agent)
+      scheduleJob(UUID.randomUUID, job)
+      expectAgentGotJob(job)
     }
 
     it("should notify scheduler about job completed") {
-      agentConnect
+      agentConnect(agent)
       val buildId = UUID.randomUUID
-      scheduleJob(buildId)
-      expectAgentGotJob
+      scheduleJob(buildId, job)
+      expectAgentGotJob(job)
 
-      jobFinishedOnAgent(buildId)
+      jobFinishedOnAgent(buildId, job)
 
       expectJobCompleted
     }
+
   }
 
-  def newJob: Job = {
-    new Job("unit test", Set(), List())
+  def agentConnect(agents: Agent*) {
+    agents.foreach(dispatcher ! AgentConnect(_))
   }
 
-  def agentConnect {
-    dispatcher ! AgentConnect(agent)
+  def scheduleJob(id: UUID, job: Job): Unit = {
+    dispatcher ! JobScheduled(id, Set(job))
   }
 
-  def scheduleJob(id: UUID): Unit = {
-    dispatcher ! JobScheduled(id, Set(newJob))
-  }
-
-  def jobFinishedOnAgent(id: UUID): Unit = {
-    agent ! JobFinished(id, newJob, agent)
+  def jobFinishedOnAgent(id: UUID, job: Job): Unit = {
+    agent ! JobFinished(id, job, agent)
   }
 
   def expectJobCompleted: Unit = {
@@ -50,11 +47,13 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
     }
   }
 
+  var job: Job = _
   var agent: Agent = _
   var dispatcher: Dispatcher = _
 
   override def beforeEach() {
     dispatcher = new Dispatcher();
+    job = new Job("unit test", Set(), List());
     dispatcher.buildScheduler = self
     agent = new Agent(new ActorBasedAgentHandler(self), dispatcher)
     agent start;
@@ -69,7 +68,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
 
 class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
   def send(message: String) {
-    actor ! "agentGotJob"
+    actor ! message
   }
   def assignAgent(agent : Actor) {}
 }
