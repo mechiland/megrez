@@ -4,7 +4,6 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Spec
 import org.megrez.vcs.Subversion
 import org.megrez._
-import java.util.UUID
 import task.CommandLineTask
 
 class JsonTest extends Spec with ShouldMatchers {
@@ -42,10 +41,9 @@ class JsonTest extends Spec with ShouldMatchers {
 
   describe("Message json serialization") {
     it("should parse job assignment from json") {
-      val build = UUID.randomUUID
-      val json = """{"build" : """ + '"' + build.toString + '"' + """, "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url"}, "workset" : {"revision" : "1"} }], "job" : {"name" : "unit test", "tasks" : [{ "type" : "cmd", "command": "ls"}] } }"""      
+      val json = """{"pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url"}, "workset" : {"revision" : "1"} }], "job" : {"name" : "unit test", "tasks" : [{ "type" : "cmd", "command": "ls"}] } }"""      
       val assignment = JSON.read[JobAssignment](JsonParser.parseFull(json).get)
-      assignment.build should equal(build)
+      assignment.pipeline should equal("pipeline")
       assignment.materials should have size(1)
       val (material, workSet) = assignment.materials.head
       material match {

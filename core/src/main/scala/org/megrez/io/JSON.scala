@@ -57,7 +57,7 @@ object JSON {
 
   implicit object JobAssignmentJson extends JSON[JobAssignment] {
     protected override def readJson(json: Json) =
-      JobAssignment(UUID.fromString(json / "build"), (json > ("materials", material =>
+      JobAssignment(json / "pipeline", (json > ("materials", material =>
         JSON.read[Material](material("material")) ->
                 MaterialJson.readWorkSet(asJson(material("material")) / "type", asJson(material("workset")))
               )).toMap, JSON.read[Job](json / "job"))

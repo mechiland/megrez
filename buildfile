@@ -34,7 +34,8 @@ define "megrez" do
   end
 
   define "agent" do
-	compile.with NETTY 
+	compile.with NETTY
+	compile.with project("core").package
 	test.resources
 	package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.agent.Main' }
  end

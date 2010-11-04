@@ -1,6 +1,7 @@
 package org.megrez
 
 import org.megrez.Pipeline.Stage
+import java.io.File
 
 class Pipeline(val name: String, val materials: Set[Material], val stages: List[Stage])
 
@@ -11,7 +12,7 @@ object Pipeline {
 class Job(val name: String, val tasks: List[Task])
 
 trait Task {
-  def execute() : Boolean
+  def execute(workingDir : File) : Boolean
   def cancel() 
 }
 
