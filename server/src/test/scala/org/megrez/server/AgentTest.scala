@@ -90,9 +90,10 @@ class AgentHandlerStub() extends AgentHandler {
 }
 
 trait AgentTestSuite extends Spec {
-  def expectAgentGotJob {
+  def expectAgentGotJob(job: Job) {
+    val RECEIVED = "received a job: " + job.name;
     receiveWithin(2000) {
-      case "agentGotJob" =>
+      case RECEIVED =>
       case TIMEOUT => fail
       case msg: Any => println(msg); fail
     }

@@ -107,7 +107,7 @@ class Dispatcher() extends Actor {
         }
 
         case message: JobScheduled => {
-          message.jobs.forall(jobQueue.add _)
+          message.jobs.foreach(jobQueue.add _)
           jobQueue.foreach(assignJob(message.build, _))
         }
 
