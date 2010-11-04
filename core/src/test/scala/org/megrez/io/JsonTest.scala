@@ -43,7 +43,7 @@ class JsonTest extends Spec with ShouldMatchers {
   describe("Message json serialization") {
     it("should parse job assignment from json") {
       val build = UUID.randomUUID
-      val json = """{"build" : """ + '"' + build.toString + '"' + """, "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url"}, "workset" : {"revision" : "1"} }] }"""      
+      val json = """{"build" : """ + '"' + build.toString + '"' + """, "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url"}, "workset" : {"revision" : "1"} }], "job" : {"name" : "unit test", "tasks" : [{ "type" : "cmd", "command": "ls"}] } }"""      
       val assignment = JSON.read[JobAssignment](JsonParser.parseFull(json).get)
       assignment.build should equal(build)
       assignment.materials should have size(1)
@@ -58,7 +58,13 @@ class JsonTest extends Spec with ShouldMatchers {
           revision should equal(1)
         case _ => fail
       }
-
+      assignment.job.name should equal("unit test")
+      assignment.job.tasks should have size(1)
+      assignment.job.tasks.head match {
+        case cmd : CommandLineTask =>
+          cmd.command should equal("ls")
+        case _ => fail
+      }
     }
   }
 }

@@ -11,15 +11,15 @@ trait JSON[T] extends Reader[T, Any] {
 
   protected def readJson(json: Map[Any, Any]): T
 
-  protected def asJson(json: Any) = {
+  protected def asJson(json: Any) =
     json match {
       case json: Map[Any, Any] => json
       case _ => throw new Exception
     }
-  }
 }
 
 trait PluggableJSON[T] extends JSON[T] {
+  import JSON._
   private val parser = HashMap[String, Map[Any, Any] => T]()
 
   def register(jsonType: String, factory: Map[Any, Any] => T) {
@@ -27,8 +27,6 @@ trait PluggableJSON[T] extends JSON[T] {
   }
 
   override protected def readJson(json: Map[Any, Any]) = parser(json / "type")(json)
-
-  implicit def map2Json(json: Map[Any, Any]): JSON.JsonHelper = new JSON.JsonHelper(json)
 }
 
 object JSON {
@@ -56,13 +54,13 @@ object JSON {
     override protected def readJson(json: Json) = new Pipeline(json / "name",
       (json > ("materials", material => JSON.read[Material](material))).toSet, List[Pipeline.Stage]())
   }
-  
+
   implicit object JobAssignmentJson extends JSON[JobAssignment] {
     protected override def readJson(json: Json) =
       JobAssignment(UUID.fromString(json / "build"), (json > ("materials", material =>
         JSON.read[Material](material("material")) ->
                 MaterialJson.readWorkSet(asJson(material("material")) / "type", asJson(material("workset")))
-              )).toMap, null)
+              )).toMap, JSON.read[Job](json / "job"))
   }
 
   MaterialJson.register("svn", json => new Subversion(json / "url"))
