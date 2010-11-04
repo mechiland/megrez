@@ -14,8 +14,12 @@ agent/*.iws
 target
 server/target
 agent/target
-rest/target
+core/target
 server/reports
 agent/reports
-rest/reports
+core/reports
+out
+core/out
+server/out
+agent/out
 server/src/test/resources/repository/svn
