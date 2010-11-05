@@ -94,7 +94,7 @@ class BuildScheduler(megrez : {val dispatcher: Actor; val buildManager: Actor}) 
   start
 }
 
-class Dispatcher(val megrez : {val buildScheduler : Actor}) extends Actor {
+class Dispatcher(megrez : {val buildScheduler : Actor}) extends Actor {
   private val jobQueue = new HashSet[Job]()
   private val idleAgents = new HashSet[Actor]()
 
@@ -137,3 +137,4 @@ class Dispatcher(val megrez : {val buildScheduler : Actor}) extends Actor {
 
   start
 }
+

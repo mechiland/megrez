@@ -25,7 +25,6 @@ class InitializerTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
 
   override def beforeEach() {
     setupSvnRepo
-    Initializer.initializeApp
     agent = new Agent(new ActorBasedAgentHandler(self), Initializer.dispatcher)
     agent start;
 
