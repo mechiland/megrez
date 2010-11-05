@@ -95,7 +95,7 @@ class BuildScheduler(val dispatcher: Actor, val buildManager: Actor) extends Act
 }
 
 class Dispatcher() extends Actor {
-  private val jobQueue = new HashSet[Job]()
+  private val jobRequestQueue = new HashSet[JobRequest]()
   private val idleAgents = new HashSet[Actor]()
   var buildScheduler: Actor = _
 
@@ -104,15 +104,16 @@ class Dispatcher() extends Actor {
       react {
         case message: AgentConnect => {
           idleAgents.add(message.agent)
+          startAssigning
         }
 
         case message: JobScheduled => {
-          message.jobs.foreach(jobQueue.add _)
-          startAssigning(message.build)
+          message.jobRequests.foreach(jobRequest => jobRequestQueue.add(jobRequest))
+          startAssigning
         }
 
         case message: JobConfirm => {
-          jobQueue.remove(message.job)
+          jobRequestQueue.remove(message.jobRequest)
           idleAgents.remove(message.agent)
           reply(Success())
         }
@@ -128,32 +129,32 @@ class Dispatcher() extends Actor {
     }
   }
 
-  private def startAssigning(buildId: UUID) {
-    val assignedJobs = new HashSet[Job]();
-    jobQueue.foreach {
-      job => {
+  private def startAssigning {
+    val assignedJobRequests = new HashSet[JobRequest]();
+    jobRequestQueue.foreach {
+      jobRequest => {
         if (!idleAgents.isEmpty) {
-          val assigned: Boolean = idleAgents.remove(assignJob(idleAgents.iterator, new JobRequest(buildId, job)).get)
+          val assigned: Boolean = idleAgents.remove(assignJobRequest(idleAgents.iterator, jobRequest).get)
           if(assigned)
-            assignedJobs.add(job)
+            assignedJobRequests.add(jobRequest)
         }
       }
     }
-    assignedJobs.foreach(jobQueue.remove(_))
+    assignedJobRequests.foreach(jobRequestQueue.remove(_))
   }
 
-  private def assignJob(iterator: Iterator[Actor], jobRequest: JobRequest): Option[Actor] = {
+  private def assignJobRequest(iterator: Iterator[Actor], jobRequest: JobRequest): Option[Actor] = {
     iterator.next !? jobRequest match {
       case message: JobConfirm => {
         Some(message.agent)
       }
       case message: JobReject => {
-        if(iterator.hasNext) assignJob(iterator, jobRequest) else None
+        if(iterator.hasNext) assignJobRequest(iterator, jobRequest) else None
       }
     }
   }
 
-  def jobs = jobQueue.toSet
+  def jobRequests = jobRequestQueue.toSet
 
   def agents = idleAgents.toSet
 

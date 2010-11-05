@@ -15,7 +15,7 @@ case class AgentConnect(val agent : Actor)
 
 abstract class JobMessage
 case class JobRequest(val buildId: UUID, val job : Job) extends JobMessage
-case class JobConfirm(val agent : Agent, val job: Job) extends JobMessage
+case class JobConfirm(val agent : Agent, val jobRequest: JobRequest) extends JobMessage
 case class JobReject(val agent : Agent) extends JobMessage
 case class JobFinished(val buildId: UUID, val job: Job, val agent : Actor) extends JobMessage
 
@@ -25,9 +25,13 @@ case class RemovePipeline(config : Pipeline)
 
 case class TriggerBuild(config : Pipeline)
 
-case class JobScheduled(build : UUID, jobs : Set[Job])
-case class JobCompleted(build : UUID, job : Job)
-case class JobFailed(build : UUID, job : Job)
+case class JobScheduled(buildId : UUID, jobs : Set[Job]) {
+  def jobRequests: Set[JobRequest] = {
+    jobs.map(job => JobRequest(buildId, job))
+  }
+}
+case class JobCompleted(buildId : UUID, job : Job)
+case class JobFailed(buildId : UUID, job : Job)
 
-case class BuildFailed(build : Build)
-case class BuildCompleted(build : Build)
+case class BuildFailed(buildId : Build)
+case class BuildCompleted(buildId : Build)

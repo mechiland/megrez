@@ -35,6 +35,12 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
       expectAgentGotJobs(job, job2)
       agent2 ! Exit();
     }
+
+    it("should begin assigning jobs when idle agents connected") {
+      scheduleJob(UUID.randomUUID, job)
+      agentsConnect(agent)
+      expectAgentGotJobs(job)
+    }
   }
 
   def agentsConnect(agents: Agent*) {
@@ -79,6 +85,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
     agent ! Exit();
     dispatcher ! Exit();
   }
+
 }
 
 class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
