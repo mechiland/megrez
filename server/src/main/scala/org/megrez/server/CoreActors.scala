@@ -108,7 +108,7 @@ class Dispatcher() extends Actor {
 
         case message: JobScheduled => {
           message.jobs.foreach(jobQueue.add _)
-          jobQueue.foreach(assignJob(message.build, _))
+          startAssigning(message.build)
         }
 
         case message: JobConfirm => {
@@ -128,8 +128,29 @@ class Dispatcher() extends Actor {
     }
   }
 
-  private def assignJob(buildId: UUID, job: Job) {
-    idleAgents.foreach(_ ! new JobRequest(buildId, job))
+  private def startAssigning(buildId: UUID) {
+    val assignedJobs = new HashSet[Job]();
+    jobQueue.foreach {
+      job => {
+        if (!idleAgents.isEmpty) {
+          val assigned: Boolean = idleAgents.remove(assignJob(idleAgents.iterator, new JobRequest(buildId, job)).get)
+          if(assigned)
+            assignedJobs.add(job)
+        }
+      }
+    }
+    assignedJobs.foreach(jobQueue.remove(_))
+  }
+
+  private def assignJob(iterator: Iterator[Actor], jobRequest: JobRequest): Option[Actor] = {
+    iterator.next !? jobRequest match {
+      case message: JobConfirm => {
+        Some(message.agent)
+      }
+      case message: JobReject => {
+        if(iterator.hasNext) assignJob(iterator, jobRequest) else None
+      }
+    }
   }
 
   def jobs = jobQueue.toSet

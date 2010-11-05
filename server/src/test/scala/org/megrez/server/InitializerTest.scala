@@ -14,7 +14,7 @@ class InitializerTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
       agent ! SetResources(Set("LINUX"))
       Initializer.dispatcher ! AgentConnect(agent)
 
-      expectAgentGotJob(job1)
+      expectAgentGotJobs(job1)
     }
   }
 

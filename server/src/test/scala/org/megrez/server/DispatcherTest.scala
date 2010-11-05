@@ -9,25 +9,35 @@ import actors.{Actor, TIMEOUT}
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   describe("Dispatcher") {
     it("should assign job to idle agent") {
-      agentConnect(agent)
+      agentsConnect(agent)
       scheduleJob(UUID.randomUUID, job)
-      expectAgentGotJob(job)
+      expectAgentGotJobs(job)
     }
 
     it("should notify scheduler about job completed") {
-      agentConnect(agent)
+      agentsConnect(agent)
       val buildId = UUID.randomUUID
       scheduleJob(buildId, job)
-      expectAgentGotJob(job)
+      expectAgentGotJobs(job)
 
       jobFinishedOnAgent(buildId, job)
 
       expectJobCompleted
     }
 
+    it("should assign job not to more than one resource matched agent") {
+      val agent2 = createAndStartAnAgent
+      agentsConnect(agent, agent2)
+
+      scheduleJob(UUID.randomUUID, job)
+      var job2 = new Job("unit test2", Set(), List())
+      scheduleJob(UUID.randomUUID, job2)
+      expectAgentGotJobs(job, job2)
+      agent2 ! Exit();
+    }
   }
 
-  def agentConnect(agents: Agent*) {
+  def agentsConnect(agents: Agent*) {
     agents.foreach(dispatcher ! AgentConnect(_))
   }
 
@@ -47,6 +57,12 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
     }
   }
 
+  def createAndStartAnAgent: Agent = {
+    var agent = new Agent(new ActorBasedAgentHandler(self), dispatcher)
+    agent start;
+    agent
+  }
+
   var job: Job = _
   var agent: Agent = _
   var dispatcher: Dispatcher = _
@@ -55,8 +71,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
     dispatcher = new Dispatcher();
     job = new Job("unit test", Set(), List());
     dispatcher.buildScheduler = self
-    agent = new Agent(new ActorBasedAgentHandler(self), dispatcher)
-    agent start;
+    agent = createAndStartAnAgent
     dispatcher start;
   }
 
