@@ -6,14 +6,14 @@ import org.scalatest.{BeforeAndAfterEach, Spec}
 import actors.Actor._
 import actors.TIMEOUT
 
-class InitializerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnTestRepo with AgentTestSuite {
+class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnTestRepo with AgentTestSuite {
   describe("App") {
     it("should receive add pipeline event and lanunch build if pipeline has new check in") {
 
-      Initializer.pipelineManager ! new AddPipeline(pipeline)
+      Megrez.pipelineManager ! new AddPipeline(pipeline)
 
       agent ! SetResources(Set("LINUX"))
-      Initializer.dispatcher ! AgentConnect(agent)
+      Megrez.dispatcher ! AgentConnect(agent)
 
       receiveWithin(2000) {
         case msg: String => if(msg.indexOf(job1.name) < 0) fail
@@ -30,7 +30,7 @@ class InitializerTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
 
   override def beforeEach() {
     setupSvnRepo
-    agent = new Agent(new ActorBasedAgentHandler(self), Initializer.dispatcher)
+    agent = new Agent(new ActorBasedAgentHandler(self), Megrez.dispatcher)
     agent start;
 
     job1 = new Job("linux-firefox", Set("LINUX"), List(new Task()))
@@ -41,9 +41,9 @@ class InitializerTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
   }
 
   override def afterEach() {
-    Initializer.pipelineManager ! new RemovePipeline(pipeline)
+    Megrez.pipelineManager ! new RemovePipeline(pipeline)
     teardownSvnRepo
     agent ! Exit();
-    Initializer.stopApp
+    Megrez.stop
   }
 }

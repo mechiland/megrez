@@ -3,6 +3,7 @@ package org.megrez.server
 import actors.Actor
 import java.util.UUID
 import collection.mutable.{HashSet, HashMap}
+import trigger.AutoTrigger
 
 class PipelineManager(megrez : {val triggerFactory : Pipeline => Trigger}) extends Actor {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
@@ -157,5 +158,35 @@ class Dispatcher(megrez : {val buildScheduler : Actor}) extends Actor {
   def agents = idleAgents.toSet
 
   start
+}
+
+class BuildManager extends Actor {
+  def act() {
+    loop {
+      react {
+        case _ : Exit =>
+          exit
+        case _ =>
+      }
+    }
+  }
+
+  start
+}
+
+object Megrez {
+  val agentManager : Actor = new AgentManager(this)
+  val buildScheduler: Actor = new BuildScheduler(this)
+  val buildManager : Actor = new BuildManager()
+  val dispatcher: Actor = new Dispatcher(this)
+  val pipelineManager = new PipelineManager(this)
+
+  val triggerFactory : Pipeline => Trigger = pipeline => new AutoTrigger(pipeline, buildScheduler)
+
+  def stop() {
+    dispatcher ! Exit()
+    buildScheduler ! Exit()
+    pipelineManager ! Exit()
+  }
 }
 
