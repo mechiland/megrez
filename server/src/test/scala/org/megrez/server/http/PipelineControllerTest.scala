@@ -24,9 +24,11 @@ class PipelineControllerTest extends Spec with ShouldMatchers with MockitoSugar 
   }
 
   private def mockPipelineManager: PipelineManager = {
-    val factory = mock[Pipeline => Trigger]
-    when(factory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline", self))
-    new PipelineManager(factory)
+    object Context {
+      val triggerFactory = mock[Pipeline => Trigger] 
+    }
+    when(Context.triggerFactory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline", self))
+    new PipelineManager(Context)
   }
 
   class ActorBasedTrigger(val name: String, val actor: Actor) extends Trigger {

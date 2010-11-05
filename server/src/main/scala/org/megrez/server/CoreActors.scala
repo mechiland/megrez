@@ -4,7 +4,7 @@ import actors.Actor
 import java.util.UUID
 import collection.mutable.{HashSet, HashMap}
 
-class PipelineManager(val triggerFactory: Pipeline => Trigger) extends Actor {
+class PipelineManager(megrez : {val triggerFactory : Pipeline => Trigger}) extends Actor {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
 
   def act {
@@ -28,7 +28,7 @@ class PipelineManager(val triggerFactory: Pipeline => Trigger) extends Actor {
 
 
   private def launchTrigger(config: Pipeline): Trigger = {
-    val trigger = triggerFactory(config)
+    val trigger = megrez.triggerFactory(config)
     trigger.start
     trigger
   }

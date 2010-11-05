@@ -11,11 +11,13 @@ import actors.Actor._
 class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
   describe("Pipeline manager") {
     it("should launch trigger when new pipeline added") {
-      val factory = mock[Pipeline => Trigger]
+      object Context {
+        val triggerFactory = mock[Pipeline => Trigger]
+      }
 
-      when(factory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline", self))
+      when(Context.triggerFactory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline", self))
 
-      val manager = new PipelineManager(factory)
+      val manager = new PipelineManager(Context)
       manager ! AddPipeline(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
 
       receiveWithin(1000) {
@@ -26,13 +28,14 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
     }
 
     it("should shutdown trigger and start new one when pipeline config changed") {
+      object Context {
+        val triggerFactory = mock[Pipeline => Trigger]
+      }
 
-      val factory = mock[Pipeline => Trigger]
-
-      when(factory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline1", self),
+      when(Context.triggerFactory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline1", self),
         new ActorBasedTrigger("pipeline2", self))
 
-      val manager = new PipelineManager(factory)
+      val manager = new PipelineManager(Context)
       manager ! AddPipeline(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
 
       receiveWithin(1000) {
