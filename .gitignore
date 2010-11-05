@@ -1,6 +1,4 @@
 *.iws
-*.ipr
-*.iml
 server/*.iml
 server/*.ipr
 server/*.iws
