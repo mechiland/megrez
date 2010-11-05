@@ -4,134 +4,178 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Spec, BeforeAndAfterEach}
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
-import org.mockito.Matchers._
 import java.io.File
 import actors.TIMEOUT
 import actors.Actor._
-import vcs.VersionControl
+import org.megrez._
 
 class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("Agent worker job execution") {
     it("should init pipeline folder under working dir") {
-      val pipelineId = "pipeline"
+      val pipeline = "pipeline"
+      val version = mock[org.megrez.vcs.VersionControl]
+      val task = mock[org.megrez.Task]
+
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "$main") -> Some(5)), new Job("test", List(task)))
+
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
-      val versionControl = mock[VersionControl]
-      val workSet : Any = 5
-      val job = new Job(List(new EmptyTask))
+      when(workingDirectory.getFolder(pipeline)).thenReturn(null)
+      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)
 
-      when(workingDirectory.getPipelineFolder(pipelineId)).thenReturn(null)
-      when(workingDirectory.createPipelineFolder(pipelineId)).thenReturn(pipelineDir)
-      
       val worker = new Worker(workingDirectory)
+
       worker.start
 
-      worker ! JobAssignment("pipeline", versionControl, workSet, job)
-      
-      receiveWithin(1000) {
-        case complete : JobCompleted =>
-          complete.pipelineId should equal(pipelineId)
-          complete.workSet should equal(workSet)
-        case TIMEOUT => fail("Timeout")
-        case _ => fail
-      }
+      worker ! assignment
 
-      verify(workingDirectory).createPipelineFolder(pipelineId)
-      verify(versionControl).checkout(pipelineDir, workSet)
+      receiveWithin(1000) {
+        case completed: JobCompleted =>          
+          verify(version).checkout(pipelineDir, Some(5))
+          verify(task).execute(pipelineDir)
+        case TIMEOUT => fail("Timeout")
+        case a: Any =>
+          fail
+      }
     }
 
     it("should update work set if pipeline already exist") {
-      val pipelineId = "pipeline"
+      val pipeline = "pipeline"
+      val version = mock[org.megrez.vcs.VersionControl]
+      val task = mock[org.megrez.Task]
+
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "$main") -> Some(5)), new Job("test", List(task)))
+
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
-      val versionControl = mock[VersionControl]
-      val workSet : Any = 5
-      val job = new Job(List(new EmptyTask))
-
-      when(workingDirectory.getPipelineFolder(pipelineId)).thenReturn(pipelineDir)
-      when(versionControl.isRepository(pipelineDir)).thenReturn(true)
+      when(workingDirectory.getFolder(pipeline)).thenReturn(pipelineDir)
+      when(version.isRepository(pipelineDir)).thenReturn(true)
 
       val worker = new Worker(workingDirectory)
       worker.start
 
-      worker ! JobAssignment("pipeline", versionControl, workSet, job)
+      worker ! assignment
 
       receiveWithin(1000) {
-        case complete : JobCompleted =>
-          complete.pipelineId should equal(pipelineId)
-          complete.workSet should equal(workSet)
+        case completed: JobCompleted =>          
+          verify(version, never).checkout(pipelineDir, Some(5))
+          verify(version).update(pipelineDir, Some(5))
         case TIMEOUT => fail("Timeout")
-        case _ => fail
+        case a: Any =>
+          fail
       }
-
-      verify(workingDirectory, never).createPipelineFolder(pipelineId)
-      verify(versionControl, never).checkout(pipelineDir, workSet)
-      verify(versionControl).update(pipelineDir, workSet)
     }
 
     it("should re-create dir if pipeline dir is not a valid dir") {
-      val pipelineId = "pipeline"
-      val pipelineDir = new File("pipeline")
-      val worksapce = mock[Workspace]
-      val versionControl = mock[VersionControl]
-      val workSet : Any = 5
-      val job = new Job(List(new EmptyTask))
+      val pipeline = "pipeline"
+      val version = mock[org.megrez.vcs.VersionControl]
+      val task = mock[org.megrez.Task]
 
-      when(worksapce.getPipelineFolder(pipelineId)).thenReturn(pipelineDir)
-      when(worksapce.createPipelineFolder(pipelineId)).thenReturn(pipelineDir)
-      when(versionControl.isRepository(pipelineDir)).thenReturn(false)
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "$main") -> Some(5)), new Job("test", List(task)))
 
-      val worker = new Worker(worksapce)
-      worker.start
-
-      worker ! JobAssignment("pipeline", versionControl, workSet, job)
-
-      receiveWithin(1000) {
-        case complete : JobCompleted =>
-          complete.pipelineId should equal(pipelineId)
-          complete.workSet should equal(workSet)
-        case TIMEOUT => fail("Timeout")
-        case _ => fail
-      }
-
-      verify(worksapce).removePipelineFolder(pipelineId)
-      verify(worksapce).createPipelineFolder(pipelineId)
-      verify(versionControl).checkout(pipelineDir, workSet)
-    }
-
-    it("should run tasks") {
-      val pipelineId = "pipeline"
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
-      val versionControl = mock[VersionControl]
-      val workSet : Any = 5
-      val task1 = mock[Task]
-      val task2 = mock[Task]
-      
-      val job = new Job(List(task1, task2))
-
-      when(workingDirectory.getPipelineFolder(pipelineId)).thenReturn(pipelineDir)
-      when(versionControl.isRepository(pipelineDir)).thenReturn(true)
+      when(workingDirectory.getFolder(pipeline)).thenReturn(pipelineDir)
+      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)      
+      when(version.isRepository(pipelineDir)).thenReturn(false)
 
       val worker = new Worker(workingDirectory)
       worker.start
 
-      worker ! JobAssignment("pipeline", versionControl, workSet, job)
+      worker ! assignment
 
       receiveWithin(1000) {
-        case complete : JobCompleted =>
-          complete.pipelineId should equal(pipelineId)
-          complete.workSet should equal(workSet)
+        case complete: JobCompleted =>
+          verify(workingDirectory).removeFolder(pipeline)
+          verify(workingDirectory, times(2)).createFolder(pipeline)
+          verify(version).checkout(pipelineDir, Some(5))
         case TIMEOUT => fail("Timeout")
         case _ => fail
       }
+    }
 
-      verify(task1).run(same(pipelineDir))
-      verify(task2).run(same(pipelineDir))
+    it("should update for mulit materials") {
+      val pipeline = "pipeline"
+      val materialA = mock[org.megrez.vcs.VersionControl]
+      val materialB = mock[org.megrez.vcs.VersionControl]
+
+      val task = mock[org.megrez.Task]
+
+      val assignment = JobAssignment(pipeline, Map(new Material(materialA, "destA") -> Some(5),
+        new Material(materialB, "destB") -> Some(4)), new Job("test", List(task)))
+
+      val pipelineDir = new File("pipeline")
+      val materialADir = new File(pipelineDir, "/destA")
+      val materialBDir = new File(pipelineDir, "/destB")
+      val workingDirectory = mock[Workspace]
+      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)
+      when(workingDirectory.createFolder(pipeline + "/destA")).thenReturn(materialADir)
+      when(workingDirectory.createFolder(pipeline + "/destB")).thenReturn(materialBDir)
+
+      val worker = new Worker(workingDirectory)
+      worker.start
+      worker ! assignment
+
+      receiveWithin(1000) {
+        case completed: JobCompleted =>
+          verify(materialA).checkout(materialADir, Some(5))
+          verify(materialB).checkout(materialBDir, Some(4))
+          verify(task).execute(pipelineDir)
+        case TIMEOUT => fail("Timeout")
+        case _ => fail
+      }
+    }
+
+    it("should reply job failed if any material fail to update") {
+      val pipeline = "pipeline"
+      val version = mock[org.megrez.vcs.VersionControl]
+      val task = mock[org.megrez.Task]
+
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "$main") -> Some(5)), new Job("test", List(task)))
+
+      val pipelineDir = new File("pipeline")
+      val workingDirectory = mock[Workspace]
+      when(workingDirectory.getFolder(pipeline)).thenReturn(pipelineDir)
+      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)      
+      when(version.isRepository(pipelineDir)).thenReturn(true)
+      when(version.update(pipelineDir, Some(5))).thenThrow(new RuntimeException("error check out"))
+
+      val worker = new Worker(workingDirectory)
+      worker.start
+      worker ! assignment
+
+      receiveWithin(1000) {
+        case failed: JobFailed =>
+          failed.reason should equal("error check out")
+        case TIMEOUT => fail("Timeout")
+        case _ => fail
+      }      
+    }
+
+    it("should reply job failed if any task fail to update") {
+      val pipeline = "pipeline"
+      val version = mock[org.megrez.vcs.VersionControl]
+      val task = mock[org.megrez.Task]
+
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "$main") -> Some(5)), new Job("test", List(task)))
+
+      val pipelineDir = new File("pipeline")
+      val workingDirectory = mock[Workspace]
+      when(workingDirectory.getFolder(pipeline)).thenReturn(pipelineDir)
+      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)
+      when(version.isRepository(pipelineDir)).thenReturn(true)
+      when(task.execute(pipelineDir)).thenThrow(new RuntimeException("task error"))
+
+      val worker = new Worker(workingDirectory)
+      worker.start
+      worker ! assignment
+
+      receiveWithin(1000) {
+        case failed: JobFailed =>
+          failed.reason should equal("task error")
+        case TIMEOUT => fail("Timeout")
+        case _ => fail
+      }
     }
   }
-}
-
-class EmptyTask extends Task {
-  def run(file: File) {}
 }

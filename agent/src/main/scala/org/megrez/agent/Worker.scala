@@ -2,62 +2,77 @@ package org.megrez.agent
 
 import actors.Actor
 import java.io.File
+import org.megrez.vcs.VersionControl
+import org.megrez.{JobFailed, JobCompleted, JobAssignment}
 
 class Worker(val workspace: Workspace) extends Actor {
   def act() {
     loop {
       react {
-        case assignment: JobAssignment => handleJob(assignment)
+        case assignment: JobAssignment =>
+          try {
+            val pipelineDir = workspace.createFolder(assignment.pipeline)
+            updateMaterials(assignment)
+            assignment.job.tasks.foreach(_ execute pipelineDir)
+            reply(new JobCompleted())
+          } catch {
+            case e: Exception => reply(new JobFailed(e.getMessage))
+          }
+        case _ =>
       }
     }
   }
 
-  private def handleJob(assignment: JobAssignment) {
-    val pipelineDir = workspace.getPipelineFolder(assignment.pipelineId) match {
-      case null =>
-        val dir = workspace.createPipelineFolder(assignment.pipelineId)
-        assignment.versionControl.checkout(dir, assignment.workSet)
-        dir
-      case dir : File if (assignment.versionControl.isRepository(dir))=>
-        assignment.versionControl.update(dir, assignment.workSet)
-        dir
-      case _ : File =>
-        workspace.removePipelineFolder(assignment.pipelineId)
-        val dir = workspace.createPipelineFolder(assignment.pipelineId)
-        assignment.versionControl.checkout(dir, assignment.workSet)
-        dir
-    }
-    assignment.job.tasks.foreach(_ run pipelineDir)
-    reply(JobCompleted(assignment.pipelineId, assignment.workSet))
+  private def updateMaterials(assignment: JobAssignment) {
+    for ((material, workset) <- assignment.materials)
+      material.source match {
+        case versionControl: VersionControl =>
+          val folder = if (material.destination != "$main") assignment.pipeline + "/" + material.destination else assignment.pipeline
+          workspace.getFolder(folder) match {
+            case null =>
+              val dir = workspace.createFolder(folder)
+              versionControl.checkout(dir, workset)
+            case dir: File if (versionControl.isRepository(dir)) =>
+              versionControl.update(dir, workset)
+            case dir: File =>
+              workspace.removeFolder(folder)
+              val dir = workspace.createFolder(folder)
+              versionControl.checkout(dir, workset)
+          }
+        case _ =>
+      }
   }
 }
 
 trait Workspace {
-  def getPipelineFolder(pipelineId: String): File
-  def createPipelineFolder(pipelineId: String): File
-  def removePipelineFolder(pipelineId: String)
+  def getFolder(pipelineId: String): File
+
+  def createFolder(pipelineId: String): File
+
+  def removeFolder(pipelineId: String)
 }
 
-class FileWorkspace(val root : File) extends Workspace {
-  override def getPipelineFolder(pipelineId : String) : File = {
+class FileWorkspace(val root: File) extends Workspace {
+  override def getFolder(pipelineId: String): File = {
     val pipeline = new File(root, pipelineId)
-    if (pipeline.exists) pipeline else null 
+    if (pipeline.exists) pipeline else null
   }
 
-  override def createPipelineFolder(pipelineId : String) : File = {
+  override def createFolder(pipelineId: String): File = {
     val pipeline = new File(root, pipelineId)
-    pipeline.mkdirs
+    if (!pipeline.exists) pipeline.mkdirs
     pipeline
   }
 
 
-  def removePipelineFolder(pipelineId: String) {
-    delete(getPipelineFolder(pipelineId))
+  def removeFolder(pipelineId: String) {
+    delete(getFolder(pipelineId))
   }
 
-  private def delete(file : File) {
-    file.listFiles.foreach {file =>
-      if (file.isDirectory) delete(file) else file.delete
+  private def delete(file: File) {
+    file.listFiles.foreach {
+      file =>
+        if (file.isDirectory) delete(file) else file.delete
     }
     file.delete
   }

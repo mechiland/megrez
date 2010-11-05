@@ -9,7 +9,7 @@ class FileWorkspaceTest extends Spec with ShouldMatchers with BeforeAndAfterEach
   describe("File Workspace") {
     it("should create dir for pipeline") {
       val workspace = new FileWorkspace(root)
-      workspace.createPipelineFolder("pipeline")
+      workspace.createFolder("pipeline")
       
       new File(root, "pipeline") should be('exists)
     }
@@ -17,20 +17,20 @@ class FileWorkspaceTest extends Spec with ShouldMatchers with BeforeAndAfterEach
     it("should returen folder if exists") {
       new File(root, "pipeline").mkdir
       val workspace = new FileWorkspace(root)
-      workspace.getPipelineFolder("pipeline") should not be(null)
+      workspace.getFolder("pipeline") should not be(null)
     }
 
     it("should return null if folder doesn't exist") {
       val workspace = new FileWorkspace(root)
-      workspace.getPipelineFolder("pipeline") should be(null)      
+      workspace.getFolder("pipeline") should be(null)
     }
 
     it("should remove all sub folder under pipeline dir") {
       val workspace = new FileWorkspace(root)
-      val pipelineDir = workspace.createPipelineFolder("pipeline")
+      val pipelineDir = workspace.createFolder("pipeline")
       new File(pipelineDir, "sub").mkdir
 
-      workspace.removePipelineFolder("pipeline")
+      workspace.removeFolder("pipeline")
       pipelineDir should not be ('exists)
     }
   }

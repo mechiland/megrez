@@ -8,26 +8,30 @@ import actors.Actor._
 import actors._
 import org.mockito._
 import org.jboss.netty.handler.codec.http.websocket.{WebSocketFrame, DefaultWebSocketFrame}
+import org.megrez.vcs.Subversion
+import org.megrez.{JobCompleted, JobAssignment}
 
 class AgentHandlerTest extends HandlerTest with ShouldMatchers {
   describe("Agent handler") {
     it("should receive job assignment and send message to worker and repsone to server") {
       val event = mock[MessageEvent]
-      val pipelineJson =
-                 """{"pipeline" : {"id" : "pipeline", "vcs" : {"type" : "svn", "url" : "svn_url"}},
-                     "workSet"  : {"revision" : "100"},
-                     "job"      : {"tasks" : [] } }"""
+      val pipelineJson = """{"pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}, "workset" : {"revision" : "1"} }], "job" : {"name" : "unit test", "tasks" : [{ "type" : "cmd", "command": "ls"}] } }"""
       val message = new DefaultWebSocketFrame(pipelineJson)
       when(event.getMessage).thenReturn(message, Array[Any]())
       handler.messageReceived(context, event)
 
       receiveWithin(1000) {
         case assignment : JobAssignment =>
-          assignment.pipelineId should equal("pipeline")
-          assignment.versionControl.toString should equal("svn : svn_url")
-          assignment.workSet should equal(100)
-          assignment.job.tasks.size should equal(0)
-          reply(JobCompleted("pipeline", 100))
+          assignment.pipeline should equal("pipeline")
+          assignment.materials should have size(1)
+          val (material, workset) = assignment.materials.head
+          material.source match {
+            case subversion : Subversion =>
+              subversion.url should equal("svn_url")
+            case _ => fail
+          }
+          workset should equal(Some(1))
+          reply(new JobCompleted)
         case TIMEOUT => fail
         case _ => fail
       }
