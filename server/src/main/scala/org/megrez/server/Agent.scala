@@ -35,8 +35,8 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
         if (checkResource(request.job)) {
           _status = Busy
           if(handler != null)
-            handler.send("received a job: " + request.job.name)
-          reply(JobConfirm(this, request.job))
+            handler.send(request.receivedMessage)
+          reply(JobConfirm(this, request))
         } else {
           reply(JobReject(this))
         }

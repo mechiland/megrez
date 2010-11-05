@@ -4,6 +4,7 @@ import org.scalatest.matchers.ShouldMatchers
 import trigger.SvnTestRepo
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import actors.Actor._
+import actors.TIMEOUT
 
 class InitializerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnTestRepo with AgentTestSuite {
   describe("App") {
@@ -14,7 +15,11 @@ class InitializerTest extends Spec with ShouldMatchers with BeforeAndAfterEach w
       agent ! SetResources(Set("LINUX"))
       Initializer.dispatcher ! AgentConnect(agent)
 
-      expectAgentGotJob(job1)
+      receiveWithin(2000) {
+        case msg: String => if(msg.indexOf(job1.name) < 0) fail
+        case TIMEOUT => println("TIMEOUT"); fail
+        case msg: Any => println(msg); fail
+      }
     }
   }
 

@@ -5,6 +5,7 @@ import org.scalatest.matchers._
 import actors.Actor._
 import actors.{TIMEOUT, Actor}
 import java.util.UUID
+import collection.mutable.HashSet
 
 class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   describe("Agent") {
@@ -90,12 +91,18 @@ class AgentHandlerStub() extends AgentHandler {
 }
 
 trait AgentTestSuite extends Spec {
-  def expectAgentGotJob(job: Job) {
-    val RECEIVED = "received a job: " + job.name;
-    receiveWithin(2000) {
-      case RECEIVED =>
-      case TIMEOUT => fail
-      case msg: Any => println(msg); fail
+
+  def expectAgentGotJobRequests(jobRequests: JobRequest*) {
+    val shouldReceivedMessages = new HashSet[String];
+    jobRequests.foreach(jobRequest => shouldReceivedMessages.add(jobRequest.receivedMessage))
+    for (i <- 1 to shouldReceivedMessages.size) {
+      receiveWithin(2000) {
+        case msg: String => {
+          if (!shouldReceivedMessages.remove(msg)) fail
+        }
+        case TIMEOUT => println("TIMEOUT"); fail
+        case msg: Any => println(msg); fail
+      }
     }
   }
 
