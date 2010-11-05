@@ -23,7 +23,3 @@ trait ChangeSource {
 class Material(val source : ChangeSource, val destination : String) {
   def this(source : ChangeSource) = this(source, "$main")
 }
-
-trait Reader[Resource, Format] {
-  def read(representation: Format): Resource
-}

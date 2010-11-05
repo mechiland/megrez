@@ -21,6 +21,10 @@ class JsonTest extends Spec with ShouldMatchers {
       }
     }
 
+    it("should generate material json") {
+      
+    }
+
     it("should parse job from json") {
       val json = """{"name" : "unit test", "tasks" : [{ "type" : "cmd", "command": "ls"}] }"""
       val job = JSON.read[Job](JsonParser.parseFull(json).get)
