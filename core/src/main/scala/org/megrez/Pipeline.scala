@@ -12,7 +12,7 @@ object Pipeline {
 class Job(val name: String, val tasks: List[Task])
 
 trait Task {
-  def execute(workingDir : File) : Boolean
+  def execute(workingDir : File)
   def cancel() 
 }
 

@@ -7,7 +7,7 @@ import org.mockito.Mockito._
 import java.io.File
 import actors.TIMEOUT
 import actors.Actor._
-import org.megrez.{Job, JobCompleted, JobAssignment, Material}
+import org.megrez._
 
 class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("Agent worker job execution") {
@@ -113,9 +113,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       when(workingDirectory.createFolder(pipeline + "/destB")).thenReturn(materialBDir)
 
       val worker = new Worker(workingDirectory)
-
       worker.start
-
       worker ! assignment
 
       receiveWithin(1000) {
@@ -124,8 +122,59 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
           verify(materialB).checkout(materialBDir, Some(4))
           verify(task).execute(pipelineDir)
         case TIMEOUT => fail("Timeout")
-        case a: Any =>
-          fail
+        case _ => fail
+      }
+    }
+
+    it("should reply job failed if any material fail to update") {
+      val pipeline = "pipeline"
+      val version = mock[org.megrez.vcs.VersionControl]
+      val task = mock[org.megrez.Task]
+
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "$main") -> Some(5)), new Job("test", List(task)))
+
+      val pipelineDir = new File("pipeline")
+      val workingDirectory = mock[Workspace]
+      when(workingDirectory.getFolder(pipeline)).thenReturn(pipelineDir)
+      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)      
+      when(version.isRepository(pipelineDir)).thenReturn(true)
+      when(version.update(pipelineDir, Some(5))).thenThrow(new RuntimeException("error check out"))
+
+      val worker = new Worker(workingDirectory)
+      worker.start
+      worker ! assignment
+
+      receiveWithin(1000) {
+        case failed: JobFailed =>
+          failed.reason should equal("error check out")
+        case TIMEOUT => fail("Timeout")
+        case _ => fail
+      }      
+    }
+
+    it("should reply job failed if any task fail to update") {
+      val pipeline = "pipeline"
+      val version = mock[org.megrez.vcs.VersionControl]
+      val task = mock[org.megrez.Task]
+
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "$main") -> Some(5)), new Job("test", List(task)))
+
+      val pipelineDir = new File("pipeline")
+      val workingDirectory = mock[Workspace]
+      when(workingDirectory.getFolder(pipeline)).thenReturn(pipelineDir)
+      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)
+      when(version.isRepository(pipelineDir)).thenReturn(true)
+      when(task.execute(pipelineDir)).thenThrow(new RuntimeException("task error"))
+
+      val worker = new Worker(workingDirectory)
+      worker.start
+      worker ! assignment
+
+      receiveWithin(1000) {
+        case failed: JobFailed =>
+          failed.reason should equal("task error")
+        case TIMEOUT => fail("Timeout")
+        case _ => fail
       }
     }
   }

@@ -3,17 +3,21 @@ package org.megrez.agent
 import actors.Actor
 import java.io.File
 import org.megrez.vcs.VersionControl
-import org.megrez.{JobCompleted, JobAssignment}
+import org.megrez.{JobFailed, JobCompleted, JobAssignment}
 
 class Worker(val workspace: Workspace) extends Actor {
   def act() {
     loop {
       react {
         case assignment: JobAssignment =>
-          val pipelineDir = workspace.createFolder(assignment.pipeline)
-          updateMaterials(assignment)
-          assignment.job.tasks.foreach(_ execute pipelineDir)
-          reply(new JobCompleted())
+          try {
+            val pipelineDir = workspace.createFolder(assignment.pipeline)
+            updateMaterials(assignment)
+            assignment.job.tasks.foreach(_ execute pipelineDir)
+            reply(new JobCompleted())
+          } catch {
+            case e: Exception => reply(new JobFailed(e.getMessage))
+          }
         case _ =>
       }
     }
@@ -23,7 +27,7 @@ class Worker(val workspace: Workspace) extends Actor {
     for ((material, workset) <- assignment.materials)
       material.source match {
         case versionControl: VersionControl =>
-          val folder = if (material.destination != "$main") assignment.pipeline + "/" + material.destination else assignment.pipeline          
+          val folder = if (material.destination != "$main") assignment.pipeline + "/" + material.destination else assignment.pipeline
           workspace.getFolder(folder) match {
             case null =>
               val dir = workspace.createFolder(folder)
