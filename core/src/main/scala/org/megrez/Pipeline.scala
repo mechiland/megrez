@@ -20,7 +20,9 @@ trait ChangeSource {
   def changes(workingDir: File): Option[Any]
 }
 
-class Material(val source : ChangeSource, val destination : String)
+class Material(val source : ChangeSource, val destination : String) {
+  def this(source : ChangeSource) = this(source, "$main")
+}
 
 trait Reader[Resource, Format] {
   def read(representation: Format): Resource

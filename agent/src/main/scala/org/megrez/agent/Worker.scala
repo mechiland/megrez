@@ -9,59 +9,60 @@ class Worker(val workspace: Workspace) extends Actor {
   def act() {
     loop {
       react {
-        case assignment: JobAssignment => handleAssignment(assignment)
+        case assignment: JobAssignment =>
+          val pipelineDir = workspace.createFolder(assignment.pipeline)
+          updateMaterials(assignment)
+          assignment.job.tasks.foreach(_ execute pipelineDir)
+          reply(new JobCompleted())
+        case _ =>
       }
     }
   }
 
-  private def handleAssignment(assignment: JobAssignment) {
-    val (material, workset) = assignment.materials.head
-    material.source match {
-      case versionControl: VersionControl =>
-        val pipelineDir = workspace.getPipelineFolder(assignment.pipeline) match {
-          case null =>
-            val dir = workspace.createPipelineFolder(assignment.pipeline)
-            versionControl.checkout(dir, workset)
-            dir
-          case dir: File if (versionControl.isRepository(dir)) =>
-            versionControl.update(dir, workset)
-            dir
-          case _ : File =>
-            workspace.removePipelineFolder(assignment.pipeline)
-            val dir = workspace.createPipelineFolder(assignment.pipeline)
-            versionControl.checkout(dir, workset)
-            dir
-        }
-        assignment.job.tasks.foreach(_ execute pipelineDir)
-        reply(new JobCompleted())
-      case _ =>
-    }
+  private def updateMaterials(assignment: JobAssignment) {
+    for ((material, workset) <- assignment.materials)
+      material.source match {
+        case versionControl: VersionControl =>
+          val folder = if (material.destination != "$main") assignment.pipeline + "/" + material.destination else assignment.pipeline          
+          workspace.getFolder(folder) match {
+            case null =>
+              val dir = workspace.createFolder(folder)
+              versionControl.checkout(dir, workset)
+            case dir: File if (versionControl.isRepository(dir)) =>
+              versionControl.update(dir, workset)
+            case dir: File =>
+              workspace.removeFolder(folder)
+              val dir = workspace.createFolder(folder)
+              versionControl.checkout(dir, workset)
+          }
+        case _ =>
+      }
   }
 }
 
 trait Workspace {
-  def getPipelineFolder(pipelineId: String): File
+  def getFolder(pipelineId: String): File
 
-  def createPipelineFolder(pipelineId: String): File
+  def createFolder(pipelineId: String): File
 
-  def removePipelineFolder(pipelineId: String)
+  def removeFolder(pipelineId: String)
 }
 
 class FileWorkspace(val root: File) extends Workspace {
-  override def getPipelineFolder(pipelineId: String): File = {
+  override def getFolder(pipelineId: String): File = {
     val pipeline = new File(root, pipelineId)
     if (pipeline.exists) pipeline else null
   }
 
-  override def createPipelineFolder(pipelineId: String): File = {
+  override def createFolder(pipelineId: String): File = {
     val pipeline = new File(root, pipelineId)
-    pipeline.mkdirs
+    if (!pipeline.exists) pipeline.mkdirs
     pipeline
   }
 
 
-  def removePipelineFolder(pipelineId: String) {
-    delete(getPipelineFolder(pipelineId))
+  def removeFolder(pipelineId: String) {
+    delete(getFolder(pipelineId))
   }
 
   private def delete(file: File) {
