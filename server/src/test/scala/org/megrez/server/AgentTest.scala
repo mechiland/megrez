@@ -92,9 +92,9 @@ class AgentHandlerStub() extends AgentHandler {
 
 trait AgentTestSuite extends Spec {
 
-  def expectAgentGotJobs(jobs: Job*) {
+  def expectAgentGotJobRequests(jobRequests: JobRequest*) {
     val shouldReceivedMessages = new HashSet[String];
-    jobs.foreach(job => shouldReceivedMessages.add("received a job: ".concat(job.name)))
+    jobRequests.foreach(jobRequest => shouldReceivedMessages.add(jobRequest.receivedMessage))
     for (i <- 1 to shouldReceivedMessages.size) {
       receiveWithin(2000) {
         case msg: String => {

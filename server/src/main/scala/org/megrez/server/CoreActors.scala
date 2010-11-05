@@ -115,13 +115,12 @@ class Dispatcher() extends Actor {
         case message: JobConfirm => {
           jobRequestQueue.remove(message.jobRequest)
           idleAgents.remove(message.agent)
-          reply(Success())
         }
 
         case message: JobFinished => {
           idleAgents.add(message.agent)
           buildScheduler ! new JobCompleted(message.buildId, message.job)
-          reply(Success())
+          startAssigning
         }
 
         case _: Exit => exit

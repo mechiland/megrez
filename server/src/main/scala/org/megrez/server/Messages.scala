@@ -14,7 +14,11 @@ case class RemoteAgentConnected(val handler : AgentHandler) extends AgentMessage
 case class AgentConnect(val agent : Actor)
 
 abstract class JobMessage
-case class JobRequest(val buildId: UUID, val job : Job) extends JobMessage
+case class JobRequest(val buildId: UUID, val job : Job) extends JobMessage {
+  def receivedMessage = {
+    "received a job request: %s for build %s".format(buildId.toString, job.name)
+  }
+}
 case class JobConfirm(val agent : Agent, val jobRequest: JobRequest) extends JobMessage
 case class JobReject(val agent : Agent) extends JobMessage
 case class JobFinished(val buildId: UUID, val job: Job, val agent : Actor) extends JobMessage
