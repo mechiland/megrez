@@ -4,6 +4,7 @@ import actors.Actor
 import java.util.UUID
 import collection.mutable.{HashSet, HashMap}
 import trigger.AutoTrigger
+import org.megrez.util.Logging
 
 class PipelineManager(megrez : {val triggerFactory : Pipeline => Trigger}) extends Actor {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
@@ -156,6 +157,23 @@ class Dispatcher(megrez : {val buildScheduler : Actor}) extends Actor {
   def jobRequests = jobRequestQueue.toSet
 
   def agents = idleAgents.toSet
+
+  start
+}
+
+class AgentManager(megrez : { val dispatcher : Actor}) extends Actor with Logging {
+  def act() {
+    loop {
+      react {
+        case RemoteAgentConnected(handler : AgentHandler) =>
+          info("Remote agent connected")
+          val agent = new Agent(handler, megrez.dispatcher)
+          handler.assignAgent(agent)
+          megrez.dispatcher ! AgentConnect(agent)
+        case _ =>
+      }
+    }
+  }
 
   start
 }

@@ -15,8 +15,9 @@ import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEn
 import org.megrez.server.{RemoteAgentConnected, AgentHandler}
 import actors.Actor
 import actors.Actor._
+import org.megrez.util.Logging
 
-class Server(val routes: Route*) extends SimpleChannelUpstreamHandler {
+class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Logging {
   private val bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(newCachedThreadPool(), newCachedThreadPool()))
 
   bootstrap.setPipelineFactory(new ChannelPipelineFactory {
@@ -95,7 +96,7 @@ class WebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChann
   handler ! channel
 }
 
-class AgentWebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChannelUpstreamHandler with AgentHandler {
+class AgentWebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChannelUpstreamHandler with AgentHandler with Logging {
   private val MegrezAgentHandshake = "megrez-agent:1.0"
   private var agent: Actor = _
 
@@ -108,6 +109,7 @@ class AgentWebSocketHandler(val channel: Channel, handler: Actor) extends Simple
       case frame: WebSocketFrame =>
         frame.getTextData match {
           case MegrezAgentHandshake =>
+            debug("megrez handshake received")
             send("megrez-server:1.0")
             handler ! RemoteAgentConnected(this)
           case message: String =>

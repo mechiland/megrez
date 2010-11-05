@@ -2,15 +2,11 @@ package org.megrez.server
 
 import http.Route._
 import actors.Actor
-import actors.Actor._
 import http.{AgentWebSocketHandler, Server}
 import org.jboss.netty.channel.Channel
+import org.megrez.util.Logging
 
-object Main {
-  object Megrez {
-    
-  }
-  
+object Main extends Logging {  
   private var server: Server = null
 
   def start(port: Int) {
@@ -18,13 +14,7 @@ object Main {
 
     if (server == null) {
       server = new Server(
-        websocket("/agent", agent) -> actor {
-          react {
-            case connected: RemoteAgentConnected =>
-              println(connected.handler)
-            case _ =>
-          }
-        }
+        websocket("/agent", agent) -> Megrez.agentManager
         )
       server.start(port)
     }
@@ -37,5 +27,6 @@ object Main {
 
   def main(args: Array[String]) {
     start(8080)
+    info("Start listening 8080...")
   }
 }

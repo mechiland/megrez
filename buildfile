@@ -9,6 +9,8 @@ repositories.remote << "http://repository.jboss.org/nexus/content/groups/public/
 
 NETTY = 'org.jboss.netty:netty:jar:3.2.2.Final'
 MOCKITO = 'org.mockito:mockito-all:jar:1.8.5'
+SLF4J_API = 'org.slf4j:slf4j-api:jar:1.6.1'
+SLF4J_SIMPLE = 'org.slf4j:slf4j-simple:jar:1.6.1'
 
 class Buildr::ScalaTest
   class << self
@@ -30,18 +32,19 @@ define "megrez" do
   test.with MOCKITO
 
   define "core" do
+    compile.with SLF4J_API, SLF4J_SIMPLE
 	package(:jar)
   end
 
   define "agent" do
-	compile.with NETTY
+	compile.with NETTY, SLF4J_API, SLF4J_SIMPLE
 	compile.with project("core").package
 	test.resources
 	package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.agent.Main' }
  end
 
   define "server" do
-    compile.with NETTY
+    compile.with NETTY, SLF4J_API, SLF4J_SIMPLE
 	compile.with project("core").package
     test.resources
     package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.server.Main' }
