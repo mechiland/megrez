@@ -16,7 +16,12 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val job = new Job("job1", Set[String](), List[Task]())
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job)))
 
-      val scheduler = new BuildScheduler(self, self)
+      object Context {
+        val dispatcher = self
+        val buildManager = self
+      }
+
+      val scheduler = new BuildScheduler(Context)
       scheduler ! TriggerBuild(pipeline)
 
       receiveWithin(1000) {
@@ -33,7 +38,12 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val job2 = new Job("job2", Set[String](), List[Task]())
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
-      val scheduler = new BuildScheduler(self, self)
+      object Context {
+        val dispatcher = self
+        val buildManager = self
+      }
+
+      val scheduler = new BuildScheduler(Context)      
       scheduler ! TriggerBuild(pipeline)
 
       receiveWithin(1000) {
@@ -57,7 +67,12 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val job2 = new Job("job2", Set[String](), List[Task]())
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
-      val scheduler = new BuildScheduler(self, self)
+      object Context {
+        val dispatcher = self
+        val buildManager = self
+      }
+
+      val scheduler = new BuildScheduler(Context)      
       scheduler ! TriggerBuild(pipeline)
 
       receiveWithin(1000) {
@@ -81,7 +96,12 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val job3 = new Job("job2", Set[String](), List[Task]())
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1, job2), createStage("unit test", job3)))
 
-      val scheduler = new BuildScheduler(self, self)
+      object Context {
+        val dispatcher = self
+        val buildManager = self
+      }
+
+      val scheduler = new BuildScheduler(Context)      
       scheduler ! TriggerBuild(pipeline)
 
       var id = UUID.randomUUID
@@ -112,7 +132,12 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val job2 = new Job("job2", Set[String](), List[Task]())
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
-      val scheduler = new BuildScheduler(self, self)
+      object Context {
+        val dispatcher = self
+        val buildManager = self
+      }
+
+      val scheduler = new BuildScheduler(Context)      
       scheduler ! TriggerBuild(pipeline)
 
       receiveWithin(1000) {

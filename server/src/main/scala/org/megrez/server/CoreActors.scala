@@ -43,7 +43,7 @@ class PipelineManager(megrez : {val triggerFactory : Pipeline => Trigger}) exten
   start
 }
 
-class BuildScheduler(val dispatcher: Actor, val buildManager: Actor) extends Actor {
+class BuildScheduler(megrez : {val dispatcher: Actor; val buildManager: Actor}) extends Actor {
   private val builds = HashMap[UUID, Build]()
 
   def act {
@@ -59,10 +59,10 @@ class BuildScheduler(val dispatcher: Actor, val buildManager: Actor) extends Act
             case Some(build: Build) =>
               build.complete(job) match {
                 case Some(Build.Completed) =>
-                  buildManager ! BuildCompleted(build)
+                  megrez.buildManager ! BuildCompleted(build)
                   builds.remove(id)
                 case Some(Build.Failed) =>
-                  buildManager ! BuildFailed(build)
+                  megrez.buildManager ! BuildFailed(build)
                   builds.remove(id)
                 case Some(stage: Build.Stage) =>
                   triggerJobs(id, build)
@@ -75,7 +75,7 @@ class BuildScheduler(val dispatcher: Actor, val buildManager: Actor) extends Act
             case Some(build: Build) =>
               build.fail(job) match {
                 case Some(Build.Failed) =>
-                  buildManager ! BuildFailed(build)
+                  megrez.buildManager ! BuildFailed(build)
                   builds.remove(id)
                 case None =>
               }
@@ -88,16 +88,15 @@ class BuildScheduler(val dispatcher: Actor, val buildManager: Actor) extends Act
   }
 
   private def triggerJobs(id: UUID, build: Build) {
-    dispatcher ! JobScheduled(id, build.current.jobs)
+    megrez.dispatcher ! JobScheduled(id, build.current.jobs)
   }
 
   start
 }
 
-class Dispatcher() extends Actor {
+class Dispatcher(val megrez : {val buildScheduler : Actor}) extends Actor {
   private val jobQueue = new HashSet[Job]()
   private val idleAgents = new HashSet[Actor]()
-  var buildScheduler: Actor = _
 
   def act() {
     loop {
@@ -119,7 +118,7 @@ class Dispatcher() extends Actor {
 
         case message: JobFinished => {
           idleAgents.add(message.agent)
-          buildScheduler ! new JobCompleted(message.buildId, message.job)
+          megrez.buildScheduler ! new JobCompleted(message.buildId, message.job)
           reply(Success())
         }
 
