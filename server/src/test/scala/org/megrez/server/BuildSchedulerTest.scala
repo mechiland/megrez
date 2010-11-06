@@ -7,7 +7,7 @@ import actors.Actor._
 import actors.TIMEOUT
 import org.megrez.Pipeline.Stage
 import java.util.UUID
-import org.megrez.{Pipeline, Job, Task}
+import org.megrez.{Material, Pipeline, Job, Task}
 
 class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
   def createStage(name: String, job: Job*) = new Stage(name, job.toSet)
@@ -23,7 +23,9 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       }
 
       val scheduler = new BuildScheduler(Context)
-      scheduler ! TriggerBuild(pipeline)
+      val changes = Map[Material, Option[Any]]()
+      
+      scheduler ! TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
         case JobScheduled(build: UUID, jobs: Set[Job]) =>
@@ -44,8 +46,10 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
         val buildManager = self
       }
 
-      val scheduler = new BuildScheduler(Context)      
-      scheduler ! TriggerBuild(pipeline)
+      val scheduler = new BuildScheduler(Context)
+      val changes = Map[Material, Option[Any]]()
+
+      scheduler ! TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
         case JobScheduled(build: UUID, jobs: Set[Job]) =>
@@ -73,8 +77,10 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
         val buildManager = self
       }
 
-      val scheduler = new BuildScheduler(Context)      
-      scheduler ! TriggerBuild(pipeline)
+      val scheduler = new BuildScheduler(Context)
+      val changes = Map[Material, Option[Any]]()
+
+      scheduler ! TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
         case JobScheduled(build: UUID, jobs: Set[Job]) =>
@@ -102,8 +108,10 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
         val buildManager = self
       }
 
-      val scheduler = new BuildScheduler(Context)      
-      scheduler ! TriggerBuild(pipeline)
+      val scheduler = new BuildScheduler(Context)
+      val changes = Map[Material, Option[Any]]()
+
+      scheduler ! TrigBuild(pipeline, changes)
 
       var id = UUID.randomUUID
       receiveWithin(1000) {
@@ -138,8 +146,10 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
         val buildManager = self
       }
 
-      val scheduler = new BuildScheduler(Context)      
-      scheduler ! TriggerBuild(pipeline)
+      val scheduler = new BuildScheduler(Context)
+      val changes = Map[Material, Option[Any]]()
+
+      scheduler ! TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
         case JobScheduled(build: UUID, jobs: Set[Job]) =>

@@ -1,9 +1,11 @@
 package org.megrez.server
 
 import collection.mutable.HashSet
-import org.megrez.{Pipeline, Job}
+import org.megrez.{Material, Pipeline, Job}
 
-class Build(val pipeline: Pipeline) {
+class Build(val pipeline: Pipeline, val changes : Map[Material, Option[Any]]) {
+  def this(pipeline : Pipeline) = this(pipeline, Map[Material, Option[Any]]())
+  
   import Build._
   private val stageIterator = pipeline.stages.iterator
   private var currentStage = nextStage

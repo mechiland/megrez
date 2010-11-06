@@ -6,7 +6,7 @@ import org.scalatest.mock.MockitoSugar
 import actors.Actor._
 import actors.TIMEOUT
 import org.megrez.Pipeline
-import org.megrez.server.NewPipeline
+import org.megrez.server.AddPipeline
 
 class PipelineControllerTest extends Spec with ShouldMatchers with MockitoSugar {
   describe("receive request") {
@@ -16,7 +16,7 @@ class PipelineControllerTest extends Spec with ShouldMatchers with MockitoSugar 
         """{"name" : "pipeline", "materials" : [{"type" : "svn", "url" : "svn_url", "dest" : "dest"}] }""")
 
       receiveWithin(1000) {
-        case NewPipeline(pipeline : Pipeline) =>
+        case AddPipeline(pipeline : Pipeline) =>
           pipeline.name should equal("pipeline")
           pipeline.materials should have size(1)          
         case TIMEOUT => fail

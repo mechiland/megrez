@@ -3,22 +3,24 @@ package org.megrez.server
 import actors.Actor
 import java.util.UUID
 import collection.mutable.{HashSet, HashMap}
-import org.megrez.util.Logging
-import org.megrez.{Pipeline, Job}
-import trigger.Trigger
+import trigger.{Materials, OnChanges, Trigger}
+import org.megrez.util.{FileWorkspace, Logging}
+import java.io.File
+import org.megrez.{Material, Pipeline, Job}
 
-class PipelineManager(megrez : {val triggerFactory : Pipeline => Trigger}) extends Actor {
+class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
 
   def act {
     loop {
       react {
-        case message: AddPipeline =>
-          addPipeline(message.config)
-        case message: PipelineChanged =>
-          removePipeline(message.config.name)
-          addPipeline(message.config)
-        case message: RemovePipeline => removePipeline(message.config.name)
+        case AddPipeline(pipeline : Pipeline) =>
+          addPipeline(pipeline)
+        case PipelineChanged(pipeline : Pipeline) =>
+          removePipeline(pipeline.name)
+          addPipeline(pipeline)
+        case RemovePipeline(pipeline : Pipeline) =>
+          removePipeline(pipeline.name)
         case _: Exit => exit
         case _ =>
       }
@@ -46,15 +48,15 @@ class PipelineManager(megrez : {val triggerFactory : Pipeline => Trigger}) exten
   start
 }
 
-class BuildScheduler(megrez : {val dispatcher: Actor; val buildManager: Actor}) extends Actor {
+class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) extends Actor {
   private val builds = HashMap[UUID, Build]()
 
   def act {
     loop {
       react {
-        case TriggerBuild(config: Pipeline) =>
+        case TrigBuild(pipeline: Pipeline, materials : Map[Material, Option[Any]]) =>
           val id = UUID.randomUUID
-          val build = new Build(config)
+          val build = new Build(pipeline, materials)
           builds.put(id, build)
           triggerJobs(id, build)
         case JobCompleted(id: UUID, job: Job) =>
@@ -97,7 +99,7 @@ class BuildScheduler(megrez : {val dispatcher: Actor; val buildManager: Actor}) 
   start
 }
 
-class Dispatcher(megrez : {val buildScheduler : Actor}) extends Actor {
+class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
   private val jobRequestQueue = new HashSet[JobRequest]()
   private val idleAgents = new HashSet[Actor]()
 
@@ -136,7 +138,7 @@ class Dispatcher(megrez : {val buildScheduler : Actor}) extends Actor {
       jobRequest => {
         if (!idleAgents.isEmpty) {
           val assigned: Boolean = idleAgents.remove(assignJobRequest(idleAgents.iterator, jobRequest).get)
-          if(assigned)
+          if (assigned)
             assignedJobRequests.add(jobRequest)
         }
       }
@@ -150,7 +152,7 @@ class Dispatcher(megrez : {val buildScheduler : Actor}) extends Actor {
         Some(message.agent)
       }
       case message: JobReject => {
-        if(iterator.hasNext) assignJobRequest(iterator, jobRequest) else None
+        if (iterator.hasNext) assignJobRequest(iterator, jobRequest) else None
       }
     }
   }
@@ -162,11 +164,11 @@ class Dispatcher(megrez : {val buildScheduler : Actor}) extends Actor {
   start
 }
 
-class AgentManager(megrez : { val dispatcher : Actor}) extends Actor with Logging {
+class AgentManager(megrez: {val dispatcher: Actor}) extends Actor with Logging {
   def act() {
     loop {
       react {
-        case RemoteAgentConnected(handler : AgentHandler) =>
+        case RemoteAgentConnected(handler: AgentHandler) =>
           info("Remote agent connected")
           val agent = new Agent(handler, megrez.dispatcher)
           handler.assignAgent(agent)
@@ -183,7 +185,7 @@ class BuildManager extends Actor {
   def act() {
     loop {
       react {
-        case _ : Exit =>
+        case _: Exit =>
           exit
         case _ =>
       }
@@ -195,13 +197,14 @@ class BuildManager extends Actor {
 
 
 object Megrez {
-  val agentManager : Actor = new AgentManager(this)
+  val agentManager: Actor = new AgentManager(this)
   val buildScheduler: Actor = new BuildScheduler(this)
-  val buildManager : Actor = new BuildManager()
+  val buildManager: Actor = new BuildManager()
   val dispatcher: Actor = new Dispatcher(this)
   val pipelineManager = new PipelineManager(this)
+  val workspace = new FileWorkspace(new File(System.getProperty("user.dir")))
 
-  val triggerFactory : Pipeline => Trigger = pipeline => null
+  val triggerFactory: Pipeline => Trigger = pipeline => new OnChanges(new Materials(pipeline, workspace), buildScheduler, 5 * 60 * 1000)
 
   def stop() {
     dispatcher ! Exit()
