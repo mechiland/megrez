@@ -2,7 +2,9 @@ package org.megrez.server
 
 import actors._
 import java.util.UUID
-import org.megrez.{Pipeline, Job}
+import org.megrez.{Material, Pipeline, Job}
+
+case class TrigBuild(val pipeline : Pipeline, val changes : Map[Material, Option[Any]])
 
 abstract class CommonMessage
 case class Success() extends CommonMessage
@@ -28,9 +30,7 @@ case class AddPipeline(pipeline : Pipeline)
 case class PipelineChanged(pipeline : Pipeline)
 case class RemovePipeline(pipeline : Pipeline)
 
-case class TrigBuild(val pipeline : Pipeline, val materials : Map[org.megrez.Material, Option[Any]])
-
-case class JobScheduled(buildId : UUID, jobs : Set[Job]) {
+case class JobScheduled(buildId : UUID, changes: Map[Material, Option[Any]], jobs : Set[Job]) {
   def jobRequests: Set[JobRequest] = {
     jobs.map(job => JobRequest(buildId, job))
   }

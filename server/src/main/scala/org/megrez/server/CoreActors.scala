@@ -93,7 +93,7 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
   }
 
   private def triggerJobs(id: UUID, build: Build) {
-    megrez.dispatcher ! JobScheduled(id, build.current.jobs)
+    megrez.dispatcher ! JobScheduled(id, build.changes, build.current.jobs)
   }
 
   start

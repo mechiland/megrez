@@ -5,7 +5,7 @@ import org.scalatest.matchers._
 import actors.Actor._
 import java.util.UUID
 import actors.{Actor, TIMEOUT}
-import org.megrez.Job
+import org.megrez.{Material, Job}
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   describe("Dispatcher") {
@@ -63,7 +63,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
   }
 
   def scheduleJobRequest(jobRequest: JobRequest): Unit = {
-    dispatcher ! JobScheduled(jobRequest.buildId, Set(jobRequest.job))
+    dispatcher ! JobScheduled(jobRequest.buildId, Map[Material, Option[Any]](), Set(jobRequest.job))
   }
 
   def jobFinishedOnAgent(jobRequest: JobRequest): Unit = {
