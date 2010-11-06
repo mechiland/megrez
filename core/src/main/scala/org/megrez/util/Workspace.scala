@@ -3,11 +3,11 @@ package org.megrez.util
 import java.io.File
 
 trait Workspace {
-  def getFolder(pipelineId: String): File
+  def getFolder(folder: String): File
 
-  def createFolder(pipelineId: String): File
+  def createFolder(folder: String): File
 
-  def removeFolder(pipelineId: String)
+  def removeFolder(folder: String)
 }
 
 class FileWorkspace(val root: File) extends Workspace {
@@ -16,15 +16,15 @@ class FileWorkspace(val root: File) extends Workspace {
     if (pipeline.exists) pipeline else null
   }
 
-  override def createFolder(pipelineId: String): File = {
-    val pipeline = new File(root, pipelineId)
+  override def createFolder(folder: String): File = {
+    val pipeline = new File(root, folder)
     if (!pipeline.exists) pipeline.mkdirs
     pipeline
   }
 
 
-  def removeFolder(pipelineId: String) {
-    delete(getFolder(pipelineId))
+  def removeFolder(folder: String) {
+    delete(getFolder(folder))
   }
 
   private def delete(file: File) {
