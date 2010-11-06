@@ -2,7 +2,7 @@ package org.megrez.server
 
 import actors._
 import java.util.UUID
-import org.megrez.Job
+import org.megrez.{Pipeline, Job}
 
 abstract class CommonMessage
 case class Success() extends CommonMessage

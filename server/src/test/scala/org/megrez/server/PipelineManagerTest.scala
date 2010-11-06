@@ -7,6 +7,7 @@ import org.mockito.Mockito._
 import org.mockito.Matchers._
 import actors.{TIMEOUT, Actor}
 import actors.Actor._
+import org.megrez.Pipeline
 
 class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
   describe("Pipeline manager") {

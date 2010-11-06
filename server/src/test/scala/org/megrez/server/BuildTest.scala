@@ -2,10 +2,10 @@ package org.megrez.server
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Spec
-import org.megrez.server.Pipeline.Stage
+import org.megrez.Pipeline.Stage
 import java.lang.String
 import collection.immutable.Set
-import org.megrez.{Job, Task}
+import org.megrez.{Pipeline, Job, Task}
 
 class BuildTest extends Spec with ShouldMatchers {
   describe("Build") {
@@ -82,7 +82,7 @@ class BuildTest extends Spec with ShouldMatchers {
 
   def createJob(name: String): Job = new Job(name, Set[String](), List[Task]())
 
-  def createStage(name: String): Stage = Stage(name, Set(createJob(name + " job")))
+  def createStage(name: String): Stage =new  Stage(name, Set(createJob(name + " job")))
 
-  def createStage(name: String, job: Job*): Stage = Stage(name, job.toSet)
+  def createStage(name: String, job: Job*): Stage = new Stage(name, job.toSet)
 }

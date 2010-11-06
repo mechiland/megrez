@@ -1,8 +1,7 @@
 package org.megrez.server
 
 import collection.mutable.HashSet
-import org.megrez.Job
-
+import org.megrez.{Pipeline, Job}
 
 class Build(val pipeline: Pipeline) {
   import Build._

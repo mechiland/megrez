@@ -5,9 +5,9 @@ import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 import actors.Actor._
 import actors.TIMEOUT
-import org.megrez.server.Pipeline.Stage
+import org.megrez.Pipeline.Stage
 import java.util.UUID
-import org.megrez.{Job, Task}
+import org.megrez.{Pipeline, Job, Task}
 
 class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
   def createStage(name: String, job: Job*) = new Stage(name, job.toSet)
