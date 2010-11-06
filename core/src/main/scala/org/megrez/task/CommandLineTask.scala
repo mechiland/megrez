@@ -1,10 +1,10 @@
 package org.megrez.task
 
 import org.megrez.Task
-import org.megrez.runtime.ShellCommand
 import java.io.File
+import org.megrez.util.ShellCommand
 
-class CommandLineTask(val command : String) extends Task with ShellCommand {  
+class CommandLineTask(val command : String) extends Task with ShellCommand {
   def execute(workingDir : File)  {
   }
   

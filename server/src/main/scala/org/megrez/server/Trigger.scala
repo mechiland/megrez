@@ -16,3 +16,7 @@ trait Trigger {
     }
   }
 }
+
+class PipelineTrigger(val pipeline : org.megrez.Pipeline, val buildScheduler : Actor) {
+  
+}

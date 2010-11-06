@@ -1,4 +1,4 @@
-package org.megrez.runtime
+package org.megrez.util
 
 import io.Source
 import java.io.File
@@ -25,3 +25,4 @@ trait ShellCommand {
 }
 
 class ShellException(message: String) extends Exception(message)
+

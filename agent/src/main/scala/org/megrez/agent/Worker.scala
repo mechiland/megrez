@@ -4,6 +4,7 @@ import actors.Actor
 import java.io.File
 import org.megrez.vcs.VersionControl
 import org.megrez.{JobFailed, JobCompleted, JobAssignment}
+import org.megrez.util.Workspace
 
 class Worker(val workspace: Workspace) extends Actor {
   def act() {
@@ -44,36 +45,3 @@ class Worker(val workspace: Workspace) extends Actor {
   }
 }
 
-trait Workspace {
-  def getFolder(pipelineId: String): File
-
-  def createFolder(pipelineId: String): File
-
-  def removeFolder(pipelineId: String)
-}
-
-class FileWorkspace(val root: File) extends Workspace {
-  override def getFolder(pipelineId: String): File = {
-    val pipeline = new File(root, pipelineId)
-    if (pipeline.exists) pipeline else null
-  }
-
-  override def createFolder(pipelineId: String): File = {
-    val pipeline = new File(root, pipelineId)
-    if (!pipeline.exists) pipeline.mkdirs
-    pipeline
-  }
-
-
-  def removeFolder(pipelineId: String) {
-    delete(getFolder(pipelineId))
-  }
-
-  private def delete(file: File) {
-    file.listFiles.foreach {
-      file =>
-        if (file.isDirectory) delete(file) else file.delete
-    }
-    file.delete
-  }
-}

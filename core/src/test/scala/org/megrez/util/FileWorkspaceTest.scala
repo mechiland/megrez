@@ -1,16 +1,16 @@
-package org.megrez.agent
+package org.megrez.util
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Spec, BeforeAndAfterEach}
 import java.io.File
 
 class FileWorkspaceTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-  
+
   describe("File Workspace") {
     it("should create dir for pipeline") {
       val workspace = new FileWorkspace(root)
       workspace.createFolder("pipeline")
-      
+
       new File(root, "pipeline") should be('exists)
     }
 

@@ -8,6 +8,7 @@ import org.jboss.netty.handler.codec.http.websocket.DefaultWebSocketFrame
 import scala.actors._
 import scala.actors.Actor._
 import java.net.URI
+import org.megrez.util.FileWorkspace
 
 class IntegrationTest extends ServerIntegration with ShouldMatchers {
   describe("Version control intergration") {

@@ -2,11 +2,17 @@ package org.megrez.vcs
 
 import java.io.File
 import xml.XML
-import org.megrez.runtime.ShellCommand
+import org.megrez.util.ShellCommand
 
 class Subversion(val url: String) extends VersionControl with ShellCommand {
-  def changes(workingDir: File): Option[Any] =
-    Some(Integer.parseInt(((XML.load(run("svn info " + url + " --xml").getInputStream) \\ "entry")(0) \ "@revision").text))
+  def changes(workingDir: File, previous: Option[Any]) = {
+    val current = Integer.parseInt(((XML.load(run("svn info " + url + " --xml").getInputStream) \\ "entry")(0) \ "@revision").text)
+    previous match {
+      case Some(previous : Int) =>
+        if (previous < current) Some(current) else None      
+      case _ => Some(current)
+    }
+  }
 
   def isRepository(workingDir: File): Boolean = check("svn info " + workingDir.getAbsolutePath)
 

@@ -3,6 +3,7 @@ package org.megrez.agent
 import java.net._
 
 import java.io.File
+import org.megrez.util.FileWorkspace
 
 object Main {
   private var worker : Worker = null

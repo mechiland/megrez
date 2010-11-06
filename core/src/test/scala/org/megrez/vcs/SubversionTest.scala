@@ -10,7 +10,7 @@ class SubversionTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("Subversion") {
     it("should detect change") {
       val subversion = new Subversion(url)
-      subversion.changes(workingDir) match {
+      subversion.changes(workingDir, None) match {
         case Some(revision: Int) =>
           revision should equal(0)
         case None => fail("none")

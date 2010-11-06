@@ -6,7 +6,7 @@ import java.io.File
 class Pipeline(val name: String, val materials: Set[Material], val stages: List[Stage])
 
 object Pipeline {
-  class Stage(val name: String)
+  class Stage(val name: String, val jobs : Set[Job])
 }
 
 class Job(val name: String, val resources: Set[String], val tasks: List[Task]) {
@@ -19,7 +19,7 @@ trait Task {
 }
 
 trait ChangeSource {
-  def changes(workingDir: File): Option[Any]
+  def changes(workingDir: File, previous : Option[Any]) : Option[Any]
 }
 
 class Material(val source : ChangeSource, val destination : String) {

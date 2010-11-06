@@ -2,8 +2,8 @@ package org.megrez.vcs
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Spec, BeforeAndAfterEach}
-import org.megrez.runtime.ShellCommand
-import java.io.File                                  
+import java.io.File
+import org.megrez.util.ShellCommand
 import io.Source
 
 class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with ShellCommand {
@@ -12,7 +12,7 @@ class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Shel
       val git = new Git(repositoryURL)
       git.checkout(workingDir, None)
       makeNewCommit(repositoryURL)
-      git.changes(workingDir) match {
+      git.changes(workingDir, None) match {
         case Some(revision: String) =>
         case _ => fail
       }
@@ -21,7 +21,7 @@ class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Shel
     it("should return false if given dir not a directory") {
       val git = new Git(repositoryURL)
       makeNewCommit(repositoryURL)
-      git.changes(workingDir) match {
+      git.changes(workingDir, None) match {
         case Some(revision: String) =>
         case _ => fail
       }
@@ -29,7 +29,7 @@ class GitTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Shel
     it("should check out specified commit") {
       val git = new Git(repositoryURL)
       makeNewCommit(repositoryURL)
-      val changes: Option[Any] = git.changes(workingDir)
+      val changes: Option[Any] = git.changes(workingDir, None)
       git.update(workingDir, changes)
       println(Source.fromInputStream(run("git log --pretty=%H -1", workingDir).getInputStream).mkString)
     }
