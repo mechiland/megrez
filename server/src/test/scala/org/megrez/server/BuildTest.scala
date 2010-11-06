@@ -5,6 +5,7 @@ import org.scalatest.Spec
 import org.megrez.server.Pipeline.Stage
 import java.lang.String
 import collection.immutable.Set
+import org.megrez.{Job, Task}
 
 class BuildTest extends Spec with ShouldMatchers {
   describe("Build") {

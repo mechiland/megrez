@@ -5,6 +5,7 @@ import trigger.SvnTestRepo
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import actors.Actor._
 import actors.TIMEOUT
+import org.megrez.{Job, Task}
 
 class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnTestRepo with AgentTestSuite {
   describe("App") {
@@ -33,8 +34,8 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with S
     agent = new Agent(new ActorBasedAgentHandler(self), Megrez.dispatcher)
     agent start;
 
-    job1 = new Job("linux-firefox", Set("LINUX"), List(new Task()))
-    job2 = new Job("win-ie", Set("WIN"), List(new Task()))
+    job1 = new Job("linux-firefox", Set("LINUX"), List[Task]())
+    job2 = new Job("win-ie", Set("WIN"), List[Task]())
     val stage1 = new Pipeline.Stage("ut", Set(job1, job2))
     val stage2 = new Pipeline.Stage("ft", Set(job1, job2))
     pipeline = new Pipeline("cruise", new SvnMaterial(svnUrl), List(stage1, stage2))

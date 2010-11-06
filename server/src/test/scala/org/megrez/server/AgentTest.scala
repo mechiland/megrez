@@ -6,6 +6,7 @@ import actors.Actor._
 import actors.{TIMEOUT, Actor}
 import java.util.UUID
 import collection.mutable.HashSet
+import org.megrez.Job
 
 class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   describe("Agent") {

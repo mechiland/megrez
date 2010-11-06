@@ -5,6 +5,7 @@ import org.scalatest.matchers._
 import actors.Actor._
 import java.util.UUID
 import actors.{Actor, TIMEOUT}
+import org.megrez.Job
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   describe("Dispatcher") {

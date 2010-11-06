@@ -2,6 +2,7 @@ package org.megrez.server
 
 import actors._
 import scala.collection.mutable._
+import org.megrez.Job
 
 class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
   import AgentStatus._

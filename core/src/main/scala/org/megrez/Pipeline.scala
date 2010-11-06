@@ -9,7 +9,9 @@ object Pipeline {
   class Stage(val name: String)
 }
 
-class Job(val name: String, val tasks: List[Task])
+class Job(val name: String, val resources: Set[String], val tasks: List[Task]) {
+  def this(name : String, tasks : List[Task]) = this(name, Set[String](), tasks)
+}
 
 trait Task {
   def execute(workingDir : File)
