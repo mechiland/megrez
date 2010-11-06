@@ -4,7 +4,8 @@ import actors.Actor
 import actors.Actor._
 import org.megrez.util.Logging
 import java.util.TimerTask
-import org.megrez.server.{Exit, TrigBuild, Trigger}
+import org.megrez.server.{Exit, TrigBuild}
+import org.megrez.server.trigger.Trigger
 
 class OnChanges(val materials : Materials, val scheduler : Actor, every : Long) extends Trigger with Logging {
   private val buildTrigger = actor {
