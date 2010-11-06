@@ -3,7 +3,6 @@ package org.megrez.server
 import actors.Actor
 import java.util.UUID
 import collection.mutable.{HashSet, HashMap}
-import trigger.AutoTrigger
 import org.megrez.util.Logging
 import org.megrez.Job
 
@@ -200,7 +199,7 @@ object Megrez {
   val dispatcher: Actor = new Dispatcher(this)
   val pipelineManager = new PipelineManager(this)
 
-  val triggerFactory : Pipeline => Trigger = pipeline => new AutoTrigger(pipeline, buildScheduler)
+  val triggerFactory : Pipeline => Trigger = pipeline => null
 
   def stop() {
     dispatcher ! Exit()

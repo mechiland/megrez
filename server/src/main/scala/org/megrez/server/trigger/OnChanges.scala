@@ -6,7 +6,7 @@ import org.megrez.util.Logging
 import java.util.TimerTask
 import org.megrez.server.{Exit, TrigBuild, Trigger}
 
-class OnChanges(val materials : Materials, val scheduler : Actor, every : Long) extends Object with Logging {
+class OnChanges(val materials : Materials, val scheduler : Actor, every : Long) extends Trigger with Logging {
   private val buildTrigger = actor {
     loop {
       react {

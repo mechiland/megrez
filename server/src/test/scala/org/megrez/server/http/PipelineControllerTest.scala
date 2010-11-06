@@ -3,44 +3,25 @@ package org.megrez.server.http
 import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.mock.MockitoSugar
-import org.megrez.server.{Trigger, Pipeline, PipelineManager}
-import org.mockito.Mockito._
-import org.mockito.Matchers._
 import actors.Actor._
-import actors.{TIMEOUT, Actor}
+import actors.TIMEOUT
+import org.megrez.Pipeline
+import org.megrez.server.NewPipeline
 
 class PipelineControllerTest extends Spec with ShouldMatchers with MockitoSugar {
   describe("receive request") {
     it("handle POST request") {
-      val pipelineController: PipelineController = new PipelineController(mockPipelineManager)
-      pipelineController ! Request(Method.GET, "/pipelines",
-        """{"pipeline" : {"name" : "pipeline1", "vcs" : {"type" : "svn", "url" : "svn_url"}}}""")
+      val pipelineController = new PipelineController(self)
+      pipelineController ! Request(Method.POST, "/pipelines",
+        """{"name" : "pipeline", "materials" : [{"type" : "svn", "url" : "svn_url", "dest" : "dest"}] }""")
+
       receiveWithin(1000) {
-        case "TRIGGER START pipeline" =>
-        case TIMEOUT =>
+        case NewPipeline(pipeline : Pipeline) =>
+          pipeline.name should equal("pipeline")
+          pipeline.materials should have size(1)          
+        case TIMEOUT => fail
         case _ => fail
       }
     }
-  }
-
-  private def mockPipelineManager: PipelineManager = {
-    object Context {
-      val triggerFactory = mock[Pipeline => Trigger] 
-    }
-    when(Context.triggerFactory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline", self))
-    new PipelineManager(Context)
-  }
-
-  class ActorBasedTrigger(val name: String, val actor: Actor) extends Trigger {
-    val pipeline: Pipeline = null
-    val target: Actor = null
-
-    def start {
-      actor ! ("TRIGGER START " + name)
-    }
-
-    def stop {
-      actor ! ("TRIGGER STOP " + name)
-    }
-  }
+  }  
 }

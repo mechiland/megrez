@@ -25,6 +25,9 @@ case class JobReject(val agent : Agent) extends JobMessage
 case class JobFinished(val buildId: UUID, val job: Job, val agent : Actor) extends JobMessage
 
 case class AddPipeline(config : Pipeline)
+
+case class NewPipeline(pipeline : org.megrez.Pipeline)
+
 case class PipelineChanged(config : Pipeline)
 case class RemovePipeline(config : Pipeline)
 

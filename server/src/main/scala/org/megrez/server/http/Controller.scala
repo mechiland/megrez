@@ -1,9 +1,13 @@
 package org.megrez.server.http
 
 import actors._
-import org.megrez.server.{PipelineManager, AddPipeline}
+import org.megrez.server.NewPipeline
+import org.megrez.Pipeline
+import util.parsing.json.JSON
 
-class PipelineController(val pipelineManager: PipelineManager) extends Actor {
+class PipelineController(val pipelineManager: Actor) extends Actor {
+  import org.megrez.io.JSON._
+  
   def act {
     loop {
       react {
@@ -15,8 +19,9 @@ class PipelineController(val pipelineManager: PipelineManager) extends Actor {
 
   def handleRequest(request: Request){
     request.method match{
-      case Method.POST =>  pipelineManager ! AddPipeline(request.resource)
+      case Method.POST =>  pipelineManager ! NewPipeline(read[Pipeline](JSON.parseFull(request.content).get))
     }
   }
-  
+
+  start  
 }
