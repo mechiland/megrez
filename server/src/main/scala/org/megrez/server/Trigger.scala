@@ -19,22 +19,3 @@ trait Trigger {
     }
   }
 }
-
-class ChangeSet(val pipeline: org.megrez.Pipeline, val workspace: Workspace) {
-  private val current = HashMap[org.megrez.Material, Option[Any]]()
-  pipeline.materials.foreach(current.put(_, None))
-
-  def get = {
-    var changesFound = false
-    for (material <- pipeline.materials) {
-      val folder = workspace.createFolder(pipeline.name + (if (material.destination == "$main") "" else "/" + material.destination))
-      material.source.changes(folder, current(material)) match {
-        case workset : Some[Any] =>
-          current.put(material, workset)
-          changesFound = true
-        case _ =>
-      }
-    }
-    if (changesFound) Some(current.toMap) else None
-  }
-}
