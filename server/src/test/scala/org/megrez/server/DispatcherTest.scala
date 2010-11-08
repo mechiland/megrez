@@ -5,57 +5,116 @@ import org.scalatest.matchers._
 import actors.Actor._
 import java.util.UUID
 import actors.{Actor, TIMEOUT}
-import org.megrez.{Material, Job}
+import org.megrez.{JobAssignment, Material, Job}
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
   describe("Dispatcher") {
     it("should assign job to idle agent") {
-      agentsConnect(agent)
-      scheduleJobRequest(jobRequest)
-      expectAgentGotJobRequests(jobRequest)
+      val job = new Job("unit test", Set(), List())
+      val assignment: JobAssignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
+
+      val dispatcher = new Dispatcher(Context)
+      dispatcher ! AgentConnect(self)
+
+      dispatcher ! JobScheduled(UUID.randomUUID, Set(assignment))
+      receiveWithin(1000) {
+        case jobAssignment: JobAssignment =>
+          jobAssignment should be === assignment
+          reply(AgentToDispatcher.Confirm)
+        case TIMEOUT => fail
+        case _ => fail
+      }
     }
 
-    it("should notify scheduler about job completed") {
-      agentsConnect(agent)
-      scheduleJobRequest(jobRequest)
-      expectAgentGotJobRequests(jobRequest)
+    it("should try next agent if the first one reject the job") {
+      val job = new Job("unit test", Set(), List())
+      val assignment: JobAssignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
+      val main = self
+      val agent1 = actor {
+        react {
+          case jobAssignment: JobAssignment =>
+            reply(AgentToDispatcher.Reject)
+          case TIMEOUT => fail
+          case _ => fail
+        }
+      }
 
-      jobFinishedOnAgent(jobRequest)
+      val agent2 = actor {
+        react {
+          case jobAssignment: JobAssignment =>
+            main ! jobAssignment
+            reply(AgentToDispatcher.Confirm)
+          case TIMEOUT => fail
+          case _ => fail
+        }
+      }      
 
-      expectJobCompleted
+      val dispatcher = new Dispatcher(Context)
+      dispatcher ! AgentConnect(agent1)
+      dispatcher ! AgentConnect(agent2)
+
+      dispatcher ! JobScheduled(UUID.randomUUID, Set(assignment))
+
+      receiveWithin(1000) {
+        case jobAssignment: JobAssignment =>
+          jobAssignment should be === assignment
+        case TIMEOUT => fail
+        case _ => fail
+      }
     }
 
-    it("should assign job not to more than one resource matched agent") {
-      val agent2 = createAndStartAnAgent
-      agentsConnect(agent, agent2)
+    //    it("should assign job to idle agent") {
+    //      agentsConnect(self)
+    //      scheduleJobRequest(jobRequest)
+    //
+    //      expectAgentGotJobRequests(jobRequest)
+    //    }
+    //
+    //    it("should notify scheduler about job completed") {
+    //      agentsConnect(agent)
+    //      scheduleJobRequest(jobRequest)
+    //      expectAgentGotJobRequests(jobRequest)
+    //
+    //      jobFinishedOnAgent(jobRequest)
+    //
+    //      expectJobCompleted
+    //    }
+    //
+    //    it("should assign job not to more than one resource matched agent") {
+    //      val agent2 = createAndStartAnAgent
+    //      agentsConnect(agent, agent2)
+    //
+    //      scheduleJobRequest(jobRequest)
+    //      var jobRequest2 = JobRequest(UUID.randomUUID, new Job("unit test2", Set(), List()))
+    //      scheduleJobRequest(jobRequest2)
+    //      expectAgentGotJobRequests(jobRequest, jobRequest2)
+    //      agent2 ! Exit();
+    //    }
+    //
+    //    it("should begin assigning jobs when idle agents connected") {
+    //      scheduleJobRequest(jobRequest)
+    //      agentsConnect(agent)
+    //      expectAgentGotJobRequests(jobRequest)
+    //    }
+    //
+    //    it("should begin assigning jobs when some job finished") {
+    //      agentsConnect(agent)
+    //      scheduleJobRequest(jobRequest)
+    //      var jobRequest2 = JobRequest(UUID.randomUUID, new Job("unit test2", Set("LINUX"), List()))
+    //      scheduleJobRequest(jobRequest2)
+    //      expectAgentGotJobRequests(jobRequest)
+    //
+    //      agent ! SetResources(Set("LINUX"))
+    //
+    //      jobFinishedOnAgent(jobRequest)
+    //      expectJobCompleted
+    //
+    //      expectAgentGotJobRequests(jobRequest2)
+    //    }
+  }
 
-      scheduleJobRequest(jobRequest)
-      var jobRequest2 = JobRequest(UUID.randomUUID, new Job("unit test2", Set(), List()))
-      scheduleJobRequest(jobRequest2)
-      expectAgentGotJobRequests(jobRequest, jobRequest2)
-      agent2 ! Exit();
-    }
-
-    it("should begin assigning jobs when idle agents connected") {
-      scheduleJobRequest(jobRequest)
-      agentsConnect(agent)
-      expectAgentGotJobRequests(jobRequest)
-    }
-
-    it("should begin assigning jobs when some job finished") {
-      agentsConnect(agent)
-      scheduleJobRequest(jobRequest)
-      var jobRequest2 = JobRequest(UUID.randomUUID, new Job("unit test2", Set("LINUX"), List()))
-      scheduleJobRequest(jobRequest2)
-      expectAgentGotJobRequests(jobRequest)
-
-      agent ! SetResources(Set("LINUX"))
-
-      jobFinishedOnAgent(jobRequest)
-      expectJobCompleted
-      
-      expectAgentGotJobRequests(jobRequest2)
-    }
+  object Context {
+    val buildScheduler = self
   }
 
   def agentsConnect(agents: Agent*) {
@@ -63,7 +122,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
   }
 
   def scheduleJobRequest(jobRequest: JobRequest): Unit = {
-    dispatcher ! JobScheduled(jobRequest.buildId, Map[Material, Option[Any]](), Set(jobRequest.job))
+    dispatcher ! JobScheduled(jobRequest.buildId, Set(JobAssignment("pipelinw", Map[Material, Option[Any]](), jobRequest.job)))
   }
 
   def jobFinishedOnAgent(jobRequest: JobRequest): Unit = {
@@ -108,5 +167,6 @@ class ActorBasedAgentHandler(val actor: Actor) extends AgentHandler {
   def send(message: String) {
     actor ! message
   }
-  def assignAgent(agent : Actor) {}
+
+  def assignAgent(agent: Actor) {}
 }

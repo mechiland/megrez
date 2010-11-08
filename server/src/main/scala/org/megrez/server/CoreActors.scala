@@ -6,7 +6,7 @@ import collection.mutable.{HashSet, HashMap}
 import trigger.{Materials, OnChanges, Trigger}
 import org.megrez.util.{FileWorkspace, Logging}
 import java.io.File
-import org.megrez.{Material, Pipeline, Job}
+import org.megrez.{JobAssignment, Material, Pipeline, Job}
 
 class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
@@ -14,12 +14,12 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
   def act {
     loop {
       react {
-        case AddPipeline(pipeline : Pipeline) =>
+        case AddPipeline(pipeline: Pipeline) =>
           addPipeline(pipeline)
-        case PipelineChanged(pipeline : Pipeline) =>
+        case PipelineChanged(pipeline: Pipeline) =>
           removePipeline(pipeline.name)
           addPipeline(pipeline)
-        case RemovePipeline(pipeline : Pipeline) =>
+        case RemovePipeline(pipeline: Pipeline) =>
           removePipeline(pipeline.name)
         case _: Exit => exit
         case _ =>
@@ -54,11 +54,11 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
   def act {
     loop {
       react {
-        case TrigBuild(pipeline: Pipeline, materials : Map[Material, Option[Any]]) =>
+        case TrigBuild(pipeline: Pipeline, materials: Map[Material, Option[Any]]) =>
           val id = UUID.randomUUID
           val build = new Build(pipeline, materials)
           builds.put(id, build)
-          triggerJobs(id, build)
+          scheduleJobs(id, build)
         case JobCompleted(id: UUID, job: Job) =>
           builds.get(id) match {
             case Some(build: Build) =>
@@ -70,7 +70,7 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
                   megrez.buildManager ! BuildFailed(build)
                   builds.remove(id)
                 case Some(stage: Build.Stage) =>
-                  triggerJobs(id, build)
+                  scheduleJobs(id, build)
                 case None =>
               }
             case None =>
@@ -92,8 +92,8 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
     }
   }
 
-  private def triggerJobs(id: UUID, build: Build) {
-    megrez.dispatcher ! JobScheduled(id, build.changes, build.current.jobs)
+  private def scheduleJobs(id: UUID, build: Build) {
+    megrez.dispatcher ! JobScheduled(id, build.current.jobs.map(JobAssignment(build.pipeline.name, build.changes, _)).toSet)
   }
 
   start
@@ -101,20 +101,24 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
 
 class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
   private val jobRequestQueue = new HashSet[JobRequest]()
+  private val jobAssignments = new HashMap[JobAssignment, UUID]()
   private val idleAgents = new HashSet[Actor]()
 
   def act() {
     loop {
       react {
-        case message: AgentConnect => {
+        case message: AgentConnect =>
           idleAgents.add(message.agent)
           startAssigning
-        }
 
-        case message: JobScheduled => {
-          message.jobRequests.foreach(jobRequest => jobRequestQueue.add(jobRequest))
-          startAssigning
-        }
+        case JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
+          assignments.foreach(jobAssignments.put(_, build))
+          jobAssignments.keys.map(dispatchJob).foreach(_ match {
+            case Some((agent : Actor, job : JobAssignment)) =>
+              idleAgents.remove(agent)
+              jobAssignments.remove(job)
+            case None =>
+          })
 
         case message: JobConfirm => {
           jobRequestQueue.remove(message.jobRequest)
@@ -129,6 +133,26 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
 
         case _: Exit => exit
       }
+    }
+  }
+
+  private def dispatchJob(job: JobAssignment) = {
+    val agents = idleAgents.iterator
+    def assignJob : Option[Actor] = {
+      if (agents.hasNext) {
+        val agent = agents.next
+        agent !? job match {
+          case AgentToDispatcher.Confirm =>
+            Some(agent)
+          case AgentToDispatcher.Reject => assignJob
+        }
+      } else None
+    }
+
+    assignJob match {
+      case Some(agent : Actor) =>
+        Some(agent -> job)
+      case None => None
     }
   }
 
@@ -156,10 +180,6 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
       }
     }
   }
-
-  def jobRequests = jobRequestQueue.toSet
-
-  def agents = idleAgents.toSet
 
   start
 }

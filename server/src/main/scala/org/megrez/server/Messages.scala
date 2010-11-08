@@ -2,7 +2,7 @@ package org.megrez.server
 
 import actors._
 import java.util.UUID
-import org.megrez.{Material, Pipeline, Job}
+import org.megrez.{JobAssignment, Material, Pipeline, Job}
 
 case class TrigBuild(val pipeline : Pipeline, val changes : Map[Material, Option[Any]])
 
@@ -30,11 +30,13 @@ case class AddPipeline(pipeline : Pipeline)
 case class PipelineChanged(pipeline : Pipeline)
 case class RemovePipeline(pipeline : Pipeline)
 
-case class JobScheduled(buildId : UUID, changes: Map[Material, Option[Any]], jobs : Set[Job]) {
-  def jobRequests: Set[JobRequest] = {
-    jobs.map(job => JobRequest(buildId, job))
-  }
+case class JobScheduled(buildId : UUID, assignments : Set[JobAssignment])
+
+object AgentToDispatcher {
+  object Confirm
+  object Reject
 }
+
 case class JobCompleted(buildId : UUID, job : Job)
 case class JobFailed(buildId : UUID, job : Job)
 

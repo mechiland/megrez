@@ -2,7 +2,7 @@ package org.megrez.server
 
 import actors._
 import scala.collection.mutable._
-import org.megrez.Job
+import org.megrez.{JobAssignment, Job}
 
 class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
   import AgentStatus._
@@ -13,7 +13,7 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
   def act() {
     loop {
       react {
-        case job: JobRequest => handleJob(job)
+        case job: JobRequest => handleJob(job)          
         case tags: SetResources => setResources(tags)
         case message: JobFinished => handleFinished(message)
         case _: Exit => exit
