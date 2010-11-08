@@ -5,5 +5,5 @@ trait Reader[Resource, Format] {
 }
 
 trait Write[Resource, Format] {
-  def write(resource : Resource): Format
+  def write(resource : Resource):String
 }
