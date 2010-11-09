@@ -21,7 +21,9 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
           addPipeline(pipeline)
         case ToPipelineManager.RemovePipeline(pipeline) =>
           removePipeline(pipeline.name)
-        case Stop => exit
+        case Stop =>
+          pipelines.values.foreach(_._2 stop)
+          exit
         case _ =>
       }
     }

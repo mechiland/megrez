@@ -13,7 +13,6 @@ import scala.io.Source
 class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("Core Actors") {
     it("should trig build for pipeline when pipeline first added") {
-      val megrez = new Megrez
       val job = new Job("linux-firefox", Set(), List[Task]())
       val pipeline = new Pipeline("pipeline", Set(new Material(new Subversion(url))), List(new Stage("name", Set(job))))
 
@@ -26,33 +25,43 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         case _ => fail
       }
     }
+
+    it("should trig build for pipeline when pipeline material changes") {
+      val job = new Job("linux-firefox", Set(), List[Task]())
+      val pipeline = new Pipeline("pipeline", Set(new Material(new Subversion(url))), List(new Stage("name", Set(job))))
+      val handler = new ActorBasedAgentHandler(self)
+
+      megrez.pipelineManager ! ToPipelineManager.AddPipeline(pipeline)
+      megrez.agentManager ! ToAgentManager.RemoteAgentConnected(handler)
+
+      receiveWithin(200) {
+        case message: String =>
+          handler.agent ! JobCompleted()
+          checkin(checkout(url), "revision")
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
+      receiveWithin(1000) {
+        case message: String =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+    }
   }
 
   class ActorBasedAgentHandler(val main: Actor) extends AgentHandler {
-    def assignAgent(agent: Actor) {
+    var agent: Actor = null
 
+    def assignAgent(agent: Actor) {
+      this.agent = agent
     }
 
     def send(message: String) {
       main ! message
     }
   }
-  //  describe("App") {
-  //    it("should receive add pipeline event and lanunch build if pipeline has new check in") {
-  //
-  //      Megrez.pipelineManager ! new AddPipeline(pipeline)
-  //
-  //      agent ! SetResources(Set("LINUX"))
-  //      Megrez.dispatcher ! AgentConnect(agent)
-  //
-  //      receiveWithin(2000) {
-  //        case msg: String => if(msg.indexOf(job1.name) < 0) fail
-  //        case TIMEOUT => println("TIMEOUT"); fail
-  //        case msg: Any => println(msg); fail
-  //      }
-  //    }
-  //  }
-  //
+  
   private var url = ""
   private var workingDir: File = _
   private var root: File = _
@@ -73,7 +82,7 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     }
 
     url = "file://" + new File(root, "repository/" + repositoryName).getAbsolutePath
-    val megrez = new Megrez
+    megrez = new Megrez(1000)
   }
 
   override def afterEach() {
