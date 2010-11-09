@@ -12,7 +12,7 @@ import org.jboss.netty.handler.codec.http.HttpHeaders.Values._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
 import org.jboss.netty.util._
 import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
-import org.megrez.server.{RemoteAgentConnected, AgentHandler}
+import org.megrez.server.{ToAgentManager, AgentHandler}
 import actors.Actor
 import actors.Actor._
 import org.megrez.util.Logging
@@ -96,7 +96,7 @@ class WebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChann
   handler ! channel
 }
 
-class AgentWebSocketHandler(val channel: Channel, handler: Actor) extends SimpleChannelUpstreamHandler with AgentHandler with Logging {
+class AgentWebSocketHandler(val channel: Channel, agentManager: Actor) extends SimpleChannelUpstreamHandler with AgentHandler with Logging {
   private val MegrezAgentHandshake = "megrez-agent:1.0"
   private var agent: Actor = _
 
@@ -111,7 +111,7 @@ class AgentWebSocketHandler(val channel: Channel, handler: Actor) extends Simple
           case MegrezAgentHandshake =>
             debug("megrez handshake received")
             send("megrez-server:1.0")
-            handler ! RemoteAgentConnected(this)
+            agentManager ! ToAgentManager.RemoteAgentConnected(this)
           case message: String =>
             agent ! message
         }

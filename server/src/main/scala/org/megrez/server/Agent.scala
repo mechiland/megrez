@@ -2,13 +2,14 @@ package org.megrez.server
 
 import actors._
 import scala.collection.mutable._
-import org.megrez.{JobAssignment, Job}
+import org.megrez._
 
 class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
   import AgentStatus._
 
   private val resources = new HashSet[String]()
-  private var _status = Idle
+  private var status = Idle
+  private var current : JobAssignment = null
 
   def act() {
     loop {
@@ -18,20 +19,25 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
         case ToAgent.SetResources(tags) =>
           resources.clear
           tags.foreach(resources add _)
-        case message: JobFinished => handleFinished(message)
+        case _ : JobCompleted =>
+          status = Idle
+          dispatcher ! AgentToDispatcher.JobCompleted(this, current)
+        case _ : JobFailed =>
+          status = Idle
+          dispatcher ! AgentToDispatcher.JobFailed(this, current)        
         case _: Exit => exit
-        case a : Any => println(a)
       }
     }
   }
 
   private def handleAssignment(assignment: JobAssignment) {
-    _status match {
+    status match {
       case Idle =>
         if (checkResource(assignment.job)) {
-          _status = Busy
+          status = Busy
           if (handler != null)
             handler.send("HAHA")
+          current = assignment
           reply(AgentToDispatcher.Confirm)
         } else {
           reply(AgentToDispatcher.Reject)
@@ -41,15 +47,9 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
     }
   }
 
-  private def handleFinished(message: JobFinished) {
-    _status = Idle
-    dispatcher ! message
-  }
-
   private def checkResource(job: Job) = job.resources.forall(resources contains _)
 
   start
-
 }
 
 object AgentStatus extends Enumeration {

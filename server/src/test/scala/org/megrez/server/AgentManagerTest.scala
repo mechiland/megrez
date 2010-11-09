@@ -17,12 +17,12 @@ class AgentManagerTest extends Spec with ShouldMatchers with MockitoSugar {
       val handler = mock[AgentHandler]
       val manager = new AgentManager(Context)
       
-      manager ! RemoteAgentConnected(handler)
+      manager ! ToAgentManager.RemoteAgentConnected(handler)
 
       val assignedAgent = ArgumentCaptor.forClass(classOf[Actor])
 
       receiveWithin(1000) {
-        case AgentConnect(agent : Actor) =>
+        case AgentManagerToDispatcher.AgentConnect(agent : Actor) =>
           verify(handler).assignAgent(assignedAgent.capture)
           agent should be === assignedAgent.getValue          
         case TIMEOUT => fail

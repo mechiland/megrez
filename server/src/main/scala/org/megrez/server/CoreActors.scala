@@ -54,7 +54,7 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
   def act {
     loop {
       react {
-        case TrigBuild(pipeline: Pipeline, materials: Map[Material, Option[Any]]) =>
+        case TriggerToScheduler.TrigBuild(pipeline, materials) =>
           val id = UUID.randomUUID
           val build = new Build(pipeline, materials)
           builds.put(id, build)
@@ -107,7 +107,7 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
   def act() {
     loop {
       react {
-        case AgentConnect(agent: Actor) =>
+        case AgentManagerToDispatcher.AgentConnect(agent: Actor) =>
           idleAgents.add(agent)
           dispatchJobs
         case SchedulerToDispatcher.JobScheduled(build, assignments) =>
@@ -164,11 +164,11 @@ class AgentManager(megrez: {val dispatcher: Actor}) extends Actor with Logging {
   def act() {
     loop {
       react {
-        case RemoteAgentConnected(handler) =>
+        case ToAgentManager.RemoteAgentConnected(handler) =>
           info("Remote agent connected")
           val agent = new Agent(handler, megrez.dispatcher)
           handler.assignAgent(agent)
-          megrez.dispatcher ! AgentConnect(agent)
+          megrez.dispatcher ! AgentManagerToDispatcher.AgentConnect(agent)
         case _ =>
       }
     }

@@ -4,24 +4,16 @@ import actors._
 import java.util.UUID
 import org.megrez.{JobAssignment, Material, Pipeline, Job}
 
-case class TrigBuild(val pipeline : Pipeline, val changes : Map[Material, Option[Any]])
-
 abstract class CommonMessage
-case class Success() extends CommonMessage
 case class Exit() extends CommonMessage
 
-abstract class AgentMessage
-case class SetResources(val resources : Set[String]) extends AgentMessage
-case class RemoteAgentConnected(val handler : AgentHandler) extends AgentMessage
 
-case class AgentConnect(val agent : Actor)
-
-abstract class JobMessage
-case class JobFinished(val buildId: UUID, val job: Job, val agent : Actor) extends JobMessage
-
+object ToAgentManager {
+  case class RemoteAgentConnected(val handler : AgentHandler)
+}
 
 object ToAgent {
-  case class SetResources(val resources : Set[String])
+  case class SetResources(val resources : Set[String])  
 }
 object ToPipelineManager {
   case class AddPipeline(val pipeline : Pipeline)
@@ -34,6 +26,14 @@ object AgentToDispatcher {
   object Reject
   case class JobCompleted(val agent : Actor, val assignment : JobAssignment)
   case class JobFailed(val agent : Actor, val assignment : JobAssignment)
+}
+
+object TriggerToScheduler {
+  case class TrigBuild(val pipeline : Pipeline, val changes : Map[Material, Option[Any]])
+}
+
+object AgentManagerToDispatcher {
+  case class AgentConnect(val agent : Actor)
 }
 
 object SchedulerToDispatcher {

@@ -25,7 +25,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
-      scheduler ! TrigBuild(pipeline, changes)
+      scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
         case SchedulerToDispatcher.JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
@@ -50,7 +50,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
-      scheduler ! TrigBuild(pipeline, changes)
+      scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
         case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
@@ -82,7 +82,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
-      scheduler ! TrigBuild(pipeline, changes)
+      scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
         case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
@@ -113,7 +113,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
-      scheduler ! TrigBuild(pipeline, changes)
+      scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       var id = UUID.randomUUID
       receiveWithin(1000) {
@@ -151,7 +151,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
-      scheduler ! TrigBuild(pipeline, changes)
+      scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
         case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>

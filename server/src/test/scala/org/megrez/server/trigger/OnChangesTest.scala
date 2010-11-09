@@ -8,7 +8,7 @@ import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
 import actors.Actor._
 import actors.TIMEOUT
-import org.megrez.server.TrigBuild
+import org.megrez.server.TriggerToScheduler
 import org.scalatest.matchers.ShouldMatchers
 
 class OnChangesTest extends Spec with ShouldMatchers with MockitoSugar {
@@ -32,7 +32,7 @@ class OnChangesTest extends Spec with ShouldMatchers with MockitoSugar {
       trigger.start
 
       receiveWithin(100) {
-        case TrigBuild(pipeline : Pipeline, changes : Map[Material, Option[Any]]) =>
+        case TriggerToScheduler.TrigBuild(pipeline : Pipeline, changes : Map[Material, Option[Any]]) =>
           pipeline should be === pipeline
           changes should have size(1)
           val (source, workset) = changes.head
@@ -47,7 +47,7 @@ class OnChangesTest extends Spec with ShouldMatchers with MockitoSugar {
       }
 
       receiveWithin(500) {
-        case TrigBuild(pipeline : Pipeline, changes : Map[Material, Option[Any]]) =>
+        case TriggerToScheduler.TrigBuild(pipeline : Pipeline, changes : Map[Material, Option[Any]]) =>
           pipeline should be === pipeline
           changes should have size(1)
           val (source, workset) = changes.head

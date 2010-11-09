@@ -14,7 +14,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
 
       val dispatcher = new Dispatcher(Context)
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
 
       dispatcher ! SchedulerToDispatcher.JobScheduled(UUID.randomUUID, Set(assignment))
       receiveWithin(1000) {
@@ -50,8 +50,8 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       }
 
       val dispatcher = new Dispatcher(Context)
-      dispatcher ! AgentConnect(agent1)
-      dispatcher ! AgentConnect(agent2)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(agent1)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(agent2)
 
       dispatcher ! SchedulerToDispatcher.JobScheduled(UUID.randomUUID, Set(assignment))
 
@@ -75,7 +75,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         case _ => fail
       }
 
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
       receiveWithin(500) {
         case jobAssignment: JobAssignment =>
           jobAssignment should be === assignment
@@ -90,7 +90,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
 
       val dispatcher = new Dispatcher(Context)
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
 
       dispatcher ! SchedulerToDispatcher.JobScheduled(build, Set(assignment))
       receiveWithin(1000) {
@@ -117,7 +117,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
 
       val dispatcher = new Dispatcher(Context)
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
 
       dispatcher ! SchedulerToDispatcher.JobScheduled(build, Set(assignment))
       receiveWithin(1000) {

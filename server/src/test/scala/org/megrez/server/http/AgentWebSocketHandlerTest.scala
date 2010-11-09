@@ -7,7 +7,7 @@ import scala.actors.Actor._
 import org.mockito.Mockito._
 import org.jboss.netty.handler.codec.http.websocket.DefaultWebSocketFrame
 import actors.TIMEOUT
-import org.megrez.server.RemoteAgentConnected
+import org.megrez.server.ToAgentManager
 import org.jboss.netty.channel.{Channel, MessageEvent, ChannelPipeline, ChannelHandlerContext}
 import org.scalatest.{BeforeAndAfterEach, Spec}
 
@@ -22,7 +22,7 @@ class AgentWebSocketHandlerTest extends Spec with ShouldMatchers with BeforeAndA
       handler.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case message: RemoteAgentConnected =>
+        case message: ToAgentManager.RemoteAgentConnected =>
           message.handler should be === (handler)
           message.handler.assignAgent(self)
         case TIMEOUT => fail
@@ -39,7 +39,7 @@ class AgentWebSocketHandlerTest extends Spec with ShouldMatchers with BeforeAndA
       handler.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case message: RemoteAgentConnected =>
+        case message: ToAgentManager.RemoteAgentConnected =>
           message.handler should be === (handler)
           message.handler.assignAgent(self)
         case TIMEOUT => fail
