@@ -59,7 +59,7 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
           val build = new Build(pipeline, materials)
           builds.put(id, build)
           scheduleJobs(id, build)
-        case JobCompleted(id: UUID, job: Job) =>
+        case DispatcherToScheduler.JobCompleted(id: UUID, job: Job) =>
           builds.get(id) match {
             case Some(build: Build) =>
               build.complete(job) match {
@@ -75,7 +75,7 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
               }
             case None =>
           }
-        case JobFailed(id: UUID, job: Job) =>
+        case DispatcherToScheduler.JobFailed(id: UUID, job: Job) =>
           builds.get(id) match {
             case Some(build: Build) =>
               build.fail(job) match {
@@ -100,45 +100,47 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
 }
 
 class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
-  private val jobRequestQueue = new HashSet[JobRequest]()
   private val jobAssignments = new HashMap[JobAssignment, UUID]()
+  private val jobInProgress = new HashMap[JobAssignment, UUID]()
   private val idleAgents = new HashSet[Actor]()
 
   def act() {
     loop {
       react {
-        case message: AgentConnect =>
-          idleAgents.add(message.agent)
-          startAssigning
-
+        case AgentConnect(agent: Actor) =>
+          idleAgents.add(agent)
+          dispatchJobs
         case JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
           assignments.foreach(jobAssignments.put(_, build))
-          jobAssignments.keys.map(dispatchJob).foreach(_ match {
-            case Some((agent : Actor, job : JobAssignment)) =>
-              idleAgents.remove(agent)
-              jobAssignments.remove(job)
-            case None =>
-          })
-
-        case message: JobConfirm => {
-          jobRequestQueue.remove(message.jobRequest)
-          idleAgents.remove(message.agent)
-        }
-
-        case message: JobFinished => {
-          idleAgents.add(message.agent)
-          megrez.buildScheduler ! new JobCompleted(message.buildId, message.job)
-          startAssigning
-        }
-
+          dispatchJobs
+        case AgentToDispatcher.JobCompleted(agent: Actor, assignment: JobAssignment) =>
+          megrez.buildScheduler ! DispatcherToScheduler.JobCompleted(jobInProgress.get(assignment).get, assignment.job)
+          jobInProgress.remove(assignment)
+          idleAgents.add(agent)
+          dispatchJobs
+        case AgentToDispatcher.JobFailed(agent: Actor, assignment: JobAssignment) =>
+          megrez.buildScheduler ! DispatcherToScheduler.JobFailed(jobInProgress.get(assignment).get, assignment.job)
+          jobInProgress.remove(assignment)
+          idleAgents.add(agent)
+          dispatchJobs
         case _: Exit => exit
       }
     }
   }
 
+  private def dispatchJobs {
+    jobAssignments.keys.map(dispatchJob).foreach(_ match {
+      case Some((agent: Actor, job: JobAssignment)) =>
+        idleAgents.remove(agent)
+        jobInProgress.put(job, jobAssignments.get(job).get)
+        jobAssignments.remove(job)
+      case None =>
+    })
+  }
+
   private def dispatchJob(job: JobAssignment) = {
     val agents = idleAgents.iterator
-    def assignJob : Option[Actor] = {
+    def assignJob: Option[Actor] = {
       if (agents.hasNext) {
         val agent = agents.next
         agent !? job match {
@@ -150,37 +152,11 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
     }
 
     assignJob match {
-      case Some(agent : Actor) =>
+      case Some(agent: Actor) =>
         Some(agent -> job)
       case None => None
     }
   }
-
-  private def startAssigning {
-    val assignedJobRequests = new HashSet[JobRequest]();
-    jobRequestQueue.foreach {
-      jobRequest => {
-        if (!idleAgents.isEmpty) {
-          val assigned: Boolean = idleAgents.remove(assignJobRequest(idleAgents.iterator, jobRequest).get)
-          if (assigned)
-            assignedJobRequests.add(jobRequest)
-        }
-      }
-    }
-    assignedJobRequests.foreach(jobRequestQueue.remove(_))
-  }
-
-  private def assignJobRequest(iterator: Iterator[Actor], jobRequest: JobRequest): Option[Actor] = {
-    iterator.next !? jobRequest match {
-      case message: JobConfirm => {
-        Some(message.agent)
-      }
-      case message: JobReject => {
-        if (iterator.hasNext) assignJobRequest(iterator, jobRequest) else None
-      }
-    }
-  }
-
   start
 }
 

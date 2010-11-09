@@ -35,10 +35,14 @@ case class JobScheduled(buildId : UUID, assignments : Set[JobAssignment])
 object AgentToDispatcher {
   object Confirm
   object Reject
+  case class JobCompleted(agent : Actor, assignment : JobAssignment)
+  case class JobFailed(agent : Actor, assignment : JobAssignment)
 }
 
-case class JobCompleted(buildId : UUID, job : Job)
-case class JobFailed(buildId : UUID, job : Job)
+object DispatcherToScheduler {
+  case class JobCompleted(build : UUID, job : Job)
+  case class JobFailed(build: UUID, job : Job)
+}
 
 case class BuildFailed(buildId : Build)
 case class BuildCompleted(buildId : Build)

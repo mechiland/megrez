@@ -54,7 +54,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
       receiveWithin(1000) {
         case JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
-          scheduler ! JobCompleted(build, job1)
+          scheduler ! DispatcherToScheduler.JobCompleted(build, job1)
         case TIMEOUT => fail
         case _ => fail
       }
@@ -86,7 +86,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
       receiveWithin(1000) {
         case JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
-          scheduler ! JobFailed(build, job1)
+          scheduler ! DispatcherToScheduler.JobFailed(build, job1)
         case TIMEOUT => fail
         case _ => fail
       }
@@ -119,14 +119,14 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       receiveWithin(1000) {
         case JobScheduled(build: UUID, _ : Set[JobAssignment]) =>
           id = build
-          scheduler ! JobFailed(build, job1)
+          scheduler ! DispatcherToScheduler.JobFailed(build, job1)
         case TIMEOUT => fail
         case _ => fail
       }
 
       receiveWithin(300) {
         case BuildFailed(build: Build) => fail
-        case TIMEOUT => scheduler ! JobCompleted(id, job1)
+        case TIMEOUT => scheduler ! DispatcherToScheduler.JobCompleted(id, job1)
         case _ => fail
       }
 
@@ -155,14 +155,14 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
       receiveWithin(1000) {
         case JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
-          scheduler ! JobCompleted(build, job1)
+          scheduler ! DispatcherToScheduler.JobCompleted(build, job1)
         case TIMEOUT => fail
         case _ => fail
       }
 
       receiveWithin(1000) {
         case JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
-          scheduler ! JobCompleted(build, job2)
+          scheduler ! DispatcherToScheduler.JobCompleted(build, job2)
         case TIMEOUT => fail
         case _ => fail
       }
