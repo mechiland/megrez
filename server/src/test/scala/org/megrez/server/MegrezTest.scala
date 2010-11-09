@@ -1,46 +1,117 @@
 package org.megrez.server
 
 import org.scalatest.matchers.ShouldMatchers
-import trigger.SvnTestRepo
 import org.scalatest.{BeforeAndAfterEach, Spec}
-class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnTestRepo {
-//  describe("App") {
-//    it("should receive add pipeline event and lanunch build if pipeline has new check in") {
-//
-//      Megrez.pipelineManager ! new AddPipeline(pipeline)
-//
-//      agent ! SetResources(Set("LINUX"))
-//      Megrez.dispatcher ! AgentConnect(agent)
-//
-//      receiveWithin(2000) {
-//        case msg: String => if(msg.indexOf(job1.name) < 0) fail
-//        case TIMEOUT => println("TIMEOUT"); fail
-//        case msg: Any => println(msg); fail
-//      }
-//    }
-//  }
-//
-//  var agent: Agent = _
-//  var job1: Job = _
-//  var job2: Job = _
-//  var pipeline: Pipeline = _
-//
-//  override def beforeEach() {
-//    setupSvnRepo
-//    agent = new Agent(new ActorBasedAgentHandler(self), Megrez.dispatcher)
-//    agent start;
-//
-//    job1 = new Job("linux-firefox", Set("LINUX"), List[Task]())
-//    job2 = new Job("win-ie", Set("WIN"), List[Task]())
-//    val stage1 = new Pipeline.Stage("ut", Set(job1, job2))
-//    val stage2 = new Pipeline.Stage("ft", Set(job1, job2))
-//    pipeline = new Pipeline("cruise", new SvnMaterial(svnUrl), List(stage1, stage2))
-//  }
-//
-//  override def afterEach() {
-//    Megrez.pipelineManager ! new RemovePipeline(pipeline)
-//    teardownSvnRepo
-//    agent ! Exit();
-//    Megrez.stop
-//  }
+import org.megrez._
+import org.megrez.Pipeline.Stage
+import vcs.Subversion
+import java.io.File
+import actors.Actor._
+import actors.{TIMEOUT, Actor}
+import scala.io.Source
+
+class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
+  describe("Core Actors") {
+    it("should trig build for pipeline when pipeline first added") {
+      val megrez = new Megrez
+      val job = new Job("linux-firefox", Set(), List[Task]())
+      val pipeline = new Pipeline("pipeline", Set(new Material(new Subversion(url))), List(new Stage("name", Set(job))))
+
+      megrez.pipelineManager ! ToPipelineManager.AddPipeline(pipeline)
+      megrez.agentManager ! ToAgentManager.RemoteAgentConnected(new ActorBasedAgentHandler(self))
+
+      receiveWithin(2000) {
+        case message: String =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+    }
+  }
+
+  class ActorBasedAgentHandler(val main: Actor) extends AgentHandler {
+    def assignAgent(agent: Actor) {
+
+    }
+
+    def send(message: String) {
+      main ! message
+    }
+  }
+  //  describe("App") {
+  //    it("should receive add pipeline event and lanunch build if pipeline has new check in") {
+  //
+  //      Megrez.pipelineManager ! new AddPipeline(pipeline)
+  //
+  //      agent ! SetResources(Set("LINUX"))
+  //      Megrez.dispatcher ! AgentConnect(agent)
+  //
+  //      receiveWithin(2000) {
+  //        case msg: String => if(msg.indexOf(job1.name) < 0) fail
+  //        case TIMEOUT => println("TIMEOUT"); fail
+  //        case msg: Any => println(msg); fail
+  //      }
+  //    }
+  //  }
+  //
+  private var url = ""
+  private var workingDir: File = _
+  private var root: File = _
+  private var megrez: Megrez = _
+
+  override def beforeEach() {
+    root = new File(System.getProperty("user.dir"), "target/vcs/svn")
+    workingDir = new File(root, "work")
+    val repository = new File(root, "repository")
+
+    List(root, workingDir, repository).foreach(_ mkdirs)
+
+    val repositoryName = String.valueOf(System.currentTimeMillis)
+    val process = Runtime.getRuntime().exec("svnadmin create " + repositoryName, null, repository)
+    process.waitFor match {
+      case 0 =>
+      case _ => fail("can't setup repository")
+    }
+
+    url = "file://" + new File(root, "repository/" + repositoryName).getAbsolutePath
+    val megrez = new Megrez
+  }
+
+  override def afterEach() {
+    megrez.stop
+    delete(root)
+  }
+
+  private def delete(file: File) {
+    file.listFiles.foreach {
+      file =>
+        if (file.isDirectory) delete(file) else file.delete
+    }
+    file.delete
+  }
+
+  private def run(command: String) {
+    run(command, root)
+  }
+
+  private def run(command: String, workingDir: File) {
+    val cmd = Runtime.getRuntime().exec(command, null, workingDir)
+    cmd.waitFor match {
+      case 0 =>
+      case _ => fail(Source.fromInputStream(cmd.getErrorStream).mkString)
+    }
+  }
+
+  private def checkin(repository: File, file: String) {
+    val revision = new File(repository, file)
+    revision.createNewFile
+
+    run("svn add " + revision.getAbsolutePath)
+    run("svn ci . -m \"checkin\"", repository)
+  }
+
+  private def checkout(url: String) = {
+    val target = new File(root, "checkout_" + System.currentTimeMillis)
+    run("svn co " + url + " " + target)
+    target
+  }
 }

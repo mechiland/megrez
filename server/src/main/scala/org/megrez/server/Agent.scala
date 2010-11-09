@@ -3,8 +3,9 @@ package org.megrez.server
 import actors._
 import scala.collection.mutable._
 import org.megrez._
+import org.megrez.util.Logging
 
-class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
+class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor with Logging {
   private val resources = new HashSet[String]()
   private var current: Option[JobAssignment] = None
 
@@ -17,10 +18,14 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
           resources.clear
           tags.foreach(resources add _)
         case _: JobCompleted =>
-          dispatcher ! AgentToDispatcher.JobCompleted(this, current.get)
+          val assignment = current.get
+          info("Job completed" + assignment.pipeline + " " + assignment.job.name)
+          dispatcher ! AgentToDispatcher.JobCompleted(this, assignment)
           current = None
         case _: JobFailed =>
-          dispatcher ! AgentToDispatcher.JobFailed(this, current.get)
+          val assignment = current.get
+          info("Job failed" + assignment.pipeline + " " + assignment.job.name)          
+          dispatcher ! AgentToDispatcher.JobFailed(this, assignment)
           current = None
         case Stop => exit
       }
@@ -31,14 +36,16 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
     current match {
       case None =>
         if (checkResource(assignment.job)) {
-          if (handler != null)
-            handler.send("HAHA")
+          handler.send("HAHA")
           current = Some(assignment)
+          info("Confirm job " + assignment.pipeline + " " + assignment.job.name)
           reply(AgentToDispatcher.Confirm)
         } else {
+          debug("Reject job " + assignment.pipeline + " " + assignment.job.name)
           reply(AgentToDispatcher.Reject)
         }
       case Some(_) =>
+        debug("Reject job due to agent busy")
         reply(AgentToDispatcher.Reject)
     }
   }

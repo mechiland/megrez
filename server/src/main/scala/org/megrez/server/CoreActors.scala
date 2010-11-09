@@ -48,7 +48,7 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
   start
 }
 
-class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) extends Actor {
+class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) extends Actor with Logging {
   private val builds = HashMap[UUID, Build]()
 
   def act {
@@ -56,9 +56,10 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
       react {
         case TriggerToScheduler.TrigBuild(pipeline, materials) =>
           val id = UUID.randomUUID
+          info("Trig build for " + pipeline.name + " build " + id)
           val build = new Build(pipeline, materials)
           builds.put(id, build)
-          scheduleJobs(id, build)
+          scheduleJobs(id, build)          
         case DispatcherToScheduler.JobCompleted(id, job) =>
           builds.get(id) match {
             case Some(build: Build) =>
@@ -99,7 +100,7 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
   start
 }
 
-class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
+class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging {
   private val jobAssignments = new HashMap[JobAssignment, UUID]()
   private val jobInProgress = new HashMap[JobAssignment, UUID]()
   private val idleAgents = new HashSet[Actor]()
@@ -107,10 +108,12 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
   def act() {
     loop {
       react {
-        case AgentManagerToDispatcher.AgentConnect(agent: Actor) =>
+        case AgentManagerToDispatcher.AgentConnect(agent: Actor) =>          
           idleAgents.add(agent)
+          info("Agent idle for job, total " + idleAgents.size + " idle agents")
           dispatchJobs
         case SchedulerToDispatcher.JobScheduled(build, assignments) =>
+          info("Job scheduled for build " + build + " " + assignments.size + " jobs")
           assignments.foreach(jobAssignments.put(_, build))
           dispatchJobs
         case AgentToDispatcher.JobCompleted(agent, assignment) =>
@@ -138,7 +141,7 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
     })
   }
 
-  private def dispatchJob(job: JobAssignment) = {
+  private def dispatchJob(job: JobAssignment) = {    
     val agents = idleAgents.iterator
     def assignJob: Option[Actor] = {
       if (agents.hasNext) {
@@ -192,15 +195,15 @@ class BuildManager extends Actor {
 }
 
 
-object Megrez {
+class Megrez(val checkInterval : Long = 5 * 60 * 1000) {
   val agentManager: Actor = new AgentManager(this)
   val buildScheduler: Actor = new BuildScheduler(this)
   val buildManager: Actor = new BuildManager()
   val dispatcher: Actor = new Dispatcher(this)
   val pipelineManager = new PipelineManager(this)
-  val workspace = new FileWorkspace(new File(System.getProperty("user.dir")))
+  val workspace = new FileWorkspace(new File(System.getProperty("user.dir"), "pipelines"))
 
-  val triggerFactory: Pipeline => Trigger = pipeline => new OnChanges(new Materials(pipeline, workspace), buildScheduler, 5 * 60 * 1000)
+  val triggerFactory: Pipeline => Trigger = pipeline => new OnChanges(new Materials(pipeline, workspace), buildScheduler, checkInterval)
 
   def stop() {
     dispatcher ! Stop

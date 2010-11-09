@@ -87,10 +87,10 @@ class SubversionTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
 
   private def checkin(repository: File, file: String) {
-    val revision1 = new File(repository, file)
-    revision1.createNewFile
+    val revision = new File(repository, file)
+    revision.createNewFile
 
-    run("svn add " + revision1.getAbsolutePath)
+    run("svn add " + revision.getAbsolutePath)
     run("svn ci . -m \"checkin\"", repository)
   }
 
