@@ -21,7 +21,7 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
           addPipeline(pipeline)
         case ToPipelineManager.RemovePipeline(pipeline) =>
           removePipeline(pipeline.name)
-        case _: Exit => exit
+        case Common.Stop => exit
         case _ =>
       }
     }
@@ -64,10 +64,10 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
             case Some(build: Build) =>
               build.complete(job) match {
                 case Some(Build.Completed) =>
-                  megrez.buildManager ! BuildCompleted(build)
+                  megrez.buildManager ! SchedulerToBuildManager.BuildCompleted(build)
                   builds.remove(id)
                 case Some(Build.Failed) =>
-                  megrez.buildManager ! BuildFailed(build)
+                  megrez.buildManager ! SchedulerToBuildManager.BuildFailed(build)
                   builds.remove(id)
                 case Some(stage: Build.Stage) =>
                   scheduleJobs(id, build)
@@ -80,13 +80,13 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
             case Some(build: Build) =>
               build.fail(job) match {
                 case Some(Build.Failed) =>
-                  megrez.buildManager ! BuildFailed(build)
+                  megrez.buildManager ! SchedulerToBuildManager.BuildFailed(build)
                   builds.remove(id)
                 case None =>
               }
             case None =>
           }
-        case _: Exit => exit
+        case Common.Stop => exit
         case _ =>
       }
     }
@@ -123,7 +123,7 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
           jobInProgress.remove(assignment)
           idleAgents.add(agent)
           dispatchJobs
-        case _: Exit => exit
+        case Common.Stop => exit
       }
     }
   }
@@ -181,7 +181,7 @@ class BuildManager extends Actor {
   def act() {
     loop {
       react {
-        case _: Exit =>
+        case Common.Stop =>
           exit
         case _ =>
       }
@@ -203,9 +203,9 @@ object Megrez {
   val triggerFactory: Pipeline => Trigger = pipeline => new OnChanges(new Materials(pipeline, workspace), buildScheduler, 5 * 60 * 1000)
 
   def stop() {
-    dispatcher ! Exit()
-    buildScheduler ! Exit()
-    pipelineManager ! Exit()
+    dispatcher ! Common.Stop
+    buildScheduler ! Common.Stop
+    pipelineManager ! Common.Stop
   }
 }
 

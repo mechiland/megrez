@@ -5,44 +5,40 @@ import scala.collection.mutable._
 import org.megrez._
 
 class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
-  import AgentStatus._
-
   private val resources = new HashSet[String]()
-  private var status = Idle
-  private var current : JobAssignment = null
+  private var current: Option[JobAssignment] = None
 
   def act() {
     loop {
       react {
-        case assignment : JobAssignment =>          
+        case assignment: JobAssignment =>
           handleAssignment(assignment)
         case ToAgent.SetResources(tags) =>
           resources.clear
           tags.foreach(resources add _)
-        case _ : JobCompleted =>
-          status = Idle
-          dispatcher ! AgentToDispatcher.JobCompleted(this, current)
-        case _ : JobFailed =>
-          status = Idle
-          dispatcher ! AgentToDispatcher.JobFailed(this, current)        
-        case _: Exit => exit
+        case _: JobCompleted =>
+          dispatcher ! AgentToDispatcher.JobCompleted(this, current.get)
+          current = None
+        case _: JobFailed =>
+          dispatcher ! AgentToDispatcher.JobFailed(this, current.get)
+          current = None
+        case Common.Stop => exit
       }
     }
   }
 
   private def handleAssignment(assignment: JobAssignment) {
-    status match {
-      case Idle =>
+    current match {
+      case None =>
         if (checkResource(assignment.job)) {
-          status = Busy
           if (handler != null)
             handler.send("HAHA")
-          current = assignment
+          current = Some(assignment)
           reply(AgentToDispatcher.Confirm)
         } else {
           reply(AgentToDispatcher.Reject)
         }
-      case Busy =>
+      case Some(_) =>
         reply(AgentToDispatcher.Reject)
     }
   }
@@ -50,11 +46,6 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
   private def checkResource(job: Job) = job.resources.forall(resources contains _)
 
   start
-}
-
-object AgentStatus extends Enumeration {
-  type AgentStatus = Value
-  val Idle, Busy = Value
 }
 
 trait AgentHandler {

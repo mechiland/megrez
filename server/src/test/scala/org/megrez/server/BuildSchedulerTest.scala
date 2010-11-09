@@ -92,7 +92,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       }
 
       receiveWithin(1000) {
-        case BuildFailed(build: Build) =>
+        case SchedulerToBuildManager.BuildFailed(build: Build) =>
           build.pipeline should be === pipeline
         case TIMEOUT => fail
         case _ => fail
@@ -125,13 +125,13 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       }
 
       receiveWithin(300) {
-        case BuildFailed(build: Build) => fail
+        case SchedulerToBuildManager.BuildFailed(build: Build) => fail
         case TIMEOUT => scheduler ! DispatcherToScheduler.JobCompleted(id, job1)
         case _ => fail
       }
 
       receiveWithin(1000) {
-        case BuildFailed(build: Build) =>
+        case SchedulerToBuildManager.BuildFailed(build: Build) =>
           build.pipeline should be === pipeline
         case TIMEOUT => fail
         case _ => fail
@@ -168,7 +168,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       }
 
       receiveWithin(1000) {
-        case BuildCompleted(build: Build) =>
+        case SchedulerToBuildManager.BuildCompleted(build: Build) =>
           build.pipeline should be === pipeline
         case TIMEOUT => fail
         case _ => fail

@@ -4,8 +4,9 @@ import actors._
 import java.util.UUID
 import org.megrez.{JobAssignment, Material, Pipeline, Job}
 
-abstract class CommonMessage
-case class Exit() extends CommonMessage
+object Common {
+  object Stop
+}
 
 
 object ToAgentManager {
@@ -45,5 +46,7 @@ object DispatcherToScheduler {
   case class JobFailed(val build: UUID, val job : Job)
 }
 
-case class BuildFailed(buildId : Build)
-case class BuildCompleted(buildId : Build)
+object SchedulerToBuildManager {
+  case class BuildFailed(buildId : Build)
+  case class BuildCompleted(buildId : Build)
+}

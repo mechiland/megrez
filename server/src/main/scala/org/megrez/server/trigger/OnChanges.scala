@@ -4,7 +4,7 @@ import actors.Actor
 import actors.Actor._
 import org.megrez.util.Logging
 import java.util.TimerTask
-import org.megrez.server.{Exit, TriggerToScheduler}
+import org.megrez.server.{Common, TriggerToScheduler}
 
 class OnChanges(val materials : Materials, val scheduler : Actor, every : Long) extends Trigger with Logging {
   private val buildTrigger = actor {
@@ -15,7 +15,7 @@ class OnChanges(val materials : Materials, val scheduler : Actor, every : Long) 
             info("Changes detected, pipeline: " + materials.pipeline.name)
             scheduler ! TriggerToScheduler.TrigBuild(materials.pipeline, materials.changes)
           }
-        case _ : Exit => exit
+        case Common.Stop => exit
         case _ =>
       }
     }
@@ -30,6 +30,6 @@ class OnChanges(val materials : Materials, val scheduler : Actor, every : Long) 
 
   def stop {
     if (task != null) task.cancel
-    buildTrigger ! Exit()
+    buildTrigger ! Common.Stop
   }
 }
