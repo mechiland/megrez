@@ -7,42 +7,37 @@ import org.megrez.{JobAssignment, Job}
 class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
   import AgentStatus._
 
-  private var _resources = new HashSet[String]()
+  private val resources = new HashSet[String]()
   private var _status = Idle
 
   def act() {
     loop {
       react {
-        case job: JobRequest => handleJob(job)          
-        case tags: SetResources => setResources(tags)
+        case assignment : JobAssignment =>          
+          handleAssignment(assignment)
+        case ToAgent.SetResources(tags) =>
+          resources.clear
+          tags.foreach(resources add _)
         case message: JobFinished => handleFinished(message)
         case _: Exit => exit
+        case a : Any => println(a)
       }
     }
   }
 
-  def status = _status
-
-  def resources = _resources.toSet
-
-  private def setResources(message: SetResources) {
-    _resources.clear()
-    message.resources.foreach(_resources add _)
-  }
-
-  private def handleJob(request: JobRequest) {
+  private def handleAssignment(assignment: JobAssignment) {
     _status match {
       case Idle =>
-        if (checkResource(request.job)) {
+        if (checkResource(assignment.job)) {
           _status = Busy
-          if(handler != null)
-            handler.send(request.receivedMessage)
-          reply(JobConfirm(this, request))
+          if (handler != null)
+            handler.send("HAHA")
+          reply(AgentToDispatcher.Confirm)
         } else {
-          reply(JobReject(this))
+          reply(AgentToDispatcher.Reject)
         }
       case Busy =>
-        reply(JobReject(this))
+        reply(AgentToDispatcher.Reject)
     }
   }
 
@@ -51,7 +46,10 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
     dispatcher ! message
   }
 
-  private def checkResource(job : Job) = job.resources.forall( _resources contains _ )
+  private def checkResource(job: Job) = job.resources.forall(resources contains _)
+
+  start
+
 }
 
 object AgentStatus extends Enumeration {
@@ -60,6 +58,7 @@ object AgentStatus extends Enumeration {
 }
 
 trait AgentHandler {
-  def assignAgent(agent : Actor)
-  def send(message : String)
+  def assignAgent(agent: Actor)
+
+  def send(message: String)
 }

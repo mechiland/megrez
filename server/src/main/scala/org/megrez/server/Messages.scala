@@ -17,34 +17,32 @@ case class RemoteAgentConnected(val handler : AgentHandler) extends AgentMessage
 case class AgentConnect(val agent : Actor)
 
 abstract class JobMessage
-case class JobRequest(val buildId: UUID, val job : Job) extends JobMessage {
-  def receivedMessage = {
-    "received a job request: %s for build %s".format(buildId.toString, job.name)
-  }
-}
-case class JobConfirm(val agent : Agent, val jobRequest: JobRequest) extends JobMessage
-case class JobReject(val agent : Agent) extends JobMessage
 case class JobFinished(val buildId: UUID, val job: Job, val agent : Actor) extends JobMessage
 
 
-case class JobScheduled(buildId : UUID, assignments : Set[JobAssignment])
-
+object ToAgent {
+  case class SetResources(val resources : Set[String])
+}
 object ToPipelineManager {
-  case class AddPipeline(pipeline : Pipeline)
-  case class PipelineChanged(pipeline : Pipeline)
-  case class RemovePipeline(pipeline : Pipeline)
+  case class AddPipeline(val pipeline : Pipeline)
+  case class PipelineChanged(val pipeline : Pipeline)
+  case class RemovePipeline(val pipeline : Pipeline)
 }
 
 object AgentToDispatcher {
   object Confirm
   object Reject
-  case class JobCompleted(agent : Actor, assignment : JobAssignment)
-  case class JobFailed(agent : Actor, assignment : JobAssignment)
+  case class JobCompleted(val agent : Actor, val assignment : JobAssignment)
+  case class JobFailed(val agent : Actor, val assignment : JobAssignment)
+}
+
+object SchedulerToDispatcher {
+  case class JobScheduled(val buildId : UUID, val assignments : Set[JobAssignment])
 }
 
 object DispatcherToScheduler {
-  case class JobCompleted(build : UUID, job : Job)
-  case class JobFailed(build: UUID, job : Job)
+  case class JobCompleted(val build : UUID, val job : Job)
+  case class JobFailed(val build: UUID, val job : Job)
 }
 
 case class BuildFailed(buildId : Build)

@@ -7,7 +7,7 @@ import java.util.UUID
 import actors.{Actor, TIMEOUT}
 import org.megrez.{JobAssignment, Material, Job}
 
-class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
+class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("Dispatcher") {
     it("should assign job to idle agent") {
       val job = new Job("unit test", Set(), List())
@@ -16,7 +16,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
       val dispatcher = new Dispatcher(Context)
       dispatcher ! AgentConnect(self)
 
-      dispatcher ! JobScheduled(UUID.randomUUID, Set(assignment))
+      dispatcher ! SchedulerToDispatcher.JobScheduled(UUID.randomUUID, Set(assignment))
       receiveWithin(1000) {
         case jobAssignment: JobAssignment =>
           jobAssignment should be === assignment
@@ -53,7 +53,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
       dispatcher ! AgentConnect(agent1)
       dispatcher ! AgentConnect(agent2)
 
-      dispatcher ! JobScheduled(UUID.randomUUID, Set(assignment))
+      dispatcher ! SchedulerToDispatcher.JobScheduled(UUID.randomUUID, Set(assignment))
 
       receiveWithin(1000) {
         case jobAssignment: JobAssignment =>
@@ -68,7 +68,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
 
       val dispatcher = new Dispatcher(Context)
-      dispatcher ! JobScheduled(UUID.randomUUID, Set(assignment))
+      dispatcher ! SchedulerToDispatcher.JobScheduled(UUID.randomUUID, Set(assignment))
       receiveWithin(500) {
         case TIMEOUT =>
         case _: JobAssignment => fail
@@ -92,7 +92,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
       val dispatcher = new Dispatcher(Context)
       dispatcher ! AgentConnect(self)
 
-      dispatcher ! JobScheduled(build, Set(assignment))
+      dispatcher ! SchedulerToDispatcher.JobScheduled(build, Set(assignment))
       receiveWithin(1000) {
         case jobAssignment: JobAssignment =>
           jobAssignment should be === assignment
@@ -119,7 +119,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach wi
       val dispatcher = new Dispatcher(Context)
       dispatcher ! AgentConnect(self)
 
-      dispatcher ! JobScheduled(build, Set(assignment))
+      dispatcher ! SchedulerToDispatcher.JobScheduled(build, Set(assignment))
       receiveWithin(1000) {
         case jobAssignment: JobAssignment =>
           jobAssignment should be === assignment

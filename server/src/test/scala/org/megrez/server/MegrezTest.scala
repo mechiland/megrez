@@ -3,7 +3,7 @@ package org.megrez.server
 import org.scalatest.matchers.ShouldMatchers
 import trigger.SvnTestRepo
 import org.scalatest.{BeforeAndAfterEach, Spec}
-class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnTestRepo with AgentTestSuite {
+class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with SvnTestRepo {
 //  describe("App") {
 //    it("should receive add pipeline event and lanunch build if pipeline has new check in") {
 //

@@ -28,7 +28,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       scheduler ! TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
-        case JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
           assignments should have size (1)
           assignments.head.job should equal(job)
           assignments.head.materials should be === changes
@@ -53,14 +53,14 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       scheduler ! TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
-        case JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
           scheduler ! DispatcherToScheduler.JobCompleted(build, job1)
         case TIMEOUT => fail
         case _ => fail
       }
 
       receiveWithin(1000) {
-        case JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
           assignments should have size (1)
           assignments.head.job should equal(job2)
           assignments.head.materials should be === changes        
@@ -85,7 +85,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       scheduler ! TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
-        case JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
           scheduler ! DispatcherToScheduler.JobFailed(build, job1)
         case TIMEOUT => fail
         case _ => fail
@@ -117,7 +117,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
       var id = UUID.randomUUID
       receiveWithin(1000) {
-        case JobScheduled(build: UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build: UUID, _ : Set[JobAssignment]) =>
           id = build
           scheduler ! DispatcherToScheduler.JobFailed(build, job1)
         case TIMEOUT => fail
@@ -154,14 +154,14 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       scheduler ! TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
-        case JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
           scheduler ! DispatcherToScheduler.JobCompleted(build, job1)
         case TIMEOUT => fail
         case _ => fail
       }
 
       receiveWithin(1000) {
-        case JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
           scheduler ! DispatcherToScheduler.JobCompleted(build, job2)
         case TIMEOUT => fail
         case _ => fail

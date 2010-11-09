@@ -1,115 +1,46 @@
 package org.megrez.server
 
 import org.scalatest._
+import mock.MockitoSugar
 import org.scalatest.matchers._
 import actors.Actor._
-import actors.{TIMEOUT, Actor}
-import java.util.UUID
-import collection.mutable.HashSet
-import org.megrez.Job
+import actors.TIMEOUT
+import org.megrez.{Material, JobAssignment, Job}
 
-class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach with AgentTestSuite {
+class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("Agent") {
     it("should confirm job when job has no resources") {
-      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set(), List()))
-      expectAgentConfirmedJob
-      agentHandler.sent should be === true
+      val handler = mock[AgentHandler]
+      val agent = new Agent(handler, self)
+      agent !? (1000, JobAssignment("pipeline", Map[Material, Option[Any]](), new Job("ut", Set(), List()))) match {
+        case Some(AgentToDispatcher.Confirm) =>
+        case Some(TIMEOUT) => fail
+        case _ => fail
+      }
     }
 
-    it("should accept job if succeed to match resource") {
-      agent ! SetResources(Set("LINUX", "FIREFOX", "JAVA"))
-      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set("LINUX", "FIREFOX"), List()))
-      expectAgentConfirmedJob
+    it("should confirm job if match resource") {
+      val handler = mock[AgentHandler]
+      val agent = new Agent(handler, self)
+
+      agent ! ToAgent.SetResources(Set("LINUX"))      
+      agent !? (1000, JobAssignment("pipeline", Map[Material, Option[Any]](), new Job("ut", Set("LINUX"), List()))) match {
+        case Some(AgentToDispatcher.Confirm) =>
+        case Some(TIMEOUT) => fail
+        case _ => fail
+      }
     }
 
     it("should reject job if failed to match resource") {
-      agent ! SetResources(Set("LINUX"))
-      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set("LINUX", "FIREFOX"), List()))
-      expectAgentRejectedJob
-    }
+      val handler = mock[AgentHandler]
+      val agent = new Agent(handler, self)
 
-    it("should reject job if the agent is busy") {
-      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set(), List()))
-      expectAgentConfirmedJob
-      agent ! JobRequest(UUID.randomUUID, new Job("unit test", Set(), List()))
-      expectAgentRejectedJob
-    }
-
-    it("should send job finish message to dispatcher") {
-      agent ! JobFinished(UUID.randomUUID, null, null)
-      expectDispatcherReceivedJobFinished
-    }
-
-
-  }
-
-  def expectAgentConfirmedJob {
-    receiveWithin(2000) {
-      case _: JobConfirm =>
-      case TIMEOUT => fail
-      case msg: Any => println(msg); fail
-    }
-  }
-
-  def expectAgentRejectedJob {
-    receiveWithin(2000) {
-      case _: JobReject =>
-      case TIMEOUT => fail
-      case msg: Any => println(msg); fail
-    }
-  }
-
-  def expectDispatcherReceivedJobFinished {
-    receiveWithin(2000) {
-      case _: JobFinished =>
-      case TIMEOUT => fail
-      case msg: Any => println(msg); fail
-    }
-  }
-
-  var agent: Agent = _
-  var agentHandler: AgentHandlerStub = _
-
-  override def beforeEach() {
-    agentHandler = new AgentHandlerStub()
-    agent = new Agent(agentHandler, self)
-    agent start
-  }
-
-  override def afterEach() {
-    agent ! Exit()
-  }
-}
-
-class AgentHandlerStub() extends AgentHandler {
-  var sent = false
-
-  def send(message: String) {
-    sent = true
-  }
-
-  def assignAgent(agent: Actor) {}
-}
-
-trait AgentTestSuite extends Spec {
-
-  def expectAgentGotJobRequests(jobRequests: JobRequest*) {
-    val shouldReceivedMessages = new HashSet[String];
-    jobRequests.foreach(jobRequest => shouldReceivedMessages.add(jobRequest.receivedMessage))
-    for (i <- 1 to shouldReceivedMessages.size) {
-      receiveWithin(2000) {
-        case msg: String => {
-          if (!shouldReceivedMessages.remove(msg)) fail
-        }
-        case TIMEOUT => println("TIMEOUT"); fail
-        case msg: Any => println(msg); fail
+      agent ! ToAgent.SetResources(Set("LINUX"))
+      agent !? (1000, JobAssignment("pipeline", Map[Material, Option[Any]](), new Job("ut", Set("FIREFOX"), List()))) match {
+        case Some(AgentToDispatcher.Reject) =>
+        case Some(TIMEOUT) => fail
+        case _ => fail
       }
-    }
-  }
-
-  def expectAgentFinishedJob: Unit = {
-    receive {
-      case _ =>
     }
   }
 }
