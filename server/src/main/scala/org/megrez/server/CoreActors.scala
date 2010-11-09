@@ -6,7 +6,7 @@ import collection.mutable.{HashSet, HashMap}
 import trigger.{Materials, OnChanges, Trigger}
 import org.megrez.util.{FileWorkspace, Logging}
 import java.io.File
-import org.megrez.{JobAssignment, Material, Pipeline, Job}
+import org.megrez._
 
 class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
@@ -21,7 +21,7 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
           addPipeline(pipeline)
         case ToPipelineManager.RemovePipeline(pipeline) =>
           removePipeline(pipeline.name)
-        case Common.Stop => exit
+        case Stop => exit
         case _ =>
       }
     }
@@ -86,7 +86,7 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
               }
             case None =>
           }
-        case Common.Stop => exit
+        case Stop => exit
         case _ =>
       }
     }
@@ -123,7 +123,7 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor {
           jobInProgress.remove(assignment)
           idleAgents.add(agent)
           dispatchJobs
-        case Common.Stop => exit
+        case Stop => exit
       }
     }
   }
@@ -181,7 +181,7 @@ class BuildManager extends Actor {
   def act() {
     loop {
       react {
-        case Common.Stop =>
+        case Stop =>
           exit
         case _ =>
       }
@@ -203,9 +203,9 @@ object Megrez {
   val triggerFactory: Pipeline => Trigger = pipeline => new OnChanges(new Materials(pipeline, workspace), buildScheduler, 5 * 60 * 1000)
 
   def stop() {
-    dispatcher ! Common.Stop
-    buildScheduler ! Common.Stop
-    pipelineManager ! Common.Stop
+    dispatcher ! Stop
+    buildScheduler ! Stop
+    pipelineManager ! Stop
   }
 }
 

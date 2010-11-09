@@ -4,3 +4,5 @@ case class JobAssignment(val pipeline : String, val materials : Map[Material, Op
 
 case class JobFailed(val reason : String)
 case class JobCompleted
+
+object Stop

@@ -22,7 +22,7 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor {
         case _: JobFailed =>
           dispatcher ! AgentToDispatcher.JobFailed(this, current.get)
           current = None
-        case Common.Stop => exit
+        case Stop => exit
       }
     }
   }

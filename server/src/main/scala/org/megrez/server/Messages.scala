@@ -4,11 +4,6 @@ import actors._
 import java.util.UUID
 import org.megrez.{JobAssignment, Material, Pipeline, Job}
 
-object Common {
-  object Stop
-}
-
-
 object ToAgentManager {
   case class RemoteAgentConnected(val handler : AgentHandler)
 }
