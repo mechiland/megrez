@@ -79,8 +79,8 @@ object JSON {
 
     def writeWorkSet(source: ChangeSource):String = {
       source match {
-        case svn: Subversion => return formatGroup("revision",workSetParsers("svn").toString)
-        case svn: Git => return formatGroup("revision",workSetParsers("git").toString)
+        case svn: Subversion => return formatGroup("revision",svn.revisionString)
+        case git: Git => return formatGroup("revision",git.revisionString)
         case _ => return ""
       }
     }

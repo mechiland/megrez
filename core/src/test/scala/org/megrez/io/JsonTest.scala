@@ -5,18 +5,22 @@ import org.scalatest.Spec
 import org.megrez.vcs.Subversion
 import org.megrez._
 import task.CommandLineTask
+import java.lang.String
 
 class JsonTest extends Spec with ShouldMatchers {
   val JsonParser = scala.util.parsing.json.JSON
   describe("Domain object json serialization") {
     it("should parse json from JobAssignment message") {
-      val material= Map(new Material(new Subversion("svn_url"),"dest")-> Some("1"))
+      val revision: String = "1"
+      val subversion: Subversion = new Subversion("svn_url")
+      subversion.revisionString = revision
+      val material= Map(new Material(subversion,"dest")-> Some(revision))
       val job: Job = new Job("unit test", List(new CommandLineTask("ls")))
       val assignmentMessage: JobAssignment = new JobAssignment("pipeline", material, job)
 
       val result = JSON.JobAssignmentJson.write(assignmentMessage)
-      val json = """{"pipeline" : "pipeline", "materials" : [{"material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}, "workset" : {"revision" : "1"}}], "job" : {"name" : "unit test", "tasks" : [{"type" : "cmd", "command": "ls"}]}}"""
-//      result.toString should equal(json)
+      val json = """{"pipeline" : "pipeline", "materials" : [{"material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}, "workset" : {"revision" : "1"}}], "job" : {"name" : "unit test", "tasks" : [{"type" : "cmd", "command" : "ls"}]}}"""
+      result.toString should equal(json)
     }
   }
 
