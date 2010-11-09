@@ -26,11 +26,14 @@ case class JobConfirm(val agent : Agent, val jobRequest: JobRequest) extends Job
 case class JobReject(val agent : Agent) extends JobMessage
 case class JobFinished(val buildId: UUID, val job: Job, val agent : Actor) extends JobMessage
 
-case class AddPipeline(pipeline : Pipeline)
-case class PipelineChanged(pipeline : Pipeline)
-case class RemovePipeline(pipeline : Pipeline)
 
 case class JobScheduled(buildId : UUID, assignments : Set[JobAssignment])
+
+object ToPipelineManager {
+  case class AddPipeline(pipeline : Pipeline)
+  case class PipelineChanged(pipeline : Pipeline)
+  case class RemovePipeline(pipeline : Pipeline)
+}
 
 object AgentToDispatcher {
   object Confirm

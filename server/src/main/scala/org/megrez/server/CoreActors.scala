@@ -14,12 +14,12 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
   def act {
     loop {
       react {
-        case AddPipeline(pipeline: Pipeline) =>
+        case ToPipelineManager.AddPipeline(pipeline: Pipeline) =>
           addPipeline(pipeline)
-        case PipelineChanged(pipeline: Pipeline) =>
+        case ToPipelineManager.PipelineChanged(pipeline: Pipeline) =>
           removePipeline(pipeline.name)
           addPipeline(pipeline)
-        case RemovePipeline(pipeline: Pipeline) =>
+        case ToPipelineManager.RemovePipeline(pipeline: Pipeline) =>
           removePipeline(pipeline.name)
         case _: Exit => exit
         case _ =>

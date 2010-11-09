@@ -63,17 +63,3 @@ trait AgentHandler {
   def assignAgent(agent : Actor)
   def send(message : String)
 }
-
-object Agent extends Actor {
-  def act() {
-    loop {
-      react {
-        case message : RemoteAgentConnected =>
-          
-        case _ => 
-      }
-    }
-  }
-
-  start
-}

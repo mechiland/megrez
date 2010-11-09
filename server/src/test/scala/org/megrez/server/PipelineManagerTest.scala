@@ -20,7 +20,7 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
       when(Context.triggerFactory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline", self))
 
       val manager = new PipelineManager(Context)
-      manager ! AddPipeline(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
+      manager ! ToPipelineManager.AddPipeline(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
 
       receiveWithin(1000) {
         case "TRIGGER START pipeline" =>
@@ -38,7 +38,7 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
         new ActorBasedTrigger("pipeline2", self))
 
       val manager = new PipelineManager(Context)
-      manager ! AddPipeline(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
+      manager ! ToPipelineManager.AddPipeline(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
 
       receiveWithin(1000) {
         case "TRIGGER START pipeline1" =>
@@ -46,7 +46,7 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
         case _ => fail
       }
       
-      manager ! PipelineChanged(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
+      manager ! ToPipelineManager.PipelineChanged(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
 
       receiveWithin(1000) {
         case "TRIGGER STOP pipeline1" =>
