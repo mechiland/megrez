@@ -8,8 +8,8 @@ class Subversion(val url: String) extends VersionControl with ShellCommand {
   def changes(workingDir: File, previous: Option[Any]) = {
     val current = Integer.parseInt(((XML.load(run("svn info " + url + " --xml").getInputStream) \\ "entry")(0) \ "@revision").text)
     previous match {
-      case Some(previous : Int) =>
-        if (previous < current) Some(current) else None      
+      case Some(previous: Int) =>
+        if (previous < current) Some(current) else None
       case _ => Some(current)
     }
   }
@@ -21,6 +21,8 @@ class Subversion(val url: String) extends VersionControl with ShellCommand {
       case Some(revision: Int) => url + "@" + revision
       case _ => url
     }) + " " + workingDir.getAbsolutePath)
+
+    revisionString = workSet.getOrElse("").toString
   }
 
   def update(workingDir: File, workSet: Option[Any]) {
@@ -28,5 +30,7 @@ class Subversion(val url: String) extends VersionControl with ShellCommand {
       case Some(revision: Int) => " -r " + revision
       case _ => ""
     }))
+
+    revisionString = workSet.getOrElse("").toString
   }
 }

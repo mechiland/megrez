@@ -5,11 +5,11 @@ import io.Source
 import org.megrez.util.ShellCommand
 
 class Git(val url: String) extends VersionControl with ShellCommand {
-  def changes(workingDir: File, previous : Option[Any]): Option[Any] = {
+  def changes(workingDir: File, previous: Option[Any]): Option[Any] = {
     if (isRepository(workingDir)) update(workingDir, None) else checkout(workingDir, None)
     val current = Source.fromInputStream(run("git log --pretty=%H -1", workingDir).getInputStream).mkString
     previous match {
-      case Some(previous : String) =>
+      case Some(previous: String) =>
         if (previous != current) Some(current) else None
       case _ => Some(current)
     }
@@ -19,12 +19,15 @@ class Git(val url: String) extends VersionControl with ShellCommand {
 
   def checkout(workingDir: File, workSet: Option[Any]) {
     run("git clone " + url + " .", workingDir)
-    if(!workSet.eq(None))update(workingDir, workSet)
+    if (!workSet.eq(None)) update(workingDir, workSet)
   }
 
   def update(workingDir: File, workSet: Option[Any]) {
-    if(workSet.eq(None))
+    if (workSet.eq(None))
       run("git pull ", workingDir)
-    else run("git checkout " + workSet.get, workingDir)
+    else {
+      run("git checkout " + workSet.get, workingDir)
+      revisionString = workSet.get.toString
+    }
   }
 }
