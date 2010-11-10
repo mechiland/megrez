@@ -21,8 +21,6 @@ class Subversion(val url: String) extends VersionControl with ShellCommand {
       case Some(revision: Int) => url + "@" + revision
       case _ => url
     }) + " " + workingDir.getAbsolutePath)
-
-    revisionString = workSet.getOrElse("").toString
   }
 
   def update(workingDir: File, workSet: Option[Any]) {
@@ -30,7 +28,5 @@ class Subversion(val url: String) extends VersionControl with ShellCommand {
       case Some(revision: Int) => " -r " + revision
       case _ => ""
     }))
-
-    revisionString = workSet.getOrElse("").toString
   }
 }

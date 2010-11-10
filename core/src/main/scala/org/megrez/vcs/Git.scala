@@ -27,7 +27,6 @@ class Git(val url: String) extends VersionControl with ShellCommand {
       run("git pull ", workingDir)
     else {
       run("git checkout " + workSet.get, workingDir)
-      revisionString = workSet.get.toString
     }
   }
 }

@@ -4,7 +4,6 @@ import java.io.File
 import org.megrez.ChangeSource
 
 trait VersionControl extends ChangeSource {
-  var revisionString: String = _
 
   def isRepository(workingDir: File): Boolean
 
