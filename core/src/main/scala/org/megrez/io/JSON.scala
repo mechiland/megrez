@@ -22,13 +22,15 @@ trait JSON[T] extends Reader[T, Any] with Write[T, Any] {
       case _ => throw new Exception
     }
 
-  protected def asResource(resource: T) =
+  protected def asResource(resource: T)=
     resource match {
-      case resource: JobAssignment => resource
       case resource: Material => resource
       case resource: Job => resource
       case resource: Task => resource
+      case resource: ChangeSource => resource
+      case resource: Pipeline => resource
       case resource: JobFailed => resource
+      case resource: JobAssignment => resource
       case resource: JobCompleted => resource
       case _ => throw new Exception
     }
@@ -72,6 +74,14 @@ object JSON {
     "\"" + title + "\" : "
   }
 
+  def formatClosure(values:String*): String = {
+    values.mkString("{", ", ", "}")
+  }
+
+  def formatGroupClosure(values:String*): String = {
+    values.mkString("[{", ", ", "}]")
+  }
+
   implicit object ChangeSourceJson extends PluggableJSON[ChangeSource] {
     private val workSetParsers = HashMap[String, Json => Option[Any]]()
 
@@ -84,7 +94,7 @@ object JSON {
 
   implicit object MaterialJson extends JSON[Material] {
     override protected def writeJson(material: Material): String = {
-      return List(ChangeSourceJson.write(material.source), formatItem("dest", material.destination)).mkString("{", ", ", "}")
+      return formatClosure(ChangeSourceJson.write(material.source), formatItem("dest", material.destination))
     }
 
     override protected def readJson(json: Json) = new Material(JSON.read[ChangeSource](json), json / "dest")
@@ -93,7 +103,7 @@ object JSON {
   implicit object TaskJson extends PluggableJSON[Task] {
     override protected def writeJson(task: Task): String = {
       task match {
-        case task: CommandLineTask => return formatTitle("tasks") + List(formatItem("type", "cmd"), formatItem("command", task.command)).mkString("[{", ", ", "}]")
+        case task: CommandLineTask => return formatTitle("tasks") + formatGroupClosure(formatItem("type", "cmd"), formatItem("command", task.command))
         case _ => return ""
       }
     }
@@ -105,7 +115,7 @@ object JSON {
     override protected def writeJson(job: Job): String = {
       var taskList: String = ""
       job.tasks.foreach(task => taskList += JSON.write[Task](task))
-      return List(formatItem("name", job.name), taskList).mkString("{", ", ", "}")
+      return formatClosure(formatItem("name", job.name), taskList)
     }
   }
 
@@ -118,10 +128,10 @@ object JSON {
       val materials: Set[Material] = pipeline.materials
 
       materials.foreach({
-        case material:Material => materialList += List(formatTitle("material"), JSON.write[Material](material)).mkString("[{", "", "}]")
+        case material: Material => materialList += List(formatTitle("material"), JSON.write[Material](material)).mkString("[{", "", "}]")
         case _ => ""
       })
-      return List(formatItem("name", pipeline.name),materialList).mkString("{", ", ", "}")
+      return formatClosure(formatItem("name", pipeline.name), materialList)
     }
   }
 
@@ -136,10 +146,10 @@ object JSON {
       var materialList: String = formatTitle("materials")
       val materials: Map[Material, Option[Any]] = message.materials
       materials.foreach({
-        case (material, optionOfMaterial) => materialList += List(formatTitle("material") + JSON.write[Material](material), formatTitle("workset") + formatGroup("revision", optionOfMaterial.get.toString)).mkString("[{", ", ", "}]")
+        case (material, optionOfMaterial) => materialList += formatGroupClosure(formatTitle("material") + JSON.write[Material](material), formatTitle("workset") + formatGroup("revision", optionOfMaterial.get.toString))
         case _ => ""
       })
-      return List(formatItem("pipeline", message.pipeline), materialList, formatTitle("job") + JSON.write[Job](message.job)).mkString("{", ", ", "}")
+      return formatClosure(formatItem("pipeline", message.pipeline), materialList, formatTitle("job") + JSON.write[Job](message.job))
     }
   }
 
