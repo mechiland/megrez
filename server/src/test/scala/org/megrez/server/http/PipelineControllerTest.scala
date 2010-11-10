@@ -13,7 +13,7 @@ class PipelineControllerTest extends Spec with ShouldMatchers with MockitoSugar 
     it("handle POST request") {
       val pipelineController = new PipelineController(self)
       pipelineController ! Request(Method.POST, "/pipelines",
-        """{"name" : "pipeline", "materials" : [{"type" : "svn", "url" : "svn_url", "dest" : "dest"}] }""")
+        """{"name" : "pipeline", "materials" : [{"material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}}] }""")
 
       receiveWithin(1000) {
         case ToPipelineManager.AddPipeline(pipeline : Pipeline) =>
