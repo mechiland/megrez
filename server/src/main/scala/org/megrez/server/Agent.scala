@@ -37,7 +37,7 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor with Logging
     current match {
       case None =>
         if (checkResource(assignment.job)) {
-          handler.send(JSON.JobAssignmentJson.write(assignment))
+          handler.send(JSON.write(assignment))
           current = Some(assignment)
           info("Confirm job " + assignment.pipeline + " " + assignment.job.name)
           reply(AgentToDispatcher.Confirm)
