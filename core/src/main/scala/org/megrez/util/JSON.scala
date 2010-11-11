@@ -3,7 +3,7 @@ package org.megrez.util
 import collection.mutable.HashMap
 import org.megrez._
 import org.megrez.task.CommandLineTask
-import org.megrez.vcs.Subversion
+import vcs.{Git, Subversion}
 
 object JSON {
   private val JsonParser = scala.util.parsing.json.JSON
@@ -15,13 +15,16 @@ object JSON {
 
   def write[T](resource: T)(implicit jsObject: JsonSerializer[T]): String = {
     def toJson(obj: Map[String, Any]): String =
-      obj.map(keyValue =>
-        "\"" + keyValue._1 + "\":" + (keyValue._2 match {
-          case string: String => "\"" + string + "\""
-          case set: Set[String] => set.map("\"" + _ + "\"").mkString("[", ",", "]")
-          case list: List[Map[String, Any]] => list.map(toJson).mkString("[", ",", "]")          
-          case map: Map[String, Any] => toJson(map)
-        })).mkString("{", ",", "}")    
+      obj.map(keyValue => "\"" + keyValue._1 + "\":" +
+              (keyValue._2 match {
+                case string: String => "\"" + string + "\""
+                case set: Set[String] => set.map("\"" + _ + "\"").mkString("[", ",", "]")
+                case list: List[Map[String, Any]] => list.map(toJson).mkString("[", ",", "]")
+                case map: Map[String, Any] => toJson(map)
+              }
+                      )
+        ).mkString("{", ",", "}")
+
     toJson(jsObject.write(resource))
   }
 
@@ -70,7 +73,14 @@ object JSON {
     def write(resource: Subversion) = Map("type" -> "svn", "url" -> resource.url)
   }
 
+  implicit object GitSerializer extends JsonSerializer[Git] {
+    def read(representation: Map[String, Any]) = new Git(representation / "url")
+
+    def write(resource: Git) = Map("type" -> "git", "url" -> resource.url)
+  }
+
   ChangeSourceSerializer.register[Subversion]("svn")
+  ChangeSourceSerializer.register[Git]("git")
 
   implicit object CommandLineTaskSerializer extends JsonSerializer[CommandLineTask] {
     def read(representation: Map[String, Any]) = new CommandLineTask(representation / "command")
@@ -102,6 +112,7 @@ object JSON {
       }
     }
 
+    //get value of json(Map) by the value(Map) of it's key
     def >[V](name: String, map: Map[String, Any] => V) = {
       json(name) match {
         case list: List[Map[String, Any]] => list.map(map)

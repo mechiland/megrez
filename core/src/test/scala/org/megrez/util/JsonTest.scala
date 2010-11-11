@@ -2,25 +2,40 @@ package org.megrez.util
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Spec
-import org.megrez.vcs.Subversion
 import org.megrez._
 import task.CommandLineTask
 import org.megrez.Pipeline.Stage
+import vcs.{Git, Subversion}
 
 class JsonTest extends Spec with ShouldMatchers {
   describe("Domain object serialization") {
-    it("should serialize material") {
+    it("should serialize svn material") {
       val material = new Material(new Subversion("svn_url"), "dest")
       JSON.write(material) should equal("""{"type":"svn","url":"svn_url","dest":"dest"}""")
     }
 
-    it("should deserialize material") {
+    it("should deserialize svn material") {
       val json = """{"type" : "svn", "url" : "svn_url", "dest" : "dest"}"""
       val material = JSON.read[Material](json)
       material.source.isInstanceOf[Subversion] should equal(true)
       material.source.asInstanceOf[Subversion].url should equal("svn_url")
       material.destination should equal("dest")
     }
+
+    it("should serialize git material") {
+      val material = new Material(new Git("git_url"), "dest")
+      JSON.write(material) should equal("""{"type":"git","url":"git_url","dest":"dest"}""")
+    }
+
+    it("should deserialize git material") {
+      val json = """{"type" : "git", "url" : "git_url", "dest" : "dest"}"""
+      val material = JSON.read[Material](json)
+      material.source.isInstanceOf[Git] should equal(true)
+      material.source.asInstanceOf[Git].url should equal("git_url")
+      material.destination should equal("dest")
+    }
+
+
 
     it("should serialize task") {
       val task = new CommandLineTask("ls")
@@ -44,7 +59,7 @@ class JsonTest extends Spec with ShouldMatchers {
       val job = JSON.read[Job](json)
       job.name should equal("job")
       job.resources should equal(Set("LINUX"))
-      job.tasks should have size(1)
+      job.tasks should have size (1)
       val task = job.tasks.head
       task.isInstanceOf[CommandLineTask] should equal(true)
       task.asInstanceOf[CommandLineTask].command should equal("ls")
@@ -60,14 +75,14 @@ class JsonTest extends Spec with ShouldMatchers {
       val json = """{"name":"stage", "jobs":[{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}]}"""
       val stage = JSON.read[Stage](json)
       stage.name should equal("stage")
-      stage.jobs should have size(1)
+      stage.jobs should have size (1)
       val job = stage.jobs.head
       job.name should equal("job")
       job.resources should equal(Set("LINUX"))
-      job.tasks should have size(1)
+      job.tasks should have size (1)
       val task = job.tasks.head
       task.isInstanceOf[CommandLineTask] should equal(true)
-      task.asInstanceOf[CommandLineTask].command should equal("ls")      
+      task.asInstanceOf[CommandLineTask].command should equal("ls")
     }
   }
 }

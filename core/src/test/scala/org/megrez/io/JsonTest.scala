@@ -18,7 +18,7 @@ class JsonTest extends Spec with ShouldMatchers {
 
       val result = JSON.write(assignmentMessage)
       val json = """{"pipeline" : "pipeline", "materials" : [{"material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}, "workset" : {"revision" : "1"}}], "job" : {"name" : "unit test", "tasks" : [{"type" : "cmd", "command" : "ls"}]}}"""
-      result.toString should equal(json)
+      result should equal(json)
     }
 
     it("should parse material to json") {
