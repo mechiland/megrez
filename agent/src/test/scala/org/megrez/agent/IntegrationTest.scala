@@ -20,14 +20,14 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
 
       server.response(WebSocketHandshake, MegrezHandshake, ReceiveResponse)
       server.start
-            
+
       val worker = new Worker(new FileWorkspace(new File(root.getAbsolutePath)))
       worker.start
       serverConnection = new Server(new URI("ws://localhost:8080/"), 5000, worker)
       serverConnection.connect
-      
+
       val jobAssignment =
-      """{"pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + subversion + '"' + """, "dest" : "$main"}, "workset" : {"revision" : "2"} }], "job" : {"name" : "unit test", "tasks" : [] } }"""
+        """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + subversion + '"' + """, "dest" : "$main"}, "workset" : {"revision" : 2} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "ls"}] } }"""
 
       receiveWithin(1000) {
         case "MEGREZ HANDSHAKE" => server.send(new DefaultWebSocketFrame(jobAssignment))
@@ -36,7 +36,7 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
       }
 
       receiveWithin(2000) {
-        case """{"status" : "completed"}""" => 
+        case """{"status" : "completed"}""" =>
         case TIMEOUT => fail
         case _ => fail
       }
@@ -48,7 +48,7 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
 
   val root = new File(System.getProperty("user.dir"), "integration")
   var properties = Map[String, Any]()
-  var serverConnection : Server = _
+  var serverConnection: Server = _
 
   override def beforeEach() {
     super.beforeEach
@@ -63,9 +63,10 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
     serverConnection.shutdown
   }
 
-  def delete(file : File) {
-    file.listFiles.foreach {file =>
-      if (file.isDirectory) delete(file) else file.delete
+  def delete(file: File) {
+    file.listFiles.foreach {
+      file =>
+        if (file.isDirectory) delete(file) else file.delete
     }
     file.delete
   }

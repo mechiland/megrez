@@ -3,8 +3,7 @@ package org.megrez.server
 import actors._
 import scala.collection.mutable._
 import org.megrez._
-import io.JSON
-import org.megrez.util.Logging
+import util.{JSON, Logging}
 
 class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor with Logging {
   private val resources = new HashSet[String]()
