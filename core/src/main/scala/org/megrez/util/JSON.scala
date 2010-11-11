@@ -20,6 +20,7 @@ object JSON {
                 case string: String => "\"" + string + "\""
                 case set: Set[String] => set.map("\"" + _ + "\"").mkString("[", ",", "]")
                 case list: List[Map[String, Any]] => list.map(toJson).mkString("[", ",", "]")
+                case int : Int => int
                 case map: Map[String, Any] => toJson(map)
               }
                       )
@@ -57,7 +58,23 @@ object JSON {
       }
   }
 
-  implicit object ChangeSourceSerializer extends TypeBasedSerializer[ChangeSource]
+  implicit object ChangeSourceSerializer extends TypeBasedSerializer[ChangeSource] {
+    private val worksets = HashMap[Class[_], (Map[String, Any] => Option[Any], Option[Any] => Map[String, Any])]()
+
+    def register[T <: ChangeSource](parser: Map[String, Any] => Option[Any], writer: Option[Any] => Map[String, Any])(implicit m: Manifest[T]) {
+      worksets.put(m.erasure, (parser, writer))
+    }
+
+    def readWorkset(source: ChangeSource, json: Map[String, Any]) = worksets.get(source.getClass) match {
+      case Some(Pair(parser, _)) => parser(json)
+      case _ => throw new Exception()
+    }
+
+    def writeWorkset(source: ChangeSource, workset: Option[Any]) = worksets.get(source.getClass) match {
+      case Some(Pair(_, writer)) => writer(workset)
+      case _ => throw new Exception()
+    }
+  }
 
   implicit object TaskSerializer extends TypeBasedSerializer[Task]
 
@@ -68,9 +85,17 @@ object JSON {
   }
 
   implicit object SubversionSerializer extends JsonSerializer[Subversion] {
-    def read(representation: Map[String, Any]) = new Subversion(representation / "url")
+    def read(json: Map[String, Any]) = new Subversion(json / "url")
 
     def write(resource: Subversion) = Map("type" -> "svn", "url" -> resource.url)
+
+    private val readWorkset: Map[String, Any] => Option[Any] = json => Some(json / "revision")
+    private val writeWorkset: Option[Any] => Map[String, Any] = revision => revision match {
+      case Some(revision: Int) => Map("revision" -> revision)
+      case _ => throw new Exception()
+    }
+
+    ChangeSourceSerializer.register[Subversion](readWorkset, writeWorkset)
   }
 
   implicit object GitSerializer extends JsonSerializer[Git] {
@@ -101,6 +126,33 @@ object JSON {
 
     def write(stage: Pipeline.Stage) = Map("name" -> stage.name, "jobs" -> stage.jobs.map(writeObject(_)).toList)
   }
+
+  implicit object PipelineSerializer extends JsonSerializer[Pipeline] {
+    def read(json: Map[String, Any]) = new Pipeline(json / "name", (json > ("materials", readObject[Material](_))).toSet, json > ("stages", readObject[Pipeline.Stage](_)))
+
+    def write(pipeline: Pipeline) = Map("name" -> pipeline.name, "materials" -> pipeline.materials.map(writeObject(_)).toList, "stages" -> pipeline.stages.map(writeObject(_)))
+  }
+
+  implicit object AgentMessageSerializer extends TypeBasedSerializer[AgentMessage]
+
+  implicit object JobAssignmentSerializer extends JsonSerializer[JobAssignment] {
+    private def readMaterials(json: Map[String, Any]) = {
+      val material = readObject[Material](json / "material")
+      val workset = ChangeSourceSerializer.readWorkset(material.source, json / "workset")
+      material -> workset
+    }
+
+    def read(json: Map[String, Any]) =
+      JobAssignment(json / "pipeline", (json > ("materials", readMaterials)).toMap, readObject[Job](json / "job"))
+
+    def write(assignment: JobAssignment) =
+      Map("type" -> "assignment", "pipeline" -> assignment.pipeline,
+        "materials" -> assignment.materials.map(keyValue =>
+          Map("material" -> writeObject(keyValue._1), "workset" -> ChangeSourceSerializer.writeWorkset(keyValue._1.source, keyValue._2))
+          ).toList, "job" -> writeObject(assignment.job))
+  }
+
+  AgentMessageSerializer.register[JobAssignment]("assignment")
 
   implicit def map2Json(json: Map[String, Any]): JsonHelper = new JsonHelper(json)
 
