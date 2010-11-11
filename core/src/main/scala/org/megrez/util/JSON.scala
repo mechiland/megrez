@@ -2,8 +2,8 @@ package org.megrez.util
 
 import collection.mutable.HashMap
 import org.megrez._
-import task.CommandLineTask
-import vcs.Subversion
+import org.megrez.task.CommandLineTask
+import org.megrez.vcs.Subversion
 
 object JSON {
   private val JsonParser = scala.util.parsing.json.JSON
@@ -16,11 +16,12 @@ object JSON {
   def write[T](resource: T)(implicit jsObject: JsonSerializer[T]): String = {
     def toJson(obj: Map[String, Any]): String =
       obj.map(keyValue =>
-        keyValue._2 match {
-          case string: String => "\"" + keyValue._1 + "\":\"" + string + "\""
-          case map: Map[String, Any] => "\"" + keyValue._1 + "\":" + toJson(map)
-          case list: List[Map[String, Any]] => list.map(toJson).mkString("[", ",", "]")
-        }).mkString("{", ",", "}")
+        "\"" + keyValue._1 + "\":" + (keyValue._2 match {
+          case string: String => "\"" + string + "\""
+          case set: Set[String] => set.map("\"" + _ + "\"").mkString("[", ",", "]")
+          case list: List[Map[String, Any]] => list.map(toJson).mkString("[", ",", "]")          
+          case map: Map[String, Any] => toJson(map)
+        })).mkString("{", ",", "}")    
     toJson(jsObject.write(resource))
   }
 
@@ -58,15 +59,15 @@ object JSON {
   implicit object TaskSerializer extends TypeBasedSerializer[Task]
 
   implicit object MaterialSerializer extends JsonSerializer[Material] {
-    def read(representation: Map[String, Any]) = new Material(JSON.readObject[ChangeSource](representation), representation / "dest")
+    def read(json: Map[String, Any]) = new Material(readObject[ChangeSource](json), json / "dest")
 
-    def write(resource: Material): Map[String, Any] = JSON.writeObject[ChangeSource](resource.source) ++ Map("dest" -> resource.destination)
-  }  
+    def write(material: Material): Map[String, Any] = writeObject[ChangeSource](material.source) ++ Map("dest" -> material.destination)
+  }
 
   implicit object SubversionSerializer extends JsonSerializer[Subversion] {
     def read(representation: Map[String, Any]) = new Subversion(representation / "url")
 
-    def write(resource: Subversion) = Map("type" -> "svn", "url" -> resource.url)    
+    def write(resource: Subversion) = Map("type" -> "svn", "url" -> resource.url)
   }
 
   ChangeSourceSerializer.register[Subversion]("svn")
@@ -74,10 +75,22 @@ object JSON {
   implicit object CommandLineTaskSerializer extends JsonSerializer[CommandLineTask] {
     def read(representation: Map[String, Any]) = new CommandLineTask(representation / "command")
 
-    def write(resource: CommandLineTask) = Map("type" -> "cmd", "command" -> resource.command)    
+    def write(resource: CommandLineTask) = Map("type" -> "cmd", "command" -> resource.command)
   }
 
   TaskSerializer.register[CommandLineTask]("cmd")
+
+  implicit object JobSerializer extends JsonSerializer[Job] {
+    def read(json: Map[String, Any]) = new Job(json / "name", json / ("resources", _.toSet), json > ("tasks", readObject[Task](_)))
+
+    def write(job: Job) = Map("name" -> job.name, "resources" -> job.resources, "tasks" -> job.tasks.map(writeObject(_)))
+  }
+
+  implicit object StageSerializer extends JsonSerializer[Pipeline.Stage] {
+    def read(json: Map[String, Any]) = new Pipeline.Stage(json / "name", (json > ("jobs", readObject[Job](_))).toSet)
+
+    def write(stage: Pipeline.Stage) = Map("name" -> stage.name, "jobs" -> stage.jobs.map(writeObject(_)).toList)
+  }
 
   implicit def map2Json(json: Map[String, Any]): JsonHelper = new JsonHelper(json)
 
@@ -91,8 +104,14 @@ object JSON {
 
     def >[V](name: String, map: Map[String, Any] => V) = {
       json(name) match {
-        case list: List[Map[String, Any]] =>
-          list.map(map)
+        case list: List[Map[String, Any]] => list.map(map)
+        case _ => throw new Exception()
+      }
+    }
+
+    def /[V](name: String, map: List[String] => V) = {
+      json(name) match {
+        case list: List[String] => map(list)
         case _ => throw new Exception()
       }
     }

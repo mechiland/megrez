@@ -19,7 +19,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Mo
       }
     }
 
-    it("should confirm job if match resource") {
+    it("should confirm job if match material") {
       val handler = mock[AgentHandler]
       val agent = new Agent(handler, self)
 
@@ -31,7 +31,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Mo
       }
     }
 
-    it("should reject job if failed to match resource") {
+    it("should reject job if failed to match material") {
       val handler = mock[AgentHandler]
       val agent = new Agent(handler, self)
 
