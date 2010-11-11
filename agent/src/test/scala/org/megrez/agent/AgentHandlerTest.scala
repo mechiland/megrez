@@ -10,6 +10,7 @@ import org.mockito._
 import org.jboss.netty.handler.codec.http.websocket.{WebSocketFrame, DefaultWebSocketFrame}
 import org.megrez.vcs.Subversion
 import org.megrez.{JobCompleted, JobAssignment}
+import org.megrez.util.JSON
 
 class AgentHandlerTest extends HandlerTest with ShouldMatchers {
   describe("Agent handler") {
@@ -41,7 +42,7 @@ class AgentHandlerTest extends HandlerTest with ShouldMatchers {
       verify(channel).write(response.capture)
       response.getValue match {
         case frame : WebSocketFrame =>
-          frame.getTextData should equal("""{"status" : "completed"}""")
+          frame.getTextData should equal(JSON.write(JobCompleted()))
         case _ => fail
       }
     }

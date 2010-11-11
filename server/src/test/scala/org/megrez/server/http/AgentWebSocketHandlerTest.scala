@@ -10,6 +10,8 @@ import actors.TIMEOUT
 import org.megrez.server.ToAgentManager
 import org.jboss.netty.channel.{Channel, MessageEvent, ChannelPipeline, ChannelHandlerContext}
 import org.scalatest.{BeforeAndAfterEach, Spec}
+import org.megrez.util.JSON
+import org.megrez.JobCompleted
 
 class AgentWebSocketHandlerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("Agent WebSocket handler") {
@@ -47,12 +49,12 @@ class AgentWebSocketHandlerTest extends Spec with ShouldMatchers with BeforeAndA
       }
 
       val newMessage = mock[MessageEvent]
-      when(newMessage.getMessage).thenReturn(new DefaultWebSocketFrame("message"), Array[Any]())
+      when(newMessage.getMessage).thenReturn(new DefaultWebSocketFrame(JSON.write(JobCompleted())), Array[Any]())
 
       handler.messageReceived(context, newMessage)
 
       receiveWithin(1000) {
-        case "message" =>
+        case _ : JobCompleted =>
         case TIMEOUT => fail
         case _ => fail
       }

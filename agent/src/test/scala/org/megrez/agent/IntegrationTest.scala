@@ -8,7 +8,8 @@ import org.jboss.netty.handler.codec.http.websocket.DefaultWebSocketFrame
 import scala.actors._
 import scala.actors.Actor._
 import java.net.URI
-import org.megrez.util.FileWorkspace
+import org.megrez.util._
+import org.megrez.{AgentMessage, JobCompleted}
 
 class IntegrationTest extends ServerIntegration with ShouldMatchers {
   describe("Version control intergration") {
@@ -36,7 +37,11 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
       }
 
       receiveWithin(2000) {
-        case """{"status" : "completed"}""" =>
+        case message : String =>
+          JSON.read[AgentMessage](message) match {
+            case _ : JobCompleted =>
+            case _ => fail
+          }
         case TIMEOUT => fail
         case _ => fail
       }

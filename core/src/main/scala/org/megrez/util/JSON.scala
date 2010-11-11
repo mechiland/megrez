@@ -152,7 +152,14 @@ object JSON {
           ).toList, "job" -> writeObject(assignment.job))
   }
 
+  implicit object JobCompletedSerializer extends JsonSerializer[JobCompleted] {
+    def read(json: Map[String, Any]) = JobCompleted()
+    def write(message : JobCompleted) = Map("type" -> "jobcompleted")
+  }
+
   AgentMessageSerializer.register[JobAssignment]("assignment")
+  AgentMessageSerializer.register[JobCompleted]("jobcompleted")
+
 
   implicit def map2Json(json: Map[String, Any]): JsonHelper = new JsonHelper(json)
 

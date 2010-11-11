@@ -65,7 +65,7 @@ class AgentHandler(val callback: ServerHandler, val worker: Actor) extends Simpl
           worker ! message
           react {
             case result: JobCompleted =>
-              context.getChannel.write(new DefaultWebSocketFrame("""{"status" : "completed"}"""))
+              context.getChannel.write(new DefaultWebSocketFrame(JSON.write(result)))
             case _ =>
           }
         }

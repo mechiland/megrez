@@ -15,7 +15,8 @@ import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEn
 import org.megrez.server.{ToAgentManager, AgentHandler}
 import actors.Actor
 import actors.Actor._
-import org.megrez.util.Logging
+import org.megrez.AgentMessage
+import org.megrez.util.{JSON, Logging}
 
 class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Logging {
   private val bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(newCachedThreadPool(), newCachedThreadPool()))
@@ -113,7 +114,7 @@ class AgentWebSocketHandler(val channel: Channel, agentManager: Actor) extends S
             send("megrez-server:1.0")
             agentManager ! ToAgentManager.RemoteAgentConnected(this)
           case message: String =>
-            agent ! message
+            agent ! JSON.read[AgentMessage](message)
         }
       case _ =>
     }
