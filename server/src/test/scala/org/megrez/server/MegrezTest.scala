@@ -4,6 +4,7 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import org.megrez._
 import org.megrez.Pipeline.Stage
+import util.JSON
 import vcs.Subversion
 import java.io.File
 import actors.Actor._
@@ -21,6 +22,11 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
       receiveWithin(2000) {
         case message: String =>
+          JSON.read[AgentMessage](message) match {
+            case assignment: JobAssignment =>
+              assignment.job.name should equal("linux-firefox")
+            case _ => fail
+          }
         case TIMEOUT => fail
         case _ => fail
       }
@@ -36,6 +42,11 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
       receiveWithin(200) {
         case message: String =>
+          JSON.read[AgentMessage](message) match {
+            case assignment: JobAssignment =>
+              assignment.job.name should equal("linux-firefox")
+            case _ => fail
+          }
           handler.agent ! JobCompleted()
           checkin(checkout(url), "revision")
         case TIMEOUT => fail
@@ -61,7 +72,7 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
       main ! message
     }
   }
-  
+
   private var url = ""
   private var workingDir: File = _
   private var root: File = _
