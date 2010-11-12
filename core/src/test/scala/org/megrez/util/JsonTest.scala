@@ -149,9 +149,9 @@ class JsonTest extends Spec with ShouldMatchers {
     }
 
     it("should deserialize job complete") {
-      val json = """{"type":"jobcompleted","message":"success"}"""
+      val json = """{"type":"jobcompleted"}"""
       JSON.read[AgentMessage](json) match {
-        case message : JobCompleted => message.result should be equals "success"
+        case message : JobCompleted =>
         case _ => fail
       }
     }
