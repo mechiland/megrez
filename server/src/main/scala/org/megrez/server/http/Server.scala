@@ -38,18 +38,13 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Loggi
         routes.find(_ matches request) match {
           case Some(route: WebSocketRoute) =>
             handleWebSocketHandshake(request, route, context)
-          case Some(route: HttpRoute) =>
+          case Some(route: HttpRoute) => {
             val content = request.getContent
-            val response = route.handler !? Request(route matchedMethod request, request.getUri, content.toString(CharsetUtil.UTF_8))
-            response match {
-              case HttpResponse.OK =>
-                context.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.OK))             
-            }
+            route.handler ! Request(route matchedMethod request, request.getUri, content.toString(CharsetUtil.UTF_8))
+          }
           case None =>
-            context.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND))
         }
       case frame: WebSocketFrame => println("here" + frame)
-      case _ => error("unhandle request "+ event.getMessage)
     }
   }
 

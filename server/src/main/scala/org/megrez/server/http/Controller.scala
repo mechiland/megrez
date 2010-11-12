@@ -1,26 +1,26 @@
 package org.megrez.server.http
 
 import actors._
+import org.megrez.server.ToPipelineManager
 import org.megrez.Pipeline
 import org.megrez.util.JSON
-import org.megrez.server.{Megrez, ToPipelineManager}
 
 class PipelineController(val pipelineManager: Actor) extends Actor {
   
   def act {
     loop {
       react {
-        case Request(Method.POST, _, content) =>          
-          pipelineManager ! ToPipelineManager.AddPipeline(JSON.read[Pipeline](Request.parse(content)("pipeline")))
-          reply(HttpResponse.OK)
+        case request: Request => handleRequest(request)
         case _ =>
       }
     }
   }
 
-  start
-}
+  def handleRequest(request: Request){
+    request.method match{      
+      case Method.POST =>  pipelineManager ! ToPipelineManager.AddPipeline(JSON.read[Pipeline](request.content))
+    }
+  }
 
-class Controllers(val megrez : Megrez) {
-  val pipeline = new PipelineController(megrez.pipelineManager)
+  start  
 }
