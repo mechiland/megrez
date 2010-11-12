@@ -11,7 +11,7 @@ class CommandLineTask(val command: String) extends Task with ShellCommand {
 
   def execute(workingDir: File):String = {
     process = run(command, workingDir)
-    return Source.fromInputStream(process.getInputStream).getLines.mkString("\r\n")
+    return Source.fromInputStream(process.getInputStream).getLines.mkString(".")
   }
 
   def cancel() {
