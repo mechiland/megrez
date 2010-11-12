@@ -14,8 +14,8 @@ class Worker(val workspace: Workspace) extends Actor {
           try {
             val pipelineDir = workspace.createFolder(assignment.pipeline)
             updateMaterials(assignment)
-            assignment.job.tasks.foreach(_ execute pipelineDir)
-            reply(new JobCompleted())
+            val result: String = assignment.job.tasks.map(_ execute pipelineDir).mkString
+            reply(new JobCompleted(result))
           } catch {
             case e: Exception => reply(new JobFailed(e.getMessage))
           }

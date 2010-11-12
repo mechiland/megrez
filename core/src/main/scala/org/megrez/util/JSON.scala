@@ -153,7 +153,7 @@ object JSON {
   }
 
   implicit object JobCompletedSerializer extends JsonSerializer[JobCompleted] {
-    def read(json: Map[String, Any]) = JobCompleted()
+    def read(json: Map[String, Any]) = JobCompleted(json/"type")
     def write(message : JobCompleted) = Map("type" -> "jobcompleted")
   }
 
