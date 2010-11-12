@@ -13,7 +13,7 @@ trait ShellCommand {
   }
 
 
-  def run(command: String, workingDir: File = null):Process = {
+  def run(command: String, workingDir: File = null) = {
     val process = Runtime.getRuntime().exec(command, null, workingDir)
     process.waitFor match {
       case 0 => process

@@ -7,11 +7,9 @@ import java.io.File
 class CommandLineTaskTest extends Spec with ShouldMatchers {
   describe("Command line task") {
     it("should not throw exception if command execution succeed") {
-      var message = "success"
-      val commandLineTask = new CommandLineTask("echo "+message)
+      val commandLineTask = new CommandLineTask("echo")
       try {
-        val result:String = commandLineTask.execute(null)
-        result should be equals message
+        commandLineTask.execute(new File("."))
       }catch {
         case e: Exception => fail
       }

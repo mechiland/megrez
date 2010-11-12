@@ -144,8 +144,8 @@ class JsonTest extends Spec with ShouldMatchers {
     }
 
     it("should serialize job complete") {
-      val message = JobCompleted("success")
-      JSON.write(message) should equal("""{"type":"jobcompleted","message":"success"}""")
+      val message = JobCompleted()
+      JSON.write(message) should equal("""{"type":"jobcompleted"}""")
     }
 
     it("should deserialize job complete") {
