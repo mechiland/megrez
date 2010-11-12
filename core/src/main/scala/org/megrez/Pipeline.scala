@@ -14,7 +14,7 @@ class Job(val name: String, val resources: Set[String], val tasks: List[Task]) {
 }
 
 trait Task {
-  def execute(workingDir : File)
+  def execute(workingDir : File):String
   def cancel() 
 }
 
