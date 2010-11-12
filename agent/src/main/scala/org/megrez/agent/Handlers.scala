@@ -11,8 +11,8 @@ import org.jboss.netty.handler.codec.http.websocket._
 import java.net._
 import actors.Actor
 import actors.Actor._
-import org.megrez.util.JSON
 import org.megrez.{AgentMessage, JobCompleted, JobAssignment}
+import org.megrez.util.{Logging, JSON}
 
 class HandshakeHandler(val server: URI, val callback: ServerHandler) extends SimpleChannelUpstreamHandler {
   override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
@@ -56,12 +56,13 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
   }
 }
 
-class AgentHandler(val callback: ServerHandler, val worker: Actor) extends SimpleChannelUpstreamHandler {
+class AgentHandler(val callback: ServerHandler, val worker: Actor) extends SimpleChannelUpstreamHandler with Logging {
   override def messageReceived(context: ChannelHandlerContext, e: MessageEvent) {
     val assignment = e.getMessage match {
       case frame: WebSocketFrame =>
         actor {
           val message = JSON.read[AgentMessage](frame.getTextData)
+          info("Message received " + message)
           worker ! message
           react {
             case result: JobCompleted =>

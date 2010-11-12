@@ -1,10 +1,9 @@
 package org.megrez.task
 
 import org.megrez.Task
+import java.io.File
 import org.megrez.util.ShellCommand
-import java.lang.String
-import scala.io.Source
-import java.io.{OutputStream, InputStream, File}
+import io.Source
 
 class CommandLineTask(val command: String) extends Task with ShellCommand {
   private var process: Process = _
@@ -13,7 +12,7 @@ class CommandLineTask(val command: String) extends Task with ShellCommand {
     process = run(command, workingDir)
     return Source.fromInputStream(process.getInputStream).getLines.mkString(".")
   }
-
+  
   def cancel() {
     process.destroy
   }
