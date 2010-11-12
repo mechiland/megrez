@@ -23,16 +23,15 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/agent"), Array[Any]())
 
       val server = new Server(
-        path("/agent") -> self
+        path("/agent") -> actor {
+          react {
+            case _: Request =>
+              reply(HttpResponse.OK)
+          }
+        }
         )
 
       server.messageReceived(context, event)
-
-      receiveWithin(1000) {
-        case _: Request =>
-        case TIMEOUT => fail
-        case _ => fail
-      }
     }
 
     it("should delegate to handler if GET request path matched") {
@@ -40,19 +39,17 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/agent"), Array[Any]())
 
       val server = new Server(
-        get("/agent") -> self
+        get("/agent") -> actor {
+          react {
+            case request: Request =>
+              request.method should be === GET
+              request.uri should be === "/agent"
+              reply(HttpResponse.OK)
+          }
+        }
         )
 
       server.messageReceived(context, event)
-
-      receiveWithin(1000) {
-        case request: Request => {
-          request.method should be === GET
-          request.uri should be === "/agent"
-        }
-        case TIMEOUT => fail
-        case _ => fail
-      }
     }
 
     it("should delegate to handler if POST request path matched") {
@@ -62,22 +59,19 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       when(event.getMessage).thenReturn(httpRequest, Array[Any]())
 
       val server = new Server(
-        post("/pipeline") -> self
+        post("/pipeline") -> actor {
+          react {
+            case request: Request =>
+              request.method should be === POST
+              request.uri should be === "/pipeline"
+              request.content should be === "testContent"
+              reply(HttpResponse.OK)
+          }
+        }
         )
 
       server.messageReceived(context, event)
-
-      receiveWithin(1000) {
-        case request: Request => {
-          request.method should be === POST
-          request.uri should be === "/pipeline"
-          request.content should be === "testContent"
-        }
-        case TIMEOUT => fail
-        case _ => fail
-      }
     }
-
   }
 
   var context: ChannelHandlerContext = _
