@@ -102,6 +102,14 @@ object JSON {
     def read(representation: Map[String, Any]) = new Git(representation / "url")
 
     def write(resource: Git) = Map("type" -> "git", "url" -> resource.url)
+
+    private val readWorkset: Map[String, Any] => Option[Any] = json => Some(json / "commit")
+    private val writeWorkset: Option[Any] => Map[String, Any] = commit => commit match {
+      case Some(commit: String) => Map("commit" -> commit)
+      case _ => throw new Exception()
+    }
+
+    ChangeSourceSerializer.register[Git](readWorkset, writeWorkset)
   }
 
   ChangeSourceSerializer.register[Subversion]("svn")

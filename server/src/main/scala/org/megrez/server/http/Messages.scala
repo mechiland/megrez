@@ -15,4 +15,5 @@ case class WebSocket()
 
 object HttpResponse {
   object OK
+  object ERROR
 }

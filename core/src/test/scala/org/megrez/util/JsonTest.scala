@@ -122,6 +122,14 @@ class JsonTest extends Spec with ShouldMatchers {
       JSON.write(assignment) should equal("""{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"svn","url":"svn_url","dest":"dest"},"workset":{"revision":5}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}""")
     }
 
+    it("should serialize job assignment for git") {
+      val material = new Material(new Git("git_url"), "dest")
+      val job = new Job("job", Set("LINUX"), List(new CommandLineTask("ls")))
+      val assignment = JobAssignment("pipeline", Map(material -> Some("abc")), job)
+      JSON.write(assignment) should equal("""{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"git","url":"git_url","dest":"dest"},"workset":{"commit":"abc"}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}""")
+    }
+
+
     it("should deserialize job assignment") {
       val json = """{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"svn","url":"svn_url","dest":"dest"},"workset":{"revision":5}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}"""
       JSON.read[AgentMessage](json) match {

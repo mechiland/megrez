@@ -27,8 +27,8 @@ object Main extends Logging {
     server.shutdown
   }
 
-  def main(args: Array[String]) {
-    start(8080)
-    info("Start listening 8080...")
+  def main(args: Array[String]) {    
+    start(Integer.parseInt(args.head))
+    info("Start listening "+ args.head +"...")
   }
 }
