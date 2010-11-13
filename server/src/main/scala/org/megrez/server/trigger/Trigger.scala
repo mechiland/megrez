@@ -2,6 +2,7 @@ package org.megrez.server.trigger
 
 import actors.Actor
 import java.util.{TimerTask, Timer}
+import org.megrez.util.Logging
 
 trait Trigger {
   def start
@@ -9,12 +10,13 @@ trait Trigger {
   def stop
 }
 
-object Trigger {
+object Trigger extends Logging {
   object Execute
 
   private val timer = new Timer
 
   def schedule(every: Long, actor: Actor) = {
+    info("task scheduled for every " + every)
     val task = new TimerTask {
       def run {
         actor ! Execute

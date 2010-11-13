@@ -42,6 +42,6 @@ object DispatcherToScheduler {
 }
 
 object SchedulerToBuildManager {
-  case class BuildFailed(buildId : Build)
-  case class BuildCompleted(buildId : Build)
+  case class BuildFailed(build : Build)
+  case class BuildCompleted(build : Build)
 }

@@ -8,14 +8,15 @@ import org.megrez.util.{FileWorkspace, Logging}
 import java.io.File
 import org.megrez._
 
-class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor {
+class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor with Logging {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
 
   def act {
     loop {
       react {
         case ToPipelineManager.AddPipeline(pipeline) =>
-          addPipeline(pipeline)
+          info("Pipeline added " + pipeline.name)
+          addPipeline(pipeline)          
         case ToPipelineManager.PipelineChanged(pipeline) =>
           removePipeline(pipeline.name)
           addPipeline(pipeline)
@@ -118,6 +119,7 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
           info("Job scheduled for build " + build + " " + assignments.size + " jobs")
           assignments.foreach(jobAssignments.put(_, build))
           dispatchJobs
+          info("Total " + idleAgents.size + " idle agents and " + jobAssignments.size + " job waiting")
         case AgentToDispatcher.JobCompleted(agent, assignment) =>
           megrez.buildScheduler ! DispatcherToScheduler.JobCompleted(jobInProgress.get(assignment).get, assignment.job)
           jobInProgress.remove(assignment)
@@ -182,10 +184,12 @@ class AgentManager(megrez: {val dispatcher: Actor}) extends Actor with Logging {
   start
 }
 
-class BuildManager extends Actor {
+class BuildManager extends Actor with Logging {
   def act() {
     loop {
       react {
+        case SchedulerToBuildManager.BuildCompleted(build) =>
+          info("build successful for pipeline " + build.pipeline.name)
         case Stop =>
           exit
         case _ =>

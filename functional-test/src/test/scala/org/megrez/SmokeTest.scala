@@ -6,27 +6,34 @@ import org.scalatest.{BeforeAndAfterEach, Spec}
 import actors.TIMEOUT
 import actors.Actor._
 import java.net.{URLEncoder, URL}
-import java.io.{DataOutputStream, File}
 import io.Source
+import java.io.{InputStream, DataOutputStream, File}
 
 class SmokeTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-
   describe("Smoke test") {
     it("should assign job to agent when source code changes") {
       startServer()
-      startAgent()
-      startAgent()
+      for (i <- 0 to 400) {
+        startAgent(i)
+      }
 
       receiveWithin(1000) {
         case TIMEOUT =>
         case _ => fail
       }
 
-      val json = """{"name":"pipeline","materials":[{"type":"svn","url":""" + '"' + url + '"' + ""","dest":"$main"}],"stages":[{"name":"stage","jobs":[{"name":"job","resources":[],"tasks":[{"type":"cmd","command":"ls"}]}]}]}"""
+      var index=  0
+      def getJobName() = {
+        index = index + 1
+        "job" + index
+      }      
 
+      val jobs = (Array.fill(400) {"""{"name":" """ + getJobName() + """ ","resources":[],"tasks":[{"type":"cmd","command":"ls"}]}"""}).mkString("[", ",", "]")
+
+      val json = """{"name":"pipeline","materials":[{"type":"svn","url":""" + '"' + url + '"' + ""","dest":"$main"}],"stages":[{"name":"stage","jobs":""" + jobs + """}]}"""
       addPipeline(json)
-      
-      receiveWithin(5000) {
+
+      receiveWithin(1000000) {
         case TIMEOUT =>
         case _ => fail
       }
@@ -36,8 +43,8 @@ class SmokeTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   val Client = org.megrez.agent.Main
   val Server = org.megrez.server.Main
 
-  private def startAgent() {
-    Client.start("ws://localhost:8080/agent", agentWorkingDir)
+  private def startAgent(num: Int) {
+    Client.start("ws://localhost:8080/agent", new File(agentWorkingDir, "agent" + num))
   }
 
   private def startServer() {
@@ -54,8 +61,8 @@ class SmokeTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     out.writeBytes("pipeline=" + URLEncoder.encode(json, "UTF-8"))
     out.flush
     out.close
-    
-    println(Source.fromInputStream(connection.getInputStream).mkString)
+
+    val inputStream: InputStream = connection.getInputStream
   }
 
   var root: File = _
@@ -77,7 +84,7 @@ class SmokeTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
     url = "file://" + new File(root, "repository/" + repositoryName).getAbsolutePath
     checkin(checkout(url), "revision_1")
-  }  
+  }
 
   override def afterEach() {
     delete(root)
@@ -109,11 +116,11 @@ class SmokeTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     run(command, root)
   }
 
-  private def run(command: String, workingDir : File) {
+  private def run(command: String, workingDir: File) {
     val cmd = Runtime.getRuntime().exec(command, null, workingDir)
     cmd.waitFor match {
       case 0 =>
       case _ => fail(Source.fromInputStream(cmd.getErrorStream).mkString)
     }
-  }  
+  }
 }

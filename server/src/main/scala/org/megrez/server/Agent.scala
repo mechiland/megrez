@@ -19,12 +19,12 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor with Logging
           tags.foreach(resources add _)
         case _: JobCompleted =>
           val assignment = current.get
-          info("Job completed" + assignment.pipeline + " " + assignment.job.name)
+          info("Job completed " + assignment.pipeline + " " + assignment.job.name)
           dispatcher ! AgentToDispatcher.JobCompleted(this, assignment)
           current = None
         case _: JobFailed =>
           val assignment = current.get
-          info("Job failed" + assignment.pipeline + " " + assignment.job.name)          
+          info("Job failed " + assignment.pipeline + " " + assignment.job.name)          
           dispatcher ! AgentToDispatcher.JobFailed(this, assignment)
           current = None
         case Stop => exit
