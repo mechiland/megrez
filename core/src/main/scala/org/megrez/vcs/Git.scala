@@ -27,6 +27,7 @@ class Git(val url: String) extends VersionControl with ShellCommand with Logging
     if (workSet.eq(None))
       run("git pull ", workingDir)
     else {
+      info("Update repository to " + workSet.get)
       run("git checkout " + workSet.get, workingDir)
     }
   }

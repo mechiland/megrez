@@ -119,7 +119,6 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
           info("Job scheduled for build " + build + " " + assignments.size + " jobs")
           assignments.foreach(jobAssignments.put(_, build))
           dispatchJobs
-          info("Total " + idleAgents.size + " idle agents and " + jobAssignments.size + " job waiting")
         case AgentToDispatcher.JobCompleted(agent, assignment) =>
           megrez.buildScheduler ! DispatcherToScheduler.JobCompleted(jobInProgress.get(assignment).get, assignment.job)
           jobInProgress.remove(assignment)
@@ -143,6 +142,7 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
         jobAssignments.remove(job)
       case None =>
     })
+    info("Total " + idleAgents.size + " idle agents and " + jobAssignments.size + " job waiting")
   }
 
   private def dispatchJob(job: JobAssignment) = {    

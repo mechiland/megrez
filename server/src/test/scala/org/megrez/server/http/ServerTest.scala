@@ -5,8 +5,8 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
+import org.mockito.Matchers._
 
-import org.jboss.netty.channel.{MessageEvent, ChannelHandlerContext, ChannelPipeline, Channel}
 import org.jboss.netty.handler.codec.http.{HttpMethod, HttpVersion, DefaultHttpRequest}
 import org.jboss.netty.buffer._
 import org.jboss.netty.util._
@@ -15,12 +15,14 @@ import scala.actors._
 import scala.actors.Actor._
 import Method._
 import Route._
+import org.jboss.netty.channel._
 
 class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
   describe("HTTP Server") {
     it("should delegate to handler if path matched") {
       val event = mock[MessageEvent]
       when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/agent"), Array[Any]())
+      when(event.getChannel).thenReturn(channel)
 
       val server = new Server(
         path("/agent") -> actor {
@@ -37,6 +39,7 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
     it("should delegate to handler if GET request path matched") {
       val event = mock[MessageEvent]
       when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/agent"), Array[Any]())
+      when(event.getChannel).thenReturn(channel)
 
       val server = new Server(
         get("/agent") -> actor {
@@ -57,6 +60,7 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       var httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/pipeline")
       httpRequest.setContent(ChannelBuffers.copiedBuffer("testContent", CharsetUtil.UTF_8));
       when(event.getMessage).thenReturn(httpRequest, Array[Any]())
+      when(event.getChannel).thenReturn(channel)
 
       val server = new Server(
         post("/pipeline") -> actor {
@@ -76,14 +80,16 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
   var context: ChannelHandlerContext = _
   var pipeline: ChannelPipeline = _
-  var channel: Channel = _
+  var channel: org.jboss.netty.channel.Channel = _
 
   override def beforeEach() {
     context = mock[ChannelHandlerContext]
     pipeline = mock[ChannelPipeline]
-    channel = mock[Channel]
+    channel = mock[org.jboss.netty.channel.Channel]
     when(context.getPipeline).thenReturn(pipeline)
     when(context.getChannel).thenReturn(channel)
+    val future: ChannelFuture = mock[ChannelFuture]
+    when(channel.write(any())).thenReturn(future)
   }
 
   def is(string: String) = org.mockito.Matchers.eq(string)

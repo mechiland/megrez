@@ -12,10 +12,10 @@ class PipelineController(val pipelineManager: Actor) extends Actor {
         case Request(Method.POST, _, content) =>
           try {
             pipelineManager ! ToPipelineManager.AddPipeline(JSON.read[Pipeline](Request.parse(content)("pipeline")))
+            reply(HttpResponse.OK)
           } catch {
             case _ : Exception => reply(HttpResponse.ERROR) 
           }
-          reply(HttpResponse.OK)
         case _ =>
       }
     }

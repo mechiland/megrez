@@ -14,9 +14,9 @@ import org.jboss.netty.util._
 import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
 import org.megrez.server.{ToAgentManager, AgentHandler}
 import actors.Actor
-import actors.Actor._
 import org.megrez.AgentMessage
 import org.megrez.util.{JSON, Logging}
+import org.jboss.netty.buffer.ChannelBuffers
 
 class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Logging {
   private val bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(newCachedThreadPool(), newCachedThreadPool()))
@@ -32,6 +32,7 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Loggi
     }
   })
 
+
   override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
     event.getMessage match {
       case request: HttpRequest =>
@@ -43,15 +44,15 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Loggi
             val response = route.handler !? Request(route matchedMethod request, request.getUri, content.toString(CharsetUtil.UTF_8))
             response match {
               case HttpResponse.OK =>
-                context.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.OK))
+                event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.OK)).addListener(ChannelFutureListener.CLOSE)              
               case HttpResponse.ERROR =>
-                context.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR))                           
+                event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR))
             }
           case None =>
             context.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND))
         }
       case frame: WebSocketFrame => println("here" + frame)
-      case _ => error("unhandle request "+ event.getMessage)
+      case _ => error("unhandle request " + event.getMessage)
     }
   }
 
