@@ -19,8 +19,7 @@ trait ShellCommand {
       case 0 => process
       case exitCode: Int => throw new ShellException("exit code " + exitCode + "\n" + Source.fromInputStream(process.getErrorStream).mkString)
     }
-  }
-
+  }  
 }
 
 class ShellException(message: String) extends Exception(message)

@@ -19,3 +19,7 @@ class CommandLineTask(val command: String) extends Task with ShellCommand {
     process.destroy
   }
 }
+
+trait StandardStreams {
+  def listen(listener : String => Unit)  
+}

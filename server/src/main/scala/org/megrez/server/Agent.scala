@@ -8,6 +8,8 @@ import util.{JSON, Logging}
 class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor with Logging {
   private val resources = new HashSet[String]()
   private var current: Option[JobAssignment] = None
+  private val output = new StringBuffer
+  private val error = new StringBuffer
 
   def act() {
     loop {
@@ -21,15 +23,21 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor with Logging
           val assignment = current.get
           info("Job completed " + assignment.pipeline + " " + assignment.job.name)
           dispatcher ! AgentToDispatcher.JobCompleted(this, assignment)
-          current = None
+          cleanup
         case _: JobFailed =>
           val assignment = current.get
           info("Job failed " + assignment.pipeline + " " + assignment.job.name)          
           dispatcher ! AgentToDispatcher.JobFailed(this, assignment)
-          current = None
+          cleanup
         case Stop => exit
       }
     }
+  }
+
+  private def cleanup{
+    current = None
+    output.delete(0, output.length)
+    error.delete(0, error.length)
   }
 
   private def handleAssignment(assignment: JobAssignment) {
@@ -51,7 +59,7 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor with Logging
   }
 
   private def checkResource(job: Job) = job.resources.forall(resources contains _)
-
+  
   start
 }
 

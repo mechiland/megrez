@@ -10,14 +10,14 @@ class Worker(val workspace: Workspace) extends Actor with Logging{
   def act() {
     loop {
       react {
-        case assignment: JobAssignment =>
+        case (actor: Actor, assignment: JobAssignment) =>
           try {
             val pipelineDir = workspace.createFolder(assignment.pipeline)
             updateMaterials(assignment)
             assignment.job.tasks.foreach(_ execute pipelineDir)
-            reply(new JobCompleted())
+            actor ! new JobCompleted()
           } catch {
-            case e: Exception => reply(new JobFailed(e.getMessage))
+            case e: Exception => actor ! new JobFailed(e.getMessage)
           }
         case _ =>
       }

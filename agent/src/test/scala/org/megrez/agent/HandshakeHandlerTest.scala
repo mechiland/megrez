@@ -72,7 +72,7 @@ class HandshakeHandlerTest extends HandlerTest with ShouldMatchers {
 
       handler.messageReceived(context, event)
 
-      verify(serverHandler).connected
+      verify(serverHandler).connected(channel)
     }
 
     it ("should call invalid server if server does not repsonse websocket handshake") {

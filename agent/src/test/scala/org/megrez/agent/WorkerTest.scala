@@ -28,7 +28,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
       worker.start
 
-      worker ! assignment
+      worker ! (self, assignment)
 
       receiveWithin(1000) {
         case completed: JobCompleted =>          
@@ -55,7 +55,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val worker = new Worker(workingDirectory)
       worker.start
 
-      worker ! assignment
+      worker ! (self, assignment)
 
       receiveWithin(1000) {
         case completed: JobCompleted =>          
@@ -83,7 +83,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val worker = new Worker(workingDirectory)
       worker.start
 
-      worker ! assignment
+      worker ! (self, assignment)
 
       receiveWithin(1000) {
         case complete: JobCompleted =>
@@ -115,7 +115,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
       val worker = new Worker(workingDirectory)
       worker.start
-      worker ! assignment
+      worker ! (self, assignment)
 
       receiveWithin(1000) {
         case completed: JobCompleted =>
@@ -143,7 +143,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
       val worker = new Worker(workingDirectory)
       worker.start
-      worker ! assignment
+      worker ! (self, assignment)
 
       receiveWithin(1000) {
         case failed: JobFailed =>
@@ -169,7 +169,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
       val worker = new Worker(workingDirectory)
       worker.start
-      worker ! assignment
+      worker ! (self, assignment)
 
       receiveWithin(1000) {
         case failed: JobFailed =>

@@ -6,6 +6,20 @@ import java.io.File
 
 class CommandLineTaskTest extends Spec with ShouldMatchers {
   describe("Command line task") {
+    it("should return screen output when executed successfully") {
+      val task = new CommandLineTask("echo HELLO")
+      val output = task.execute(new File(System.getProperty("user.dir")))
+      output should equal("HELLO")
+    }
+
+    it("should return notify listener when screen output changes") {
+      val task = new CommandLineTask("echo HELLO")
+      task
+      val output = task.execute(new File(System.getProperty("user.dir")))
+      output should equal("HELLO")
+    }
+
+
     it("should not throw exception if command execution succeed") {
       val commandLineTask = new CommandLineTask("echo")
       try {

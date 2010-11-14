@@ -7,4 +7,6 @@ case class JobAssignment(val pipeline : String, val materials : Map[Material, Op
 case class JobFailed(val reason: String) extends AgentMessage
 case class JobCompleted(val result: String = "") extends AgentMessage
 
+case class ConsoleOutput(val output : String) extends AgentMessage
+
 object Stop

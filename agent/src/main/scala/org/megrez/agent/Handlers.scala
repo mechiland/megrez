@@ -43,7 +43,7 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
 
   private def handleMegrezHandshake(context: ChannelHandlerContext, response: WebSocketFrame, channel: Channel) {
     if (response.getTextData != "megrez-server:1.0") throw new NotMegrezServerException(server)
-    callback.connected
+    callback.connected(channel)
   }
 
   private def handshakeRequest = {
@@ -56,21 +56,28 @@ class HandshakeHandler(val server: URI, val callback: ServerHandler) extends Sim
   }
 }
 
-class AgentHandler(val callback: ServerHandler, val worker: Actor) extends SimpleChannelUpstreamHandler with Logging {
+class AgentHandler(val callback: ServerHandler, val worker: Actor) extends SimpleChannelUpstreamHandler with Actor with Logging {
+  private var channel: Channel = _
+
   override def messageReceived(context: ChannelHandlerContext, e: MessageEvent) {
     val assignment = e.getMessage match {
       case frame: WebSocketFrame =>
-        actor {
-          val message = JSON.read[AgentMessage](frame.getTextData)
-          info("Message received " + message)
-          worker ! message
-          react {
-            case result: JobCompleted =>
-              context.getChannel.write(new DefaultWebSocketFrame(JSON.write(result)))
-            case _ =>
-          }
-        }
+        val message = JSON.read[AgentMessage](frame.getTextData)
+        info("Message received " + message)
+        worker ! (this, message)
       case _ =>
+    }
+  }
+
+  def act() {
+    loop {
+      react {
+        case result: JobCompleted =>
+          channel.write(new DefaultWebSocketFrame(JSON.write(result)))
+        case channel: Channel =>
+          this.channel = channel
+        case _ =>
+      }
     }
   }
 
@@ -81,6 +88,8 @@ class AgentHandler(val callback: ServerHandler, val worker: Actor) extends Simpl
   override def exceptionCaught(context: ChannelHandlerContext, event: ExceptionEvent) {
     super.exceptionCaught(context, event)
   }
+
+  start
 }
 
 class HandlerHolder(var handler: SimpleChannelUpstreamHandler) extends SimpleChannelUpstreamHandler {

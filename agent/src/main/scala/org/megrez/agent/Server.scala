@@ -36,8 +36,9 @@ class Server(val server: URI, val reconnectAfter : Long, val worker : Actor) ext
     channel = bootstrap.connect(new InetSocketAddress(server.getHost, server.getPort))
   }
 
-  override def connected() {    
-    holder.handler = agentHandler 
+  override def connected(channel : Channel) {
+    agentHandler ! channel
+    holder.handler = agentHandler
   }
 
   override def disconnected() {
@@ -56,7 +57,7 @@ class Server(val server: URI, val reconnectAfter : Long, val worker : Actor) ext
 }
 
 trait ServerHandler {
-  def connected() {}
+  def connected(channel : Channel) {}
   def disconnected() {}
   def invalidServer(uri: URI) {}
 }

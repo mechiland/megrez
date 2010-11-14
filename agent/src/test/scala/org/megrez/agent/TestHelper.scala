@@ -113,8 +113,8 @@ class WebSocketServer extends SimpleChannelUpstreamHandler {
 trait ActorBasedServerHandlerMixin extends ServerHandler {
   var actor: Actor = _
 
-  override def connected() {
-    super.connected
+  override def connected(channel : Channel) {
+    super.connected(channel)
     actor ! "CONNECTED"
   }
 
