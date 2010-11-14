@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="server" default="test" basedir=".">
+<project name="core" default="test" basedir=".">
 
     <property environment="env"/>
     <property name="scala.home" value="${env.SCALA_HOME}"/>
@@ -16,7 +16,6 @@
 
     <path id="classpath.build">
         <pathelement location="${scala-library}"/>
-        <pathelement location="../core/target/classes"/>
         <fileset dir="../lib">
             <include name="*.jar"/>
         </fileset>

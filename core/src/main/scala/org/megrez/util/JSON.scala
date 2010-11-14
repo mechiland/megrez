@@ -2,7 +2,7 @@ package org.megrez.util
 
 import collection.mutable.HashMap
 import org.megrez._
-import org.megrez.task.CommandLineTask
+import task.{AntTask, CommandLineTask}
 import vcs.{Git, Subversion}
 
 object JSON {
@@ -20,7 +20,7 @@ object JSON {
                 case string: String => "\"" + string + "\""
                 case set: Set[String] => set.map("\"" + _ + "\"").mkString("[", ",", "]")
                 case list: List[Map[String, Any]] => list.map(toJson).mkString("[", ",", "]")
-                case int : Int => int
+                case int: Int => int
                 case map: Map[String, Any] => toJson(map)
               }
                       )
@@ -123,6 +123,39 @@ object JSON {
 
   TaskSerializer.register[CommandLineTask]("cmd")
 
+  implicit object AntTaskSerializer extends JsonSerializer[AntTask] {
+    def read(json: Map[String, Any]) = {
+      if(json.contains("target") && json.contains("buildfile")) {
+        new AntTask(json / "target", json / "buildfile")
+      }
+      else if(json.contains("target")) {
+        new AntTask(json / "target", null)
+      }
+      else if(json.contains("buildfile")) {
+        new AntTask(null, json / "buildfile")
+      }
+      else {
+        new AntTask(null, null)
+      }
+    }
+
+    def write(resource: AntTask) = {
+      if (resource.target != null && resource.buildfile != null) {
+        Map("type" -> "ant", "target" -> resource.target, "buildfile" -> resource.buildfile)
+      }
+      else if (resource.target != null) {
+        Map("type" -> "ant", "target" -> resource.target)
+      }
+      else if (resource.buildfile != null) {
+        Map("type" -> "ant", "buildfile" -> resource.buildfile)
+      } else {
+        Map("type" -> "ant")
+      }
+    }
+  }
+
+  TaskSerializer.register[AntTask]("ant")
+
   implicit object JobSerializer extends JsonSerializer[Job] {
     def read(json: Map[String, Any]) = new Job(json / "name", json / ("resources", _.toSet), json > ("tasks", readObject[Task](_)))
 
@@ -162,7 +195,8 @@ object JSON {
 
   implicit object JobCompletedSerializer extends JsonSerializer[JobCompleted] {
     def read(json: Map[String, Any]) = JobCompleted()
-    def write(message : JobCompleted) = Map("type" -> "jobcompleted")
+
+    def write(message: JobCompleted) = Map("type" -> "jobcompleted")
   }
 
   AgentMessageSerializer.register[JobAssignment]("assignment")

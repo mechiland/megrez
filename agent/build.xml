@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="server" default="test" basedir=".">
+<project name="agent" default="test" basedir=".">
 
     <property environment="env"/>
     <property name="scala.home" value="${env.SCALA_HOME}"/>

@@ -3,8 +3,8 @@ package org.megrez.util
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Spec
 import org.megrez._
-import task.CommandLineTask
 import org.megrez.Pipeline.Stage
+import task.{AntTask, CommandLineTask}
 import vcs.{Git, Subversion}
 
 class JsonTest extends Spec with ShouldMatchers {
@@ -33,18 +33,6 @@ class JsonTest extends Spec with ShouldMatchers {
       material.source.isInstanceOf[Git] should equal(true)
       material.source.asInstanceOf[Git].url should equal("git_url")
       material.destination should equal("dest")
-    }
-
-    it("should serialize task") {
-      val task = new CommandLineTask("ls")
-      JSON.write(task) should equal("""{"type":"cmd","command":"ls"}""")
-    }
-
-    it("should deserialize task") {
-      val json = """{"type":"cmd","command":"ls"}"""
-      val task = JSON.read[Task](json)
-      task.isInstanceOf[CommandLineTask] should equal(true)
-      task.asInstanceOf[CommandLineTask].command should equal("ls")
     }
 
     it("should serialize job") {
@@ -112,6 +100,54 @@ class JsonTest extends Spec with ShouldMatchers {
       task.isInstanceOf[CommandLineTask] should equal(true)
       task.asInstanceOf[CommandLineTask].command should equal("ls")
     }        
+  }
+
+  describe("Task serialization") {
+
+    it("should serialize command line task") {
+      val task = new CommandLineTask("ls")
+      JSON.write(task) should equal("""{"type":"cmd","command":"ls"}""")
+    }
+
+    it("should deserialize command line task") {
+      val json = """{"type":"cmd","command":"ls"}"""
+      val task = JSON.read[Task](json)
+      task.isInstanceOf[CommandLineTask] should equal(true)
+      task.asInstanceOf[CommandLineTask].command should equal("ls")
+    }
+
+    it("should serialize bare ant task") {
+      val task = new AntTask(null, null)
+      JSON.write(task) should equal("""{"type":"ant"}""")
+    }
+
+    it("should deserialize bare ant task") {
+      JSON.read[AntTask]("""{"type":"ant"}""") should equal(new AntTask(null, null))
+    }
+
+    it("should serialize ant task with target") {
+      val task = new AntTask("test", null)
+      JSON.write(task) should equal("""{"type":"ant","target":"test"}""")
+    }
+
+    it("should deserialize ant task with target") {
+      JSON.read[AntTask]("""{"type":"ant","target":"test"}""") should equal(new AntTask("test", null))
+    }
+
+    it("should serialize ant task with buildfile") {
+      val task = new AntTask(null, "build.xml")
+      JSON.write(task) should equal("""{"type":"ant","buildfile":"build.xml"}""")
+    }
+
+    it("should serialize ant task with target and buildfile") {
+      val task = new AntTask("test", "build.xml")
+      JSON.write(task) should equal("""{"type":"ant","target":"test","buildfile":"build.xml"}""")
+    }
+
+    it("should deserialize ant task with target and buildfile") {
+      JSON.read[AntTask]("""{"type":"ant","target":"test","buildfile":"build.xml"}""") should equal(new AntTask("test", "build.xml"))
+    }
+
   }
 
   describe("Agent message serialization") {
