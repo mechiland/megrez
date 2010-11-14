@@ -9,17 +9,16 @@ import scala.actors._
 import scala.actors.Actor._
 import java.net.URI
 import org.megrez.util._
-import org.megrez.{AgentMessage, JobCompleted}
+import org.megrez.{ConsoleOutput, AgentMessage, JobCompleted}
+import io.Source
 
 class IntegrationTest extends ServerIntegration with ShouldMatchers {
   describe("Version control intergration") {
     it("should handle subversion job assignment") {
-      val subversion = "file://" + properties("agent.vcs.root") + "/svn/agent_test"
-
       MegrezHandshake.actor = self
       ReceiveResponse.actor = self
 
-      server.response(WebSocketHandshake, MegrezHandshake, ReceiveResponse)
+      server.response(WebSocketHandshake, MegrezHandshake, ReceiveResponse, ReceiveResponse)
       server.start
 
       val worker = new Worker(new FileWorkspace(new File(root.getAbsolutePath)))
@@ -28,13 +27,24 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
       serverConnection.connect
 
       val jobAssignment =
-        """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + subversion + '"' + """, "dest" : "$main"}, "workset" : {"revision" : 2} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "ls"}] } }"""
+        """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + url + '"' + """, "dest" : "$main"}, "workset" : {"revision" : 2} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "echo HELLO"}] } }"""
 
       receiveWithin(1000) {
         case "MEGREZ HANDSHAKE" => server.send(new DefaultWebSocketFrame(jobAssignment))
         case TIMEOUT => fail
         case _ => fail
       }
+
+      receiveWithin(2000) {
+        case message : String =>
+          JSON.read[AgentMessage](message) match {
+            case ConsoleOutput(output) =>
+              output should equal("HELLO")
+            case _ => fail
+          }
+        case TIMEOUT => fail
+        case _ => fail
+      }      
 
       receiveWithin(2000) {
         case message : String =>
@@ -51,13 +61,46 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
     }
   }
 
-  val root = new File(System.getProperty("user.dir"), "integration")
   var properties = Map[String, Any]()
   var serverConnection: Server = _
 
+  private def checkin(repository: File, file: String) {
+    val revision = new File(repository, file)
+    revision.createNewFile
+
+    run("svn add " + revision.getAbsolutePath)
+    run("svn ci . -m \"checkin\"", repository)
+  }
+
+  private def checkout(url: String) = {
+    val target = new File(root, "checkout_" + System.currentTimeMillis)
+    run("svn co " + url + " " + target)
+    target
+  }
+
+  private var url = ""
+  private var workingDir: File = _
+  private var root: File = _
+
   override def beforeEach() {
     super.beforeEach
-    root.mkdirs
+    root = new File(System.getProperty("user.dir"), "target/vcs/svn")
+    workingDir = new File(root, "work")
+    val repository = new File(root, "repository")
+
+    List(root, workingDir, repository).foreach(_ mkdirs)
+
+    val repositoryName = String.valueOf(System.currentTimeMillis)
+    val process = Runtime.getRuntime().exec("svnadmin create " + repositoryName, null, repository)
+    process.waitFor match {
+      case 0 =>
+      case _ => fail("can't setup repository")
+    }
+
+    url = "file://" + new File(root, "repository/" + repositoryName).getAbsolutePath
+    val svn = checkout(url)
+    checkin(svn, "README")
+    checkin(svn, "REVISION_2")
   }
 
   override def afterEach() {
@@ -76,8 +119,15 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
     file.delete
   }
 
-  protected override def runTests(testName: Option[String], reporter: Reporter, stopper: Stopper, filter: Filter, configMap: Map[String, Any], distributor: Option[Distributor], tracker: Tracker) {
-    properties = configMap
-    super.runTests(testName, reporter, stopper, filter, configMap, distributor, tracker)
+  private def run(command: String) {
+    run(command, root)
+  }
+
+  private def run(command: String, workingDir : File) {
+    val cmd = Runtime.getRuntime().exec(command, null, workingDir)
+    cmd.waitFor match {
+      case 0 =>
+      case _ => fail(Source.fromInputStream(cmd.getErrorStream).mkString)
+    }
   }
 }

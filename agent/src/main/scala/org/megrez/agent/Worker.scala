@@ -3,8 +3,9 @@ package org.megrez.agent
 import actors.Actor
 import java.io.File
 import org.megrez.vcs.VersionControl
-import org.megrez.{JobFailed, JobCompleted, JobAssignment}
 import org.megrez.util.{Logging, Workspace}
+import org.megrez.task.CommandLineTask
+import org.megrez._
 
 class Worker(val workspace: Workspace) extends Actor with Logging{
   def act() {
@@ -14,7 +15,14 @@ class Worker(val workspace: Workspace) extends Actor with Logging{
           try {
             val pipelineDir = workspace.createFolder(assignment.pipeline)
             updateMaterials(assignment)
-            assignment.job.tasks.foreach(_ execute pipelineDir)
+            for (task <- assignment.job.tasks) {
+              task match {
+                case t:CommandLineTask =>
+                  t.onConsoleOutputChanges(actor ! ConsoleOutput(_))
+                  t.execute(pipelineDir)
+                case _ => task.execute(pipelineDir)
+              }
+            }
             actor ! new JobCompleted()
           } catch {
             case e: Exception => actor ! new JobFailed(e.getMessage)

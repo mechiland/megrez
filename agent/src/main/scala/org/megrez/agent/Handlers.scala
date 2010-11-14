@@ -72,8 +72,8 @@ class AgentHandler(val callback: ServerHandler, val worker: Actor) extends Simpl
   def act() {
     loop {
       react {
-        case result: JobCompleted =>
-          channel.write(new DefaultWebSocketFrame(JSON.write(result)))
+        case message: AgentMessage =>
+          channel.write(new DefaultWebSocketFrame(JSON.write(message)))
         case channel: Channel =>
           this.channel = channel
         case _ =>

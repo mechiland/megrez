@@ -170,7 +170,6 @@ class JsonTest extends Spec with ShouldMatchers {
       val assignment = JSON.read[JobAssignment](json)
       assignment.materials should have size(1)
       val (material, workset) = assignment.materials.head
-      println(material)
       material.source match {
         case git : Git =>
           git.url should equal("git_url")
@@ -213,6 +212,20 @@ class JsonTest extends Spec with ShouldMatchers {
       val json = """{"type":"jobcompleted"}"""
       JSON.read[AgentMessage](json) match {
         case message : JobCompleted =>
+        case _ => fail
+      }
+    }
+
+    it("should serialize console output") {
+      val message = ConsoleOutput("Output")
+      JSON.write(message) should equal("""{"type":"consoleoutput","content":"Output"}""")
+    }
+
+    it("should deserialize console output") {
+      val json = """{"type":"consoleoutput","content":"Output"}"""
+      JSON.read[AgentMessage](json) match {
+        case ConsoleOutput(content) =>
+          content should equal("Output")
         case _ => fail
       }
     }

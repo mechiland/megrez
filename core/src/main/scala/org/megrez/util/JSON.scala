@@ -4,6 +4,7 @@ import collection.mutable.HashMap
 import org.megrez._
 import task.{AntTask, CommandLineTask}
 import vcs.{Git, Subversion}
+import java.net.{URLDecoder, URLEncoder}
 
 object JSON {
   private val JsonParser = scala.util.parsing.json.JSON
@@ -199,8 +200,14 @@ object JSON {
     def write(message: JobCompleted) = Map("type" -> "jobcompleted")
   }
 
+  implicit object ConsoleOutputSerializer extends JsonSerializer[ConsoleOutput] {
+    def read(json: Map[String, Any]) = ConsoleOutput(URLDecoder.decode(json / "content", "UTF-8"))
+    def write(message: ConsoleOutput) = Map("type" -> "consoleoutput", "content" -> URLEncoder.encode(message.output, "UTF-8"))
+  }
+
   AgentMessageSerializer.register[JobAssignment]("assignment")
   AgentMessageSerializer.register[JobCompleted]("jobcompleted")
+  AgentMessageSerializer.register[ConsoleOutput]("consoleoutput")
 
 
   implicit def map2Json(json: Map[String, Any]): JsonHelper = new JsonHelper(json)
