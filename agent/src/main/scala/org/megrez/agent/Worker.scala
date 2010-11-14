@@ -4,9 +4,9 @@ import actors.Actor
 import java.io.File
 import org.megrez.vcs.VersionControl
 import org.megrez.{JobFailed, JobCompleted, JobAssignment}
-import org.megrez.util.Workspace
+import org.megrez.util.{Logging, Workspace}
 
-class Worker(val workspace: Workspace) extends Actor {
+class Worker(val workspace: Workspace) extends Actor with Logging{
   def act() {
     loop {
       react {

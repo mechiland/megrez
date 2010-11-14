@@ -129,6 +129,23 @@ class JsonTest extends Spec with ShouldMatchers {
       JSON.write(assignment) should equal("""{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"git","url":"git_url","dest":"dest"},"workset":{"commit":"abc"}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}""")
     }
 
+    it("should deserialize job assignment for git") {
+      val json = """{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"git","url":"git_url","dest":"dest"},"workset":{"commit":"abc"}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}"""
+      val assignment = JSON.read[JobAssignment](json)
+      assignment.materials should have size(1)
+      val (material, workset) = assignment.materials.head
+      println(material)
+      material.source match {
+        case git : Git =>
+          git.url should equal("git_url")
+        case _ => fail
+      }
+      workset match {
+        case Some("abc") =>
+        case _ => fail
+      }
+    }
+
 
     it("should deserialize job assignment") {
       val json = """{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"svn","url":"svn_url","dest":"dest"},"workset":{"revision":5}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}"""
