@@ -46,10 +46,10 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Loggi
               case HttpResponse.OK =>
                 event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.OK)).addListener(ChannelFutureListener.CLOSE)              
               case HttpResponse.ERROR =>
-                event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR))
+                event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR)).addListener(ChannelFutureListener.CLOSE)
             }
           case None =>
-            context.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND))
+            context.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND)).addListener(ChannelFutureListener.CLOSE)
         }
       case frame: WebSocketFrame => println("here" + frame)
       case _ => error("unhandle request " + event.getMessage)
