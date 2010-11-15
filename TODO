@@ -1,0 +1,7 @@
+xiaodao:
+
+- reporting, just like iAnalysis, especially building trend
+- the function of checking build failure like teamcity (parsing JUnit and TestNG log files)
+- manually trigger build.
+- support ant.
+- NO support for maven (do we need to open another project to convert maven project to ant?)
