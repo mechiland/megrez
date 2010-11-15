@@ -1,9 +1,8 @@
 package org.megrez.task
 
-import org.megrez.util.ShellCommand
 import actors.Actor._
 import java.io.{InputStream, InputStreamReader, BufferedReader, File}
-import org.megrez.{ConsoleOutput, Task}
+import org.megrez.Task
 import actors.{TIMEOUT, Actor}
 
 class CommandLineTask(val command: String) extends Task {

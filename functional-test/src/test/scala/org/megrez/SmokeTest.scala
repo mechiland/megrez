@@ -13,7 +13,7 @@ class SmokeTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("Smoke test") {
     it("should assign job to agent when source code changes") {
       startServer()
-      for (i <- 0 to 400) {
+      for (i <- 0 to 50) {
         startAgent(i)
       }
 
@@ -28,12 +28,12 @@ class SmokeTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         "job" + index
       }      
 
-      val jobs = (Array.fill(400) {"""{"name":" """ + getJobName() + """ ","resources":[],"tasks":[{"type":"cmd","command":"ls"}]}"""}).mkString("[", ",", "]")
+      val jobs = (Array.fill(50) {"""{"name":" """ + getJobName() + """ ","resources":[],"tasks":[{"type":"cmd","command":"ls"}]}"""}).mkString("[", ",", "]")
 
       val json = """{"name":"pipeline","materials":[{"type":"svn","url":""" + '"' + url + '"' + ""","dest":"$main"}],"stages":[{"name":"stage","jobs":""" + jobs + """}]}"""
       addPipeline(json)
 
-      receiveWithin(1000000) {
+      receiveWithin(100000) {
         case TIMEOUT =>
         case _ => fail
       }

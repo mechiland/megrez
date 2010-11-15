@@ -25,3 +25,5 @@ trait ChangeSource {
 class Material(val source : ChangeSource, val destination : String) {
   def this(source : ChangeSource) = this(source, "$main")
 }
+
+class Artifact(val path : String, val tags : Set[String])

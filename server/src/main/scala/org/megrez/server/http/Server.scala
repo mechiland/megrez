@@ -16,8 +16,6 @@ import org.megrez.server.{ToAgentManager, AgentHandler}
 import actors.Actor
 import org.megrez.AgentMessage
 import org.megrez.util.{JSON, Logging}
-import org.jboss.netty.buffer.ChannelBuffers
-
 class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Logging {
   private val bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(newCachedThreadPool(), newCachedThreadPool()))
 
@@ -44,7 +42,7 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Loggi
             val response = route.handler !? Request(route matchedMethod request, request.getUri, content.toString(CharsetUtil.UTF_8))
             response match {
               case HttpResponse.OK =>
-                event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.OK)).addListener(ChannelFutureListener.CLOSE)              
+                event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.OK)).addListener(ChannelFutureListener.CLOSE)
               case HttpResponse.ERROR =>
                 event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR)).addListener(ChannelFutureListener.CLOSE)
             }
@@ -118,7 +116,6 @@ class AgentWebSocketHandler(val channel: Channel, agentManager: Actor) extends S
       case frame: WebSocketFrame =>
         frame.getTextData match {
           case MegrezAgentHandshake =>
-            debug("megrez handshake received")
             send("megrez-server:1.0")
             agentManager ! ToAgentManager.RemoteAgentConnected(this)
           case message: String =>

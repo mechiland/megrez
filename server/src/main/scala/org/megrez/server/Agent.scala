@@ -16,8 +16,7 @@ class Agent(handler: AgentHandler, dispatcher: Actor) extends Actor with Logging
       react {
         case assignment: JobAssignment =>
           handleAssignment(assignment)
-        case ConsoleOutput(content) =>
-          info("Agent " + content)
+        case ConsoleOutput(content) =>          
           output.append(content)
         case ToAgent.SetResources(tags) =>
           resources.clear
