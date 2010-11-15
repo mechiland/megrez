@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<project name="test" default="sleep" basedir=".">
+
+    <target name="sleep">
+        <echo message="Sleeping for 5 seconds..."/>
+        <sleep seconds="5"/>
+        <echo message="Sleep finished."/>
+    </target>
+
+</project>
+
