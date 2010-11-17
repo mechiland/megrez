@@ -9,15 +9,15 @@ class CommandLineTask(val command: String) extends Task {
   private var process: Process = _
   private val stdout = new StringBuffer
 
-  private var onConsoleOutput : String => Unit = (_) => {}
+  private var onConsoleOutput: String => Unit = (_) => {}
 
-  def execute(workingDir: File):String = {
-    process = Runtime.getRuntime.exec(command)
+  def execute(workingDir: File): String = {
+    process = Runtime.getRuntime.exec(command, null, workingDir)
     if (stdout.length != 0) stdout.delete(0, stdout.length)
     pipe(process.getInputStream, stdout, self, onConsoleOutput)
-    
+
     process.waitFor
-    
+
     receiveWithin(5000) {
       case "DONE" =>
       case TIMEOUT =>
@@ -25,15 +25,15 @@ class CommandLineTask(val command: String) extends Task {
     return stdout.toString
   }
 
-  def onConsoleOutputChanges(listener : String => Unit) {
+  def onConsoleOutputChanges(listener: String => Unit) {
     onConsoleOutput = listener
   }
 
-  private def pipe(in : InputStream, result : StringBuffer, executor : Actor, listener : String => Unit) {
+  private def pipe(in: InputStream, result: StringBuffer, executor: Actor, listener: String => Unit) {
     actor {
       val reader = new BufferedReader(new InputStreamReader(in))
       var line = reader.readLine
-      while(line != null) {
+      while (line != null) {
         listener(line)
         result.append(line)
         line = reader.readLine
@@ -43,7 +43,7 @@ class CommandLineTask(val command: String) extends Task {
   }
 
   protected def commandLine() = command
-  
+
   def cancel() {
     process.destroy
   }
