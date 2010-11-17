@@ -16,7 +16,7 @@ object JSON {
 
   def write[T](resource: T)(implicit jsObject: JsonSerializer[T]): String = {
     def toJson(obj: Map[String, Any]): String =
-      obj.map(keyValue => "\"" + keyValue._1 + "\":" +
+      obj.filter(keyValue => keyValue._2 != null).map(keyValue => "\"" + keyValue._1 + "\":" +
               (keyValue._2 match {
                 case string: String => "\"" + string + "\""
                 case set: Set[String] => set.map("\"" + _ + "\"").mkString("[", ",", "]")
@@ -125,34 +125,9 @@ object JSON {
   TaskSerializer.register[CommandLineTask]("cmd")
 
   implicit object AntTaskSerializer extends JsonSerializer[AntTask] {
-    def read(json: Map[String, Any]) = {
-      if(json.contains("target") && json.contains("buildfile")) {
-        new AntTask(json / "target", json / "buildfile")
-      }
-      else if(json.contains("target")) {
-        new AntTask(json / "target", null)
-      }
-      else if(json.contains("buildfile")) {
-        new AntTask(null, json / "buildfile")
-      }
-      else {
-        new AntTask(null, null)
-      }
-    }
+    def read(json: Map[String, Any]) = new AntTask(json /? ("target", null), json /? ("buildfile", null))
 
-    def write(resource: AntTask) = {
-      if (resource.target != null && resource.buildfile != null) {
-        Map("type" -> "ant", "target" -> resource.target, "buildfile" -> resource.buildfile)
-      }
-      else if (resource.target != null) {
-        Map("type" -> "ant", "target" -> resource.target)
-      }
-      else if (resource.buildfile != null) {
-        Map("type" -> "ant", "buildfile" -> resource.buildfile)
-      } else {
-        Map("type" -> "ant")
-      }
-    }
+    def write(resource: AntTask) = Map("type" -> "ant", "target" -> resource.target, "buildfile" -> resource.buildfile)    
   }
 
   TaskSerializer.register[AntTask]("ant")
@@ -173,6 +148,12 @@ object JSON {
     def read(json: Map[String, Any]) = new Pipeline(json / "name", (json > ("materials", readObject[Material](_))).toSet, json > ("stages", readObject[Pipeline.Stage](_)))
 
     def write(pipeline: Pipeline) = Map("name" -> pipeline.name, "materials" -> pipeline.materials.map(writeObject(_)).toList, "stages" -> pipeline.stages.map(writeObject(_)))
+  }
+
+  implicit object ArtifactSerializer extends JsonSerializer[Artifact] {
+    def read(json: Map[String, Any]) = new Artifact(json / "path", json / ("tags", _.toSet))
+
+    def write(artifact: Artifact) = Map("path" -> artifact.path, "tags" -> artifact.tags)
   }
 
   implicit object AgentMessageSerializer extends TypeBasedSerializer[AgentMessage]
@@ -202,6 +183,7 @@ object JSON {
 
   implicit object ConsoleOutputSerializer extends JsonSerializer[ConsoleOutput] {
     def read(json: Map[String, Any]) = ConsoleOutput(URLDecoder.decode(json / "content", "UTF-8"))
+
     def write(message: ConsoleOutput) = Map("type" -> "consoleoutput", "content" -> URLEncoder.encode(message.output, "UTF-8"))
   }
 
@@ -213,26 +195,29 @@ object JSON {
   implicit def map2Json(json: Map[String, Any]): JsonHelper = new JsonHelper(json)
 
   class JsonHelper(val json: Map[String, Any]) {
-    def /[T](name: String): T = {
-      json(name) match {
-        case result: T => result
+    def /[T](name: String): T =
+      json.get(name) match {
+        case Some(result: T) => result
         case _ => throw new Exception()
       }
-    }
 
-    //get value of json(Map) by the value(Map) of it's key
-    def >[V](name: String, map: Map[String, Any] => V) = {
-      json(name) match {
-        case list: List[Map[String, Any]] => list.map(map)
-        case _ => throw new Exception()
+    def /?[T](name: String, default: T): T =
+      json.get(name) match {
+        case Some(result: T) => result
+        case _ => default
       }
-    }
 
-    def /[V](name: String, map: List[String] => V) = {
-      json(name) match {
-        case list: List[String] => map(list)
+    def >[V](name: String, map: Map[String, Any] => V) =
+      json.get(name) match {
+        case Some(list: List[Map[String, Any]]) => list.map(map)
         case _ => throw new Exception()
       }
-    }
+
+
+    def /[V](name: String, map: List[String] => V) =
+      json.get(name) match {
+        case Some(list: List[String]) => map(list)
+        case _ => throw new Exception()
+      }
   }
 }

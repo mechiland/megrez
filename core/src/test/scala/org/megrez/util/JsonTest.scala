@@ -99,7 +99,18 @@ class JsonTest extends Spec with ShouldMatchers {
       val task = job.tasks.head
       task.isInstanceOf[CommandLineTask] should equal(true)
       task.asInstanceOf[CommandLineTask].command should equal("ls")
-    }        
+    }
+
+    it("should seraialize artifact") {
+      val artifact = new Artifact("/target/**/*.jar", Set("artifact"))
+      JSON.write(artifact) should equal("""{"path":"/target/**/*.jar","tags":["artifact"]}""")
+    }
+
+    it("should deseraialize artifact") {
+      val artifact = JSON.read[Artifact]("""{"path":"/target/**/*.jar","tags":["artifact"]}""")
+      artifact.path should equal("/target/**/*.jar")
+      artifact.tags should equal(Set("artifact"))
+    }
   }
 
   describe("Task serialization") {
