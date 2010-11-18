@@ -11,6 +11,7 @@ NETTY = 'org.jboss.netty:netty:jar:3.2.2.Final'
 MOCKITO = 'org.mockito:mockito-all:jar:1.8.5'
 SLF4J_API = 'org.slf4j:slf4j-api:jar:1.6.1'
 SLF4J_SIMPLE = 'org.slf4j:slf4j-simple:jar:1.6.1'
+NEO4J = 'org.neo4j:neo4j:pom:1.2.M03'
 
 class Buildr::ScalaTest
   class << self
@@ -48,7 +49,7 @@ define "megrez" do
   end
 
   define "server" do
-    compile.with NETTY, SLF4J_API, SLF4J_SIMPLE, Dir['lib/neo/*.jar']
+    compile.with NETTY, SLF4J_API, SLF4J_SIMPLE, transitive(NEO4J)
 	compile.with project("core").package
 	compile.with 
     test.resources
