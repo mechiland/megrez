@@ -4,8 +4,8 @@ COPYRIGHT = ""
 
 require 'buildr/scala'
 
-repositories.remote << "http://www.ibiblio.org/maven2/"
-repositories.remote << "http://repository.jboss.org/nexus/content/groups/public/"
+repositories.remote << "http://www.ibiblio.org/maven2"
+repositories.remote << "http://repository.jboss.org/nexus/content/groups/public"
 
 NETTY = 'org.jboss.netty:netty:jar:3.2.2.Final'
 MOCKITO = 'org.mockito:mockito-all:jar:1.8.5'
@@ -48,8 +48,9 @@ define "megrez" do
   end
 
   define "server" do
-    compile.with NETTY, SLF4J_API, SLF4J_SIMPLE
+    compile.with NETTY, SLF4J_API, SLF4J_SIMPLE, Dir['lib/neo/*.jar']
 	compile.with project("core").package
+	compile.with 
     test.resources
     package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.server.Main' }
 
