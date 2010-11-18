@@ -42,7 +42,7 @@ define "megrez" do
 	test.resources
 	package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.agent.Main' }
     task :run => :package do
-        system "mkdir agent-workspace"
+        system "mkdir agent-workspace" unless File.directory?("agent-workspace")
         system "scala -classpath $HOME/.m2/repository/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar:$HOME/.m2/repository/org/slf4j/slf4j-simple/1.6.1/slf4j-simple-1.6.1.jar:$HOME/.m2/repository/org/jboss/netty/netty/3.2.2.Final/netty-3.2.2.Final.jar:core/target/megrez-core-1.0.0.jar:agent/target/megrez-agent-1.0.0.jar org.megrez.agent.Main ws://localhost:8051/agent agent-workspace"
     end	
   end
