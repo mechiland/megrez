@@ -41,10 +41,8 @@ class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Loggi
             val content = request.getContent
             val response = route.handler !? Request(route matchedMethod request, request.getUri, content.toString(CharsetUtil.UTF_8))
             response match {
-              case HttpResponse.OK =>
-                event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.OK)).addListener(ChannelFutureListener.CLOSE)
-              case HttpResponse.ERROR =>
-                event.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR)).addListener(ChannelFutureListener.CLOSE)
+              case response: HttpResponse =>
+                event.getChannel.write(response).addListener(ChannelFutureListener.CLOSE)
             }
           case None =>
             context.getChannel.write(new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND)).addListener(ChannelFutureListener.CLOSE)

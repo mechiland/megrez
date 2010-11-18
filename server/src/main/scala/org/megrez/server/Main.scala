@@ -16,8 +16,9 @@ object Main extends Logging {
 
     if (server == null) {
       server = new Server(
-        websocket("/agent", agent) -> megrez.agentManager,
-        post("/pipelines") -> controllers.pipeline)
+        websocket("/agent", agent) -> megrez.agentManager
+        ,post("/pipelines") -> controllers.pipeline
+        ,get("/builds") -> controllers.builds)
       server.start(port)
     }
   }
