@@ -67,5 +67,11 @@
             <wildcard package="org.megrez.server"/>
         </scalatest>
     </target>
+
+    <target name="runserver" depends="compile">
+        <java classname="org.megrez.server.Daemon" classpathref="classpath.test">
+            <arg line="8051"/>
+        </java>
+    </target>
 </project>
 

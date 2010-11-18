@@ -67,5 +67,9 @@
             <wildcard package="org.megrez.server"/>
         </scalatest>
     </target>
+
+    <target name="runagent" depends="compile">
+        <java classname="org.megrez.agent.Daemon" classpathref="classpath.test" />
+    </target>
 </project>
 
