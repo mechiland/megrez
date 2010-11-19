@@ -1,7 +1,6 @@
 package org.megrez.server
 
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.{BeforeAndAfterEach, Spec}
 import org.megrez._
 import org.megrez.Pipeline.Stage
 import util.JSON
@@ -10,8 +9,9 @@ import java.io.File
 import actors.Actor._
 import actors.{TIMEOUT, Actor}
 import scala.io.Source
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Spec}
 
-class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
+class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with BeforeAndAfterAll with Neo4jHelper{
   describe("Core Actors") {
     it("should trig build for pipeline when pipeline first added") {
       val job = new Job("linux-firefox", Set(), List[Task]())
@@ -100,6 +100,11 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     megrez.stop
     delete(root)
   }
+
+  override def afterAll(){
+    cleanupDatabase
+  }
+
 
   private def delete(file: File) {
     file.listFiles.foreach {

@@ -1,6 +1,5 @@
 package org.megrez.server
 
-import org.scalatest.Spec
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.matchers.ShouldMatchers
 import org.mockito.Mockito._
@@ -9,8 +8,12 @@ import actors.{TIMEOUT, Actor}
 import actors.Actor._
 import trigger.Trigger
 import org.megrez.Pipeline
+import scala.collection.JavaConversions._
+import org.neo4j.graphdb._
+import org.neo4j.graphdb.Traverser.Order
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Spec}
 
-class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
+class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar with BeforeAndAfterAll with Neo4jHelper {
   describe("Pipeline manager") {
     it("should launch trigger when new pipeline added") {
       object Context {
@@ -26,6 +29,20 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
         case "TRIGGER START pipeline" =>
         case TIMEOUT =>
         case _ => fail
+      }
+    }
+
+    it("should save pipeline to database when new pipeline added") {
+
+      Neo4jServer.exec {
+        neo => {
+          val traverse = neo.getReferenceNode.traverse(Order.BREADTH_FIRST, StopEvaluator.DEPTH_ONE, ReturnableEvaluator.ALL_BUT_START_NODE, DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING)
+          val ordersNode = traverse.getAllNodes.iterator.next
+          val pipelineTraverse = ordersNode.traverse(Order.BREADTH_FIRST, StopEvaluator.DEPTH_ONE, ReturnableEvaluator.ALL_BUT_START_NODE, DynamicRelationshipType.withName("PIPELINE"), Direction.OUTGOING)
+          val nodes = pipelineTraverse.getAllNodes
+          nodes.size should be === 1
+          nodes.iterator.next.getProperty("name") should be === "pipeline"
+        }
       }
     }
 
@@ -45,7 +62,7 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
         case TIMEOUT =>
         case _ => fail
       }
-      
+
       manager ! ToPipelineManager.PipelineChanged(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
 
       receiveWithin(1000) {
@@ -62,10 +79,15 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar {
     }
   }
 
-  class ActorBasedTrigger(val name: String, val actor : Actor) extends Trigger {
+
+  override def afterAll() {
+    cleanupDatabase
+  }
+
+  class ActorBasedTrigger(val name: String, val actor: Actor) extends Trigger {
     val pipeline: Pipeline = null
     val target: Actor = null
-    
+
     def start {
       actor ! ("TRIGGER START " + name)
     }

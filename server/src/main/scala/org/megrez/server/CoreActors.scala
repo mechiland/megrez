@@ -7,16 +7,18 @@ import trigger.{Materials, OnChanges, Trigger}
 import org.megrez.util.{FileWorkspace, Logging}
 import java.io.File
 import org.megrez._
+import org.neo4j.graphdb.{DynamicRelationshipType, Direction, Relationship, Node}
 
 class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor with Logging {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
+  private var pipelinesNode: Node = _
 
   def act {
     loop {
       react {
         case ToPipelineManager.AddPipeline(pipeline) =>
           info("Pipeline added " + pipeline.name)
-          addPipeline(pipeline)          
+          addPipeline(pipeline)
         case ToPipelineManager.PipelineChanged(pipeline) =>
           removePipeline(pipeline.name)
           addPipeline(pipeline)
@@ -31,6 +33,22 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
   }
 
   private def addPipeline(config: Pipeline): Option[(Pipeline, Trigger)] = {
+    Neo4jServer.exec {
+      neo =>
+        {
+          val rel = neo.getReferenceNode.getSingleRelationship(DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING)
+          if (rel == null) {
+            pipelinesNode = neo.createNode
+            pipelinesNode.setProperty("name", "pipelines")
+            neo.getReferenceNode.createRelationshipTo(pipelinesNode, DynamicRelationshipType.withName("PIPELINES"))
+          }else{
+            pipelinesNode = rel.getEndNode
+          }
+          val pipelineNode = neo.createNode
+          pipelineNode.setProperty("name", config.name)
+          pipelinesNode.createRelationshipTo(pipelineNode, DynamicRelationshipType.withName("PIPELINE"))
+        }
+    }
     pipelines.put(config.name, Pair(config, launchTrigger(config)))
   }
 
@@ -62,7 +80,7 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
           info("Trig build for " + pipeline.name + " build " + id)
           val build = new Build(pipeline, materials)
           builds.put(id, build)
-          scheduleJobs(id, build)          
+          scheduleJobs(id, build)
         case DispatcherToScheduler.JobCompleted(id, job) =>
           builds.get(id) match {
             case Some(build: Build) =>
@@ -111,7 +129,7 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
   def act() {
     loop {
       react {
-        case AgentManagerToDispatcher.AgentConnect(agent: Actor) =>          
+        case AgentManagerToDispatcher.AgentConnect(agent: Actor) =>
           idleAgents.add(agent)
           info("Agent idle for job, total " + idleAgents.size + " idle agents")
           dispatchJobs
@@ -145,7 +163,7 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
     info("Total " + idleAgents.size + " idle agents and " + jobAssignments.size + " job waiting")
   }
 
-  private def dispatchJob(job: JobAssignment) = {    
+  private def dispatchJob(job: JobAssignment) = {
     val agents = idleAgents.iterator
     def assignJob: Option[Actor] = {
       if (agents.hasNext) {
@@ -201,7 +219,7 @@ class BuildManager extends Actor with Logging {
 }
 
 
-class Megrez(val checkInterval : Long = 5 * 60 * 1000) {
+class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
   val agentManager: Actor = new AgentManager(this)
   val buildScheduler: Actor = new BuildScheduler(this)
   val buildManager: Actor = new BuildManager()
