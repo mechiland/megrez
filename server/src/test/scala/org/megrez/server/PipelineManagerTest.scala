@@ -13,7 +13,7 @@ import org.neo4j.graphdb._
 import org.neo4j.graphdb.Traverser.Order
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Spec}
 
-class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar with BeforeAndAfterAll with Neo4jHelper {
+class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar with BeforeAndAfterEach with BeforeAndAfterAll with Neo4jHelper {
   describe("Pipeline manager") {
     it("should launch trigger when new pipeline added") {
       object Context {
@@ -33,12 +33,27 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
     }
 
     it("should save pipeline to database when new pipeline added") {
+      object Context {
+        val triggerFactory = mock[Pipeline => Trigger]
+      }
 
+      when(Context.triggerFactory.apply(any(classOf[Pipeline]))).thenReturn(new ActorBasedTrigger("pipeline", self))
+
+      val manager = new PipelineManager(Context)
+      manager ! ToPipelineManager.AddPipeline(new Pipeline("pipeline", null, List[Pipeline.Stage]()))
+
+      receiveWithin(1000) {
+        case "TRIGGER START pipeline" =>
+        case TIMEOUT =>
+        case _ => fail
+      }
+      
       Neo4jServer.exec {
         neo => {
-          val traverse = neo.getReferenceNode.traverse(Order.BREADTH_FIRST, StopEvaluator.DEPTH_ONE, ReturnableEvaluator.ALL_BUT_START_NODE, DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING)
-          val ordersNode = traverse.getAllNodes.iterator.next
-          val pipelineTraverse = ordersNode.traverse(Order.BREADTH_FIRST, StopEvaluator.DEPTH_ONE, ReturnableEvaluator.ALL_BUT_START_NODE, DynamicRelationshipType.withName("PIPELINE"), Direction.OUTGOING)
+          val rootRelationship: Relationship = neo.getReferenceNode.getSingleRelationship(DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING)
+          val pipelinesNode: Node = rootRelationship.getEndNode
+          val pipelineTraverse = pipelinesNode.traverse(Order.BREADTH_FIRST, StopEvaluator.DEPTH_ONE,
+            ReturnableEvaluator.ALL_BUT_START_NODE, DynamicRelationshipType.withName("PIPELINE"), Direction.OUTGOING)
           val nodes = pipelineTraverse.getAllNodes
           nodes.size should be === 1
           nodes.iterator.next.getProperty("name") should be === "pipeline"
@@ -79,6 +94,9 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
     }
   }
 
+  override def afterEach(){
+    cleanData
+  }
 
   override def afterAll() {
     cleanupDatabase

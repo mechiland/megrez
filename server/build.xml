@@ -18,7 +18,7 @@
         <pathelement location="${scala-library}"/>
         <pathelement location="../core/target/classes"/>
         <fileset dir="../lib">
-            <include name="*.jar"/>
+            <include name="**/*.jar"/>
         </fileset>
     </path>
     <path id="classpath.test">
