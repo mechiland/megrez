@@ -8,12 +8,7 @@ trait Neo4jHelper {
   def cleanData {
     Neo4jServer.exec {
       neo => {
-        val rootRelationship: Relationship = neo.getReferenceNode.getSingleRelationship(DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING)
-        val pipelinesNode: Node = rootRelationship.getEndNode
-        val pipelineTraverse = pipelinesNode.traverse(Order.BREADTH_FIRST, StopEvaluator.DEPTH_ONE,
-          ReturnableEvaluator.ALL_BUT_START_NODE, DynamicRelationshipType.withName("PIPELINE"), Direction.OUTGOING)
-        val nodes = pipelineTraverse.getAllNodes
-        nodes.foreach {
+        allPipelineNodes.foreach {
           node: Node => {
             node.getRelationships.foreach(_.delete)
             node.delete
@@ -22,6 +17,16 @@ trait Neo4jHelper {
       }
     }
   }
+
+  def allPipelineNodes = Neo4jServer.exec {
+      neo => {
+        val rootRelationship: Relationship = neo.getReferenceNode.getSingleRelationship(DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING)
+        val pipelinesNode: Node = rootRelationship.getEndNode
+        val pipelineTraverse = pipelinesNode.traverse(Order.BREADTH_FIRST, StopEvaluator.DEPTH_ONE,
+          ReturnableEvaluator.ALL_BUT_START_NODE, DynamicRelationshipType.withName("PIPELINE"), Direction.OUTGOING)
+        pipelineTraverse.getAllNodes
+      }
+    }
 
   def cleanupDatabase {
     cleanData

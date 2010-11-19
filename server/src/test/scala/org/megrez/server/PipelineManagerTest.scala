@@ -47,18 +47,11 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
         case TIMEOUT =>
         case _ => fail
       }
-      
-      Neo4jServer.exec {
-        neo => {
-          val rootRelationship: Relationship = neo.getReferenceNode.getSingleRelationship(DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING)
-          val pipelinesNode: Node = rootRelationship.getEndNode
-          val pipelineTraverse = pipelinesNode.traverse(Order.BREADTH_FIRST, StopEvaluator.DEPTH_ONE,
-            ReturnableEvaluator.ALL_BUT_START_NODE, DynamicRelationshipType.withName("PIPELINE"), Direction.OUTGOING)
-          val nodes = pipelineTraverse.getAllNodes
-          nodes.size should be === 1
-          nodes.iterator.next.getProperty("name") should be === "pipeline"
-        }
-      }
+
+      val nodes = allPipelineNodes
+      nodes.size should be === 1
+      nodes.iterator.next.getProperty("name") should be === "pipeline"
+
     }
 
     it("should shutdown trigger and start new one when pipeline config changed") {
@@ -94,7 +87,7 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
     }
   }
 
-  override def afterEach(){
+  override def afterEach() {
     cleanData
   }
 
