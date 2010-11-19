@@ -45,12 +45,17 @@ class WebSocketClient(val server: URI, val test : Actor) extends SimpleChannelUp
 
   override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
     event.getMessage match {
-      case response: HttpResponse => handleWebSocketHandshake(context, response, event.getChannel)
+      case response: org.jboss.netty.handler.codec.http.HttpResponse => handleWebSocketHandshake(context, response, event.getChannel)
       case frame: WebSocketFrame => handleMegrezHandshake(context, frame, event.getChannel)
     }
   }
 
-  private def handleWebSocketHandshake(context: ChannelHandlerContext, response: HttpResponse, channel: Channel) {
+
+  override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
+    e.getCause.printStackTrace
+  }
+
+  private def handleWebSocketHandshake(context: ChannelHandlerContext, response: org.jboss.netty.handler.codec.http.HttpResponse, channel: Channel) {
     val validStatus = response.getStatus.getCode == 101 && response.getStatus.getReasonPhrase == "Web Socket Protocol Handshake"
     val validHeaders = response.getHeader(Names.UPGRADE) == WEBSOCKET && response.getHeader(CONNECTION) == Values.UPGRADE
     if (!validStatus || !validHeaders) throw new Exception()

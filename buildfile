@@ -29,7 +29,6 @@ define "megrez" do
   project.group = GROUP  
 
   test.using :scalatest
-  test.using :properties => { 'agent.vcs.root' => "#{File.dirname(__FILE__)}/agent/src/test/resources/vcs" }
   test.with MOCKITO
 
   define "core" do
