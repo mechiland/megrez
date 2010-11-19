@@ -49,9 +49,8 @@ define "megrez" do
   end
 
   define "server" do
-    compile.with NETTY, SLF4J_API, SLF4J_SIMPLE, transitive(NEO4J)
+    compile.with NETTY, SLF4J_API, SLF4J_SIMPLE, Dir["lib/neo/*.jar"]
 	compile.with project("core").package
-	compile.with 
     test.resources
     package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.server.Main' }
 
