@@ -196,7 +196,11 @@
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/lib" recursive="false" />
     </library>
+<<<<<<< HEAD
     <library name="neo">
+=======
+    <library name="neo4j">
+>>>>>>> 7ef289207015ee5ba32fffaf4165c3a8db397a2d
       <CLASSES>
         <root url="file://$PROJECT_DIR$/lib/neo" />
       </CLASSES>
