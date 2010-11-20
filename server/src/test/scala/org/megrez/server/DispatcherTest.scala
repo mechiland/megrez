@@ -8,9 +8,10 @@ import actors.{Actor, TIMEOUT}
 import org.megrez.{JobAssignment, Material, Job}
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
+  val job = new Job("unit test", Set(), List())
+
   describe("Dispatcher") {
-    it("should assign job to idle agent") {
-      val job = new Job("unit test", Set(), List())
+    it("should assign job to idle agent") {      
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
 
       val dispatcher = new Dispatcher(Context)
@@ -27,7 +28,6 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     }
 
     it("should try next agent if the first one reject the job") {
-      val job = new Job("unit test", Set(), List())
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
       val main = self
       val agent1 = actor {
@@ -64,7 +64,6 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     }
 
     it("should assign job when idle agent connected") {
-      val job = new Job("unit test", Set(), List())
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
 
       val dispatcher = new Dispatcher(Context)
@@ -86,7 +85,6 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
     it("should notify build scheduler job completed") {
       val build = UUID.randomUUID
-      val job = new Job("unit test", Set(), List())
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
 
       val dispatcher = new Dispatcher(Context)
@@ -113,7 +111,6 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
 
     it("should notify build scheduler job failed") {
       val build = UUID.randomUUID
-      val job = new Job("unit test", Set(), List())
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
 
       val dispatcher = new Dispatcher(Context)

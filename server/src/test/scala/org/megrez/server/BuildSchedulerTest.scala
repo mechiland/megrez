@@ -11,11 +11,14 @@ import org.megrez._
 
 class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
   def createStage(name: String, job: Job*) = new Stage(name, job.toSet)
+  val job1 = new Job("job1", Set[String](), List[Task]())
+  val job2 = new Job("job2", Set[String](), List[Task]())
+  val job3 = new Job("job3", Set[String](), List[Task]())
+  
 
   describe("Build scheduler") {
     it("should send the first job in pipeline to dispatcher") {
-      val job = new Job("job1", Set[String](), List[Task]())
-      val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job)))
+      val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1)))
 
       object Context {
         val dispatcher = self
@@ -30,7 +33,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       receiveWithin(1000) {
         case SchedulerToDispatcher.JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
           assignments should have size (1)
-          assignments.head.job should equal(job)
+          assignments.head.job should equal(job1)
           assignments.head.materials should be === changes
         case TIMEOUT => fail
         case _ => fail
@@ -38,8 +41,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     }
 
     it("should send jobs from next stage if first stage completed") {
-      val job1 = new Job("job1", Set[String](), List[Task]())
-      val job2 = new Job("job2", Set[String](), List[Task]())
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
       object Context {
@@ -70,8 +71,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     }
 
     it("should fail the build if stage failed") {
-      val job1 = new Job("job1", Set[String](), List[Task]())
-      val job2 = new Job("job2", Set[String](), List[Task]())
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
       object Context {
@@ -100,9 +99,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     }
 
     it("should fail the build if all stage jobs failed") {
-      val job1 = new Job("job1", Set[String](), List[Task]())
-      val job2 = new Job("job2", Set[String](), List[Task]())
-      val job3 = new Job("job2", Set[String](), List[Task]())
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1, job2), createStage("unit test", job3)))
 
       object Context {
@@ -139,8 +135,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     }
 
     it("should complete build if all jobs completed") {
-      val job1 = new Job("job1", Set[String](), List[Task]())
-      val job2 = new Job("job2", Set[String](), List[Task]())
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
       object Context {

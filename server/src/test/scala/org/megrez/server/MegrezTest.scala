@@ -12,9 +12,10 @@ import scala.io.Source
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Spec}
 
 class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with BeforeAndAfterAll with Neo4jHelper{
+  val job = new Job("linux-firefox", Set(), List[Task]())
+  
   describe("Core Actors") {
-    it("should trig build for pipeline when pipeline first added") {
-      val job = new Job("linux-firefox", Set(), List[Task]())
+    it("should trig build for pipeline when pipeline first added") {      
       val pipeline = new Pipeline("pipeline", Set(new Material(new Subversion(url))), List(new Stage("name", Set(job))))
 
       megrez.pipelineManager ! ToPipelineManager.AddPipeline(pipeline)
@@ -32,8 +33,7 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with B
       }
     }
 
-    it("should trig build for pipeline when pipeline material changes") {
-      val job = new Job("linux-firefox", Set(), List[Task]())
+    it("should trig build for pipeline when pipeline material changes") {      
       val pipeline = new Pipeline("pipeline", Set(new Material(new Subversion(url))), List(new Stage("name", Set(job))))
       val handler = new ActorBasedAgentHandler(self)
 
