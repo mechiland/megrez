@@ -17,7 +17,8 @@ class OnChanges(val materials: Materials, val scheduler: Actor, every: Long) ext
             scheduler ! TriggerToScheduler.TrigBuild(materials.pipeline, materials.changes)
           }
         case Some(everyTime: Long) => if (everyTime < 0) {
-          materials.hasChanges
+          if (materials.previous.values.head == None)
+            materials.hasChanges
           info("manual trigger, pipeline:" + materials.pipeline.name)
           scheduler ! TriggerToScheduler.TrigBuild(materials.pipeline, materials.changes)
         }

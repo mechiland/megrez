@@ -4,7 +4,7 @@ import org.megrez.util.Workspace
 import collection.mutable.HashMap
 import org.megrez.{Pipeline, Material}
 
-class Materials(val pipeline: Pipeline, previous: Map[Material, Option[Any]], val workspace: Workspace) {
+class Materials(val pipeline: Pipeline, val previous: Map[Material, Option[Any]], val workspace: Workspace) {
   private val lastChanges = HashMap[Material, Option[Any]](previous.toSeq: _*)
 
   def this(pipeline: Pipeline, workspace: Workspace) = this (pipeline, pipeline.materials.map(_ -> None).toMap, workspace)
