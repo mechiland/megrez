@@ -7,7 +7,7 @@ import java.util.TimerTask
 import org.megrez.server.TriggerToScheduler
 import org.megrez.Stop
 
-class OnChanges(val materials : Materials, val scheduler : Actor, every : Long) extends Trigger with Logging {
+class OnChanges(val materials: Materials, val scheduler: Actor, every: Long) extends Trigger with Logging {
   private val buildTrigger = actor {
     loop {
       react {
@@ -16,17 +16,26 @@ class OnChanges(val materials : Materials, val scheduler : Actor, every : Long) 
             info("Changes detected, pipeline: " + materials.pipeline.name)
             scheduler ! TriggerToScheduler.TrigBuild(materials.pipeline, materials.changes)
           }
+        case Some(everyTime: Long) => if (everyTime < 0) {
+          materials.hasChanges
+          info("manual trigger, pipeline:" + materials.pipeline.name)
+          scheduler ! TriggerToScheduler.TrigBuild(materials.pipeline, materials.changes)
+        }
         case Stop => exit
         case _ =>
       }
     }
   }
 
-  private var task : TimerTask = null
+  private var task: TimerTask = null
 
   def start {
     buildTrigger.start
-    task = Trigger.schedule(every, buildTrigger)
+    if (every >= 0)
+      task = Trigger.schedule(every, buildTrigger)
+    else {
+      buildTrigger ! Some(every)
+    }
   }
 
   def stop {

@@ -60,14 +60,14 @@ class ServerWebsocketTest extends Spec with ShouldMatchers with BeforeAndAfterEa
       }
     }
 
-    it("should communicte with multi client via websocket") {      
+    it("should communicte with multi client via websocket") {
       def agent(channel: Channel, actor: Actor) = new SimpleChannelUpstreamHandler() {
         actor ! channel
         override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
           event.getMessage match {
             case frame: WebSocketFrame =>
               if (frame.getTextData == "megrez-agent:1.0")
-                channel.write(new DefaultWebSocketFrame("megrez-server:1.0"))              
+                channel.write(new DefaultWebSocketFrame("megrez-server:1.0"))
             case _ =>
           }
         }
@@ -85,7 +85,7 @@ class ServerWebsocketTest extends Spec with ShouldMatchers with BeforeAndAfterEa
         case TIMEOUT => fail
         case _ => fail
       }
-      
+
       client2 = new WebSocketClient(new URI("ws://localhost:8080/agent"), self)
       val channelOfClient2 = receiveWithin(1000) {
         case channel : Channel => channel
@@ -113,7 +113,7 @@ class ServerWebsocketTest extends Spec with ShouldMatchers with BeforeAndAfterEa
 
   var server: Server = _
   var client: WebSocketClient = _
-  var client2 : WebSocketClient = _ 
+  var client2 : WebSocketClient = _
 
   override protected def afterEach() {
     server.shutdown

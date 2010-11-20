@@ -26,15 +26,15 @@ class OnChangesTest extends Spec with ShouldMatchers with MockitoSugar {
       when(source.changes(workingDir, Some(5))).thenReturn(Some(6))
 
       val materials = new Materials(pipeline, workspace)
-      
+
       val trigger = new OnChanges(materials, self, 500)
 
       trigger.start
 
       receiveWithin(100) {
-        case TriggerToScheduler.TrigBuild(pipeline : Pipeline, changes : Map[Material, Option[Any]]) =>
+        case TriggerToScheduler.TrigBuild(pipeline: Pipeline, changes: Map[Material, Option[Any]]) =>
           pipeline should be === pipeline
-          changes should have size(1)
+          changes should have size (1)
           val (source, workset) = changes.head
           source should be === material
           workset should equal(Some(5))
@@ -47,9 +47,9 @@ class OnChangesTest extends Spec with ShouldMatchers with MockitoSugar {
       }
 
       receiveWithin(500) {
-        case TriggerToScheduler.TrigBuild(pipeline : Pipeline, changes : Map[Material, Option[Any]]) =>
+        case TriggerToScheduler.TrigBuild(pipeline: Pipeline, changes: Map[Material, Option[Any]]) =>
           pipeline should be === pipeline
-          changes should have size(1)
+          changes should have size (1)
           val (source, workset) = changes.head
           source should be === material
           workset should equal(Some(6))
@@ -59,6 +59,39 @@ class OnChangesTest extends Spec with ShouldMatchers with MockitoSugar {
           fail
         case _ =>
           trigger.stop
+          fail
+      }
+    }
+    it("should trigger build by manual trigger") {
+      val source = mock[ChangeSource]
+      val workingDir = new File("workingdir")
+      when(source.changes(workingDir, None)).thenReturn(Some(5))
+      val material = new Material(source)
+      val pipeline = new Pipeline("pipeline", Set(material), List[org.megrez.Pipeline.Stage]())
+
+      val workspace = mock[Workspace]
+
+      when(workspace.createFolder("pipeline")).thenReturn(workingDir)
+
+      val materials = new Materials(pipeline, workspace)
+
+      val checkInterval: Long = -1
+      val manualTrigger = new OnChanges(materials, self, checkInterval)
+
+      manualTrigger.start
+      receiveWithin(100) {
+        case TriggerToScheduler.TrigBuild(pipeline: Pipeline, changes: Map[Material, Option[Any]]) =>
+          pipeline should be === pipeline
+          changes should have size (1)
+          val (source, workset) = changes.head
+          source should be === material
+          workset should equal(Some(5))
+          manualTrigger.stop
+        case TIMEOUT =>
+          manualTrigger.stop
+          fail
+        case _ =>
+          manualTrigger.stop
           fail
       }
     }
