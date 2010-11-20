@@ -15,6 +15,7 @@ object ToPipelineManager {
   case class AddPipeline(val pipeline : Pipeline)
   case class PipelineChanged(val pipeline : Pipeline)
   case class RemovePipeline(val pipeline : Pipeline)
+  case class TriggerPipeline(val pipeline: Pipeline)
 }
 
 object AgentToDispatcher {

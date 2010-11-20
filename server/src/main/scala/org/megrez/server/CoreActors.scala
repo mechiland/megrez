@@ -24,6 +24,8 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
           addPipeline(pipeline)
         case ToPipelineManager.RemovePipeline(pipeline) =>
           removePipeline(pipeline.name)
+        case ToPipelineManager.TriggerPipeline(pipeline) =>
+          triggerPipeline(pipeline)
         case Stop =>
           pipelines.values.foreach(_._2 stop)
           exit
@@ -52,7 +54,8 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
     pipelines.put(config.name, Pair(config, launchTrigger(config)))
   }
 
-
+  private def triggerPipeline(config:Pipeline)={
+  }
   private def launchTrigger(config: Pipeline): Trigger = {
     val trigger = megrez.triggerFactory(config)
     trigger.start
