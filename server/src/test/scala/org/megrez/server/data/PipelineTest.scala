@@ -4,29 +4,25 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Spec, BeforeAndAfterEach}
 import java.io.File
 import org.neo4j.kernel.EmbeddedGraphDatabase
-import org.neo4j.graphdb.{Direction, GraphDatabaseService}
+import org.neo4j.graphdb.{DynamicRelationshipType, Direction, GraphDatabaseService}
 
 class PipelineTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-  import scala.collection.JavaConversions._
-
   describe("Pipeline repository") {
-    it("should create a reference node") {
-      transaction {
-        val root = new Root(neo)
-        new Pipelines(root)
-      }
+    import scala.collection.JavaConversions._
 
-      val references = neo.getReferenceNode.getRelationships(Relationships.pipelines, Direction.OUTGOING).toList
-      references should have size (1)
+    it("created pipeline should be connected to root") {
+      val pipeline = Pipeline.create(Map("name" -> "name", "stages" -> List()))
+      val pipelines = neo.getReferenceNode.getSingleRelationship(DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING).getEndNode
+      val relationships = pipelines.getRelationships(DynamicRelationshipType.withName("ACTIVE_PIPELINE"), Direction.OUTGOING).toList
+      relationships should have size(1)            
     }
 
-    it("should create a pipeline with name") {
-      val pipeline = transaction {
-        val pipelines = new Pipelines(new Root(neo))
-        pipelines.create(Map("name" -> "name"))
-      }
-      pipeline.name() should equal("name")
-    }    
+    it("should create pipeline with details") {
+        val pipeline = Pipeline.create(Map("name" -> "name", "stages" -> List(Map("name" -> "ut"))))
+        pipeline.name() should equal("name")
+        pipeline.stages() should have size(1)
+        pipeline.stages().head.name() should equal("ut")
+    }
   }
 
   val root: File = new File(System.getProperty("user.dir"), "database/megrez")
@@ -35,6 +31,7 @@ class PipelineTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   override def beforeEach() {
     root.mkdirs
     neo = new EmbeddedGraphDatabase(root.getAbsolutePath)
+    Graph.from(neo)
   }
 
   override def afterEach() {
