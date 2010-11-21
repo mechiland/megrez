@@ -83,5 +83,11 @@ object Build {
       if (failedJobs.size + completedJobs.size == stage.jobs.size)
         stageStatus = Stage.Status.Failed
     }
+
+    def jobStatus(job: Job) = {
+      if(completedJobs.contains(job)) Stage.Status.Completed
+      else if(failedJobs.contains(job)) Stage.Status.Failed
+      else Stage.Status.Ongoing
+    }
   }
 }

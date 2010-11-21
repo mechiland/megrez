@@ -2,12 +2,13 @@ package org.megrez.server
 
 import actors.Actor
 import java.util.UUID
-import collection.mutable.{HashSet, HashMap}
+import json.JSON
 import trigger.{Materials, OnChanges, Trigger}
 import org.megrez.util.{FileWorkspace, Logging}
 import java.io.File
 import org.megrez._
-import org.neo4j.graphdb.{DynamicRelationshipType, Direction, Relationship, Node}
+import org.neo4j.graphdb.{DynamicRelationshipType, Direction, Node}
+import collection.mutable.{ListBuffer, HashSet, HashMap}
 
 class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor with Logging {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
@@ -43,7 +44,7 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
             pipelinesNode = neo.createNode
             pipelinesNode.setProperty("name", "pipelines")
             neo.getReferenceNode.createRelationshipTo(pipelinesNode, DynamicRelationshipType.withName("PIPELINES"))
-          }else{
+          } else {
             pipelinesNode = rel.getEndNode
           }
           val pipelineNode = neo.createNode
@@ -54,8 +55,9 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
     pipelines.put(config.name, Pair(config, launchTrigger(config)))
   }
 
-  private def triggerPipeline(config:Pipeline)={
+  private def triggerPipeline(config: Pipeline) = {
   }
+
   private def launchTrigger(config: Pipeline): Trigger = {
     val trigger = megrez.triggerFactory(config)
     trigger.start
@@ -120,6 +122,8 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
   private def scheduleJobs(id: UUID, build: Build) {
     megrez.dispatcher ! SchedulerToDispatcher.JobScheduled(id, build.current.jobs.map(JobAssignment(build.pipeline.name, build.changes, _)).toSet)
   }
+
+  def ongoingPipelines = builds.values
 
   start
 }
@@ -206,11 +210,17 @@ class AgentManager(megrez: {val dispatcher: Actor}) extends Actor with Logging {
 }
 
 class BuildManager extends Actor with Logging {
+  private val pipelines = HashMap[Pipeline, Build]()
+
   def act() {
     loop {
       react {
         case SchedulerToBuildManager.BuildCompleted(build) =>
+          pipelines.put(build.pipeline, build)
           info("build successful for pipeline " + build.pipeline.name)
+        case SchedulerToBuildManager.BuildFailed(build) =>
+          pipelines.put(build.pipeline, build)
+          info("build failed for pipeline " + build.pipeline.name)
         case Stop =>
           exit
         case _ =>
@@ -218,19 +228,34 @@ class BuildManager extends Actor with Logging {
     }
   }
 
+  def completedPipelines = pipelines.values
+
   start
 }
 
 
 class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
   val agentManager: Actor = new AgentManager(this)
-  val buildScheduler: Actor = new BuildScheduler(this)
-  val buildManager: Actor = new BuildManager()
+  val buildScheduler = new BuildScheduler(this)
+  val buildManager = new BuildManager()
   val dispatcher: Actor = new Dispatcher(this)
   val pipelineManager = new PipelineManager(this)
   val workspace = new FileWorkspace(new File(System.getProperty("user.dir"), "pipelines"))
 
   val triggerFactory: Pipeline => Trigger = pipeline => new OnChanges(new Materials(pipeline, workspace), buildScheduler, checkInterval)
+
+  def pipelinesJson = {
+    val builds = new ListBuffer[Build]()
+    def accumulator(list: ListBuffer[Build], build: Build) = {
+      list.append(build)
+      list
+    }
+    //TODO: add pipelines from PipelineManager
+    (builds /: buildScheduler.ongoingPipelines) {accumulator _}
+    (builds /: buildManager.completedPipelines) {accumulator _}
+    import JSON._
+    """{"pipelines":""" + builds.map(JSON.write(_)).mkString("[", ",", "]") + "}"
+  }
 
   def stop() {
     dispatcher ! Stop

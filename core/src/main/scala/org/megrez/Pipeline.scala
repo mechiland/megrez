@@ -6,7 +6,11 @@ import java.io.File
 class Pipeline(val name: String, val materials: Set[Material], val stages: List[Stage])
 
 object Pipeline {
-  class Stage(val name: String, val jobs: Set[Job])
+  class Stage(val name: String, val jobs : Set[Job]) {
+    def before(stage: Stage)(implicit pipeline: Pipeline) = {
+      pipeline.stages.indexOf(this) < pipeline.stages.indexOf(stage)
+    }
+  }
 }
 
 class Job(val name: String, val resources: Set[String], val tasks: List[Task], val artifacts: List[Artifact] = List())

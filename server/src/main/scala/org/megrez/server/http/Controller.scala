@@ -3,7 +3,7 @@ package org.megrez.server.http
 import actors._
 import org.megrez.Pipeline
 import org.megrez.util.JSON
-import org.megrez.server.{Megrez, ToPipelineManager}
+import org.megrez.server._
 class PipelineController(val pipelineManager: Actor) extends Actor {
   def act {
     loop {
@@ -23,13 +23,13 @@ class PipelineController(val pipelineManager: Actor) extends Actor {
   start
 }
 
-class BuildsController(val buildManager: Actor) extends Actor {
+class BuildsController(val megrez: Megrez) extends Actor {
   def act {
     loop {
       react {
         case Request(Method.GET, _, content) =>
-          try {//TODO: calculate builds status json
-            reply(new HttpResponse("builds status json"))
+          try {
+            reply(new HttpResponse(megrez.pipelinesJson))
           } catch {
             case _: Exception => reply(HttpResponse.ERROR)
           }
@@ -43,5 +43,5 @@ class BuildsController(val buildManager: Actor) extends Actor {
 
 class Controllers(val megrez: Megrez) {
   val pipeline = new PipelineController(megrez.pipelineManager)
-  val builds = new BuildsController(megrez.buildManager)
+  val builds = new BuildsController(megrez)
 }
