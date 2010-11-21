@@ -16,7 +16,7 @@ class AgentHandlerTest extends HandlerTest with ShouldMatchers {
   describe("Agent handler") {
     it("should receive job assignment and send message to worker and repsone to server") {
       val event = mock[MessageEvent]
-      val pipelineJson = """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}, "workset" : {"revision" : 1} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "ls"}] } }"""
+      val pipelineJson = """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}, "workset" : {"revision" : 1} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "ls"}], "artifacts" : [{"path" : "/target/**/*.jar", "tags" : ["artifact"]}] } }"""
       val message = new DefaultWebSocketFrame(pipelineJson)
       when(event.getMessage).thenReturn(message, Array[Any]())      
       handler.messageReceived(context, event)

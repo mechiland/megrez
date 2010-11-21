@@ -36,12 +36,12 @@ class JsonTest extends Spec with ShouldMatchers {
     }
 
     it("should serialize job") {
-      val job = new Job("job", Set("LINUX"), List(new CommandLineTask("ls")))
-      JSON.write(job) should equal("""{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}""")
+      val job = new Job("job", Set("LINUX"), List(new CommandLineTask("ls")), List(new Artifact("/target/**/*.jar", Set("artifact"))))
+      JSON.write(job) should equal("""{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}""")
     }
 
     it("should deserialize job") {
-      val json = """{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}"""
+      val json = """{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}"""
       val job = JSON.read[Job](json)
       job.name should equal("job")
       job.resources should equal(Set("LINUX"))
@@ -49,6 +49,10 @@ class JsonTest extends Spec with ShouldMatchers {
       val task = job.tasks.head
       task.isInstanceOf[CommandLineTask] should equal(true)
       task.asInstanceOf[CommandLineTask].command should equal("ls")
+      job.artifacts should have size (1)
+      val artifact: Artifact = job.artifacts.head
+      artifact.path should equal("/target/**/*.jar")
+      artifact.tags should equal(Set("artifact"))
     }
 
     it("should serialize stage") {
@@ -58,7 +62,7 @@ class JsonTest extends Spec with ShouldMatchers {
     }
 
     it("should deserialize stage") {
-      val json = """{"name":"stage", "jobs":[{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}]}"""
+      val json = """{"name":"stage", "jobs":[{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}]}"""
       val stage = JSON.read[Stage](json)
       stage.name should equal("stage")
       stage.jobs should have size (1)
@@ -74,21 +78,21 @@ class JsonTest extends Spec with ShouldMatchers {
     it("should serialize pipeline") {
       val material = new Material(new Subversion("svn_url"), "dest")
       val job = new Job("job", Set("LINUX"), List(new CommandLineTask("ls")))
-      val stage = new Stage("stage", Set(job))      
+      val stage = new Stage("stage", Set(job))
       val pipeline = new Pipeline("pipeline", Set(material), List(stage))
-      JSON.write(pipeline) should equal("""{"name":"pipeline","materials":[{"type":"svn","url":"svn_url","dest":"dest"}],"stages":[{"name":"stage","jobs":[{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}]}]}""")                                           
+      JSON.write(pipeline) should equal("""{"name":"pipeline","materials":[{"type":"svn","url":"svn_url","dest":"dest"}],"stages":[{"name":"stage","jobs":[{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}]}]}""")
     }
 
     it("should deserialize pipeline") {
-      val json = """{"name":"pipeline","materials":[{"type":"svn","url":"svn_url","dest":"dest"}],"stages":[{"name":"stage","jobs":[{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}]}]}"""
+      val json = """{"name":"pipeline","materials":[{"type":"svn","url":"svn_url","dest":"dest"}],"stages":[{"name":"stage","jobs":[{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}]}]}"""
       val pipeline = JSON.read[Pipeline](json)
       pipeline.name should equal("pipeline")
-      pipeline.materials should have size(1)
+      pipeline.materials should have size (1)
       val material = pipeline.materials.head
       material.source.isInstanceOf[Subversion] should equal(true)
       material.source.asInstanceOf[Subversion].url should equal("svn_url")
       material.destination should equal("dest")
-      pipeline.stages should have size(1)
+      pipeline.stages should have size (1)
       val stage = pipeline.stages.head
       stage.name should equal("stage")
       stage.jobs should have size (1)
@@ -177,12 +181,12 @@ class JsonTest extends Spec with ShouldMatchers {
     }
 
     it("should deserialize job assignment for git") {
-      val json = """{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"git","url":"git_url","dest":"dest"},"workset":{"commit":"abc"}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}"""
+      val json = """{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"git","url":"git_url","dest":"dest"},"workset":{"commit":"abc"}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}}"""
       val assignment = JSON.read[JobAssignment](json)
-      assignment.materials should have size(1)
+      assignment.materials should have size (1)
       val (material, workset) = assignment.materials.head
       material.source match {
-        case git : Git =>
+        case git: Git =>
           git.url should equal("git_url")
         case _ => fail
       }
@@ -194,14 +198,14 @@ class JsonTest extends Spec with ShouldMatchers {
 
 
     it("should deserialize job assignment") {
-      val json = """{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"svn","url":"svn_url","dest":"dest"},"workset":{"revision":5}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}"""
+      val json = """{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"svn","url":"svn_url","dest":"dest"},"workset":{"revision":5}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}}"""
       JSON.read[AgentMessage](json) match {
         case JobAssignment(pipeline, materials, job) =>
           pipeline should equal("pipeline")
-          materials should have size(1)
+          materials should have size (1)
           val (material, workset) = materials.head
           material.source match {
-            case subversion : Subversion =>
+            case subversion: Subversion =>
               subversion.url should equal("svn_url")
             case _ => fail
           }
@@ -222,7 +226,7 @@ class JsonTest extends Spec with ShouldMatchers {
     it("should deserialize job complete") {
       val json = """{"type":"jobcompleted"}"""
       JSON.read[AgentMessage](json) match {
-        case message : JobCompleted =>
+        case message: JobCompleted =>
         case _ => fail
       }
     }
