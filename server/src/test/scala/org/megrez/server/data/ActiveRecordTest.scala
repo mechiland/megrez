@@ -6,9 +6,15 @@ import java.io.File
 import org.neo4j.kernel.EmbeddedGraphDatabase
 import org.neo4j.graphdb.{DynamicRelationshipType, Direction, GraphDatabaseService}
 
-class PipelineTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-  describe("Pipeline repository") {
+class ActiveRecordTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
+  describe("Active Record like layer on top of neo4j") {
     import scala.collection.JavaConversions._
+
+    it("should create stage with details") {      
+      val stage = transaction {Stage(neo.createNode, Map("name"->"ut", "jobs" -> List(Map("name" -> "unit-test"))))}
+      stage.name() should equal("ut")
+      stage.jobs() should have size(1)
+    }
 
     it("created pipeline should be connected to root") {
       val pipeline = Pipeline.create(Map("name" -> "name", "stages" -> List()))
