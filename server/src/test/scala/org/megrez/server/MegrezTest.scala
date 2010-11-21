@@ -12,7 +12,7 @@ import scala.io.Source
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Spec}
 
 class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with BeforeAndAfterAll with Neo4jHelper{
-  val job = new Job("linux-firefox", Set(), List[Task]())
+  val job = new Job("linux-firefox", Set(), List[Task](),List[Artifact]( new Artifact("/target/**/*.jar", Set("artifact"))))
   
   describe("Core Actors") {
     it("should trig build for pipeline when pipeline first added") {      

@@ -127,97 +127,102 @@ object JSON {
   implicit object AntTaskSerializer extends JsonSerializer[AntTask] {
     def read(json: Map[String, Any]) = new AntTask(json /? ("target", null), json /? ("buildfile", null))
 
-    def write(resource: AntTask) = Map("type" -> "ant", "target" -> resource.target, "buildfile" -> resource.buildfile)    
+    def write(resource: AntTask) = Map("type" -> "ant", "target" -> resource.target, "buildfile" -> resource.buildfile)
   }
 
   TaskSerializer.register[AntTask]("ant")
 
   implicit object JobSerializer extends JsonSerializer[Job] {
-    def read(json: Map[String, Any]) = new Job(json / "name", json / ("resources", _.toSet), json > ("tasks", readObject[Task](_)))
+    def read(json: Map[String, Any]) = new Job(json / "name", json / ("resources", _.toSet), json > ("tasks", readObject[Task](_)), json > ("artifacts", readObject[Artifact](_)))
 
-    def write(job: Job) = Map("name" -> job.name, "resources" -> job.resources, "tasks" -> job.tasks.map(writeObject(_)))
+    def write(job: Job) = {
+      if (job.artifacts.isEmpty)
+        Map("name" -> job.name, "resources" -> job.resources, "tasks" -> job.tasks.map(writeObject(_)))
+      else
+        Map("name" -> job.name, "resources" -> job.resources, "tasks" -> job.tasks.map(writeObject(_)), "artifacts" -> job.artifacts.map(writeObject[Artifact](_)))
+    }
   }
 
-  implicit object StageSerializer extends JsonSerializer[Pipeline.Stage] {
-    def read(json: Map[String, Any]) = new Pipeline.Stage(json / "name", (json > ("jobs", readObject[Job](_))).toSet)
+implicit object StageSerializer extends JsonSerializer[Pipeline.Stage] {
+  def read(json: Map[String, Any]) = new Pipeline.Stage(json / "name", (json > ("jobs", readObject[Job](_))).toSet)
 
-    def write(stage: Pipeline.Stage) = Map("name" -> stage.name, "jobs" -> stage.jobs.map(writeObject(_)).toList)
+  def write(stage: Pipeline.Stage) = Map("name" -> stage.name, "jobs" -> stage.jobs.map(writeObject(_)).toList)
+}
+
+implicit object PipelineSerializer extends JsonSerializer[Pipeline] {
+  def read(json: Map[String, Any]) = new Pipeline(json / "name", (json > ("materials", readObject[Material](_))).toSet, json > ("stages", readObject[Pipeline.Stage](_)))
+
+  def write(pipeline: Pipeline) = Map("name" -> pipeline.name, "materials" -> pipeline.materials.map(writeObject(_)).toList, "stages" -> pipeline.stages.map(writeObject(_)))
+}
+
+implicit object ArtifactSerializer extends JsonSerializer[Artifact] {
+  def read(json: Map[String, Any]) = new Artifact(json / "path", json / ("tags", _.toSet))
+
+  def write(artifact: Artifact) = Map("path" -> artifact.path, "tags" -> artifact.tags)
+}
+
+implicit object AgentMessageSerializer extends TypeBasedSerializer[AgentMessage]
+
+implicit object JobAssignmentSerializer extends JsonSerializer[JobAssignment] {
+  private def readMaterials(json: Map[String, Any]) = {
+    val material = readObject[Material](json / "material")
+    val workset = ChangeSourceSerializer.readWorkset(material.source, json / "workset")
+    material -> workset
   }
 
-  implicit object PipelineSerializer extends JsonSerializer[Pipeline] {
-    def read(json: Map[String, Any]) = new Pipeline(json / "name", (json > ("materials", readObject[Material](_))).toSet, json > ("stages", readObject[Pipeline.Stage](_)))
+  def read(json: Map[String, Any]) =
+    JobAssignment(json / "pipeline", (json > ("materials", readMaterials)).toMap, readObject[Job](json / "job"))
 
-    def write(pipeline: Pipeline) = Map("name" -> pipeline.name, "materials" -> pipeline.materials.map(writeObject(_)).toList, "stages" -> pipeline.stages.map(writeObject(_)))
-  }
+  def write(assignment: JobAssignment) =
+    Map("type" -> "assignment", "pipeline" -> assignment.pipeline,
+      "materials" -> assignment.materials.map(keyValue =>
+        Map("material" -> writeObject(keyValue._1), "workset" -> ChangeSourceSerializer.writeWorkset(keyValue._1.source, keyValue._2))
+        ).toList, "job" -> writeObject(assignment.job))
+}
 
-  implicit object ArtifactSerializer extends JsonSerializer[Artifact] {
-    def read(json: Map[String, Any]) = new Artifact(json / "path", json / ("tags", _.toSet))
+implicit object JobCompletedSerializer extends JsonSerializer[JobCompleted] {
+  def read(json: Map[String, Any]) = JobCompleted()
 
-    def write(artifact: Artifact) = Map("path" -> artifact.path, "tags" -> artifact.tags)
-  }
+  def write(message: JobCompleted) = Map("type" -> "jobcompleted")
+}
 
-  implicit object AgentMessageSerializer extends TypeBasedSerializer[AgentMessage]
+implicit object ConsoleOutputSerializer extends JsonSerializer[ConsoleOutput] {
+  def read(json: Map[String, Any]) = ConsoleOutput(URLDecoder.decode(json / "content", "UTF-8"))
 
-  implicit object JobAssignmentSerializer extends JsonSerializer[JobAssignment] {
-    private def readMaterials(json: Map[String, Any]) = {
-      val material = readObject[Material](json / "material")
-      val workset = ChangeSourceSerializer.readWorkset(material.source, json / "workset")
-      material -> workset
+  def write(message: ConsoleOutput) = Map("type" -> "consoleoutput", "content" -> URLEncoder.encode(message.output, "UTF-8"))
+}
+
+AgentMessageSerializer.register[JobAssignment] ("assignment")
+AgentMessageSerializer.register[JobCompleted] ("jobcompleted")
+AgentMessageSerializer.register[ConsoleOutput] ("consoleoutput")
+
+
+implicit def map2Json (json: Map[String, Any] ): JsonHelper = new JsonHelper (json)
+
+class JsonHelper(val json: Map[String, Any]) {
+  def /[T](name: String): T =
+    json.get(name) match {
+      case Some(result: T) => result
+      case _ => throw new Exception()
     }
 
-    def read(json: Map[String, Any]) =
-      JobAssignment(json / "pipeline", (json > ("materials", readMaterials)).toMap, readObject[Job](json / "job"))
+  def /?[T](name: String, default: T): T =
+    json.get(name) match {
+      case Some(result: T) => result
+      case _ => default
+    }
 
-    def write(assignment: JobAssignment) =
-      Map("type" -> "assignment", "pipeline" -> assignment.pipeline,
-        "materials" -> assignment.materials.map(keyValue =>
-          Map("material" -> writeObject(keyValue._1), "workset" -> ChangeSourceSerializer.writeWorkset(keyValue._1.source, keyValue._2))
-          ).toList, "job" -> writeObject(assignment.job))
-  }
-
-  implicit object JobCompletedSerializer extends JsonSerializer[JobCompleted] {
-    def read(json: Map[String, Any]) = JobCompleted()
-
-    def write(message: JobCompleted) = Map("type" -> "jobcompleted")
-  }
-
-  implicit object ConsoleOutputSerializer extends JsonSerializer[ConsoleOutput] {
-    def read(json: Map[String, Any]) = ConsoleOutput(URLDecoder.decode(json / "content", "UTF-8"))
-
-    def write(message: ConsoleOutput) = Map("type" -> "consoleoutput", "content" -> URLEncoder.encode(message.output, "UTF-8"))
-  }
-
-  AgentMessageSerializer.register[JobAssignment]("assignment")
-  AgentMessageSerializer.register[JobCompleted]("jobcompleted")
-  AgentMessageSerializer.register[ConsoleOutput]("consoleoutput")
+  def >[V](name: String, map: Map[String, Any] => V) =
+    json.get(name) match {
+      case Some(list: List[Map[String, Any]]) =>list.map(map)
+      case _ => throw new Exception()
+    }
 
 
-  implicit def map2Json(json: Map[String, Any]): JsonHelper = new JsonHelper(json)
-
-  class JsonHelper(val json: Map[String, Any]) {
-    def /[T](name: String): T =
-      json.get(name) match {
-        case Some(result: T) => result
-        case _ => throw new Exception()
-      }
-
-    def /?[T](name: String, default: T): T =
-      json.get(name) match {
-        case Some(result: T) => result
-        case _ => default
-      }
-
-    def >[V](name: String, map: Map[String, Any] => V) =
-      json.get(name) match {
-        case Some(list: List[Map[String, Any]]) => list.map(map)
-        case _ => throw new Exception()
-      }
-
-
-    def /[V](name: String, map: List[String] => V) =
-      json.get(name) match {
-        case Some(list: List[String]) => map(list)
-        case _ => throw new Exception()
-      }
-  }
+  def /[V](name: String, map: List[String] => V) =
+    json.get(name) match {
+      case Some(list: List[String]) => map(list)
+      case _ => throw new Exception()
+    }
+}
 }
