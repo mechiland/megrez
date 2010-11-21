@@ -87,6 +87,11 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
     }
   }
 
+
+  override def beforeEach(){
+    cleanData
+  }
+
   override def afterEach() {
     cleanData
   }
