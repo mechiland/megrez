@@ -3,14 +3,8 @@ package org.megrez.server.data
 import org.neo4j.graphdb.Node
 
 
-class Stage(val node: Node) extends Entity {
+class Stage private (val node: Node) extends Entity {
   val name = property(Stage.name)
-
-  def updateAttributes(data: Map[String, Any]) {
-    transaction {
-      name(data("name").asInstanceOf[String])
-    }
-  }
 }
 
 object Stage extends Metadata[Stage] {

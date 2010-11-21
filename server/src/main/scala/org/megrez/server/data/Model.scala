@@ -2,9 +2,13 @@ package org.megrez.server.data
 
 import org.neo4j.graphdb._
 import org.neo4j.graphdb.Traverser.Order
-import collection.mutable.HashSet
+import collection.mutable.{HashMap, HashSet}
 
 trait BelongsToGraph {
+  import Order._
+  import StopEvaluator._
+  import Direction._
+  
   protected var graph: GraphDatabaseService = null
 
   private[data] def assign(graph: GraphDatabaseService) {
@@ -28,6 +32,18 @@ trait BelongsToGraph {
 
   protected def has(node: Node, relationshipType: RelationshipType) = node.getSingleRelationship(relationshipType, Direction.OUTGOING) != null
 
+  protected def appendToList(node: Node, element: Node, start: RelationshipType, next : RelationshipType) {
+    Option(node.getSingleRelationship(start, Direction.OUTGOING)) match {
+      case Some(relationship: Relationship) =>
+        val nodes = relationship.getEndNode.traverse(BREADTH_FIRST, END_OF_GRAPH,
+          returnable(position => !has(position.currentNode, next)), next, OUTGOING).getAllNodes
+        val last = nodes.iterator.next
+        last.createRelationshipTo(element, next)
+      case None =>
+        node.createRelationshipTo(element, start)
+    }
+  }
+
   Graph.register(this)
 }
 
@@ -47,24 +63,65 @@ object Graph {
 }
 
 trait Metadata[EntityType <: Entity] extends BelongsToGraph {
-  def property[T](name: String) = Property[T](name)
-  
-  def list[T <: Entity](metadata : Metadata[T], start: RelationshipType, link: RelationshipType) = NodeList[T](metadata, start, link)
+  private val properties = HashMap[Property[_], PropertyReader[_]]()
+  private val lists = HashSet[NodeList[_ <: Entity]]()
 
-  def apply(node : Node) : EntityType
+  implicit object StringPropertyReader extends PropertyReader[String] {
+    def read(data: Any) = data.toString
+  }  
+
+  def property[T](name: String)(implicit reader: PropertyReader[T]) = {
+    val property = Property[T](name)
+    properties.put(property, reader)
+    property
+  }
+
+  def list[T <: Entity](name:String, metadata: Metadata[T], start: RelationshipType, link: RelationshipType) = {
+    val list = NodeList[T](name, metadata, start, link)
+    lists.add(list)
+    list
+  }
+
+  def apply(node: Node): EntityType
+
+  def apply(node :Node, data: Map[String, Any]) : EntityType = {
+    val entity = apply(node)
+    updateAttributes(entity, data)
+    entity
+  }
+
+  def updateAttributes(entity: EntityType, data: Map[String, Any]) {
+    transaction {
+      for (Pair(property, reader) <- properties)
+        entity.node.setProperty(property.name, reader.read(data(property.name)))
+      for (list <- lists)
+        data.get(list.name) match {
+          case Some(listData : List[Map[String, Any]]) =>
+            listData.foreach { data =>
+              val listEntity = list.metadata(graph.createNode, data)
+              appendToList(entity.node, listEntity.node, list.start, list.next)
+            }                                    
+          case _ =>
+        }
+    }
+  }
+}
+
+trait PropertyReader[T] {
+  def read(data: Any): T
 }
 
 trait Repository[EntityType <: Entity] extends BelongsToGraph {
   val referenceType: RelationshipType
-  
+
   protected def reference = Option(graph.getReferenceNode.getSingleRelationship(referenceType, Direction.OUTGOING)).getOrElse(
-    graph.getReferenceNode.createRelationshipTo(graph.createNode, referenceType)).getEndNode  
+    graph.getReferenceNode.createRelationshipTo(graph.createNode, referenceType)).getEndNode
 }
 
 trait Entity extends BelongsToGraph {
-  val node: Node
+  val node : Node
 
-  class PropertyAccessor[T](val property: Property[T]) {    
+  class PropertyAccessor[T](val property: Property[T]) {
     def apply() = node.getProperty(property.name).asInstanceOf[T]
 
     def apply(value: T) = node.setProperty(property.name, value)
@@ -76,8 +133,8 @@ trait Entity extends BelongsToGraph {
     import Direction._
     import ReturnableEvaluator._
     import scala.collection.JavaConversions._
-    
-    def apply() : List[T] = {
+
+    def apply(): List[T] = {
       val start = Option(node.getSingleRelationship(list.start, OUTGOING))
       start match {
         case Some(relationship: Relationship) =>
@@ -86,26 +143,14 @@ trait Entity extends BelongsToGraph {
       }
     }
 
-    def <<(element: T) {
-      val start = Option(node.getSingleRelationship(list.start, Direction.OUTGOING))
-      start match {
-        case Some(relationship: Relationship) =>
-          val nodes = relationship.getEndNode.traverse(BREADTH_FIRST, END_OF_GRAPH,
-            returnable(position => !has(position.currentNode, list.next)), list.next, OUTGOING).getAllNodes
-          val last = nodes.iterator.next
-          last.createRelationshipTo(element.node, list.next)
-        case None =>
-          node.createRelationshipTo(element.node, list.start)
-      }
-    }
+    def <<(element: T) = appendToList(node, element.node, list.start, list.next)    
   }
 
   protected def property[T](property: Property[T]) = new PropertyAccessor[T](property)
-  protected def list[T <: Entity](list: NodeList[T]) = new ListAccessor[T](list)
 
-  def updateAttributes(attributes : Map[String, Any])
+  protected def list[T <: Entity](list: NodeList[T]) = new ListAccessor[T](list)
 }
 
 
 case class Property[T](name: String)
-case class NodeList[T <: Entity](metadata : Metadata[T], start: RelationshipType, next: RelationshipType)
+case class NodeList[T <: Entity](name: String, metadata: Metadata[T], start: RelationshipType, next: RelationshipType)
