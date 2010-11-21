@@ -9,8 +9,8 @@ import scala.actors._
 import scala.actors.Actor._
 import java.net.URI
 import org.megrez.util._
-import org.megrez.{ConsoleOutput, AgentMessage, JobCompleted}
 import io.Source
+import org.megrez.{ArtifactStream, ConsoleOutput, AgentMessage, JobCompleted}
 
 class IntegrationTest extends ServerIntegration with ShouldMatchers {
   describe("Version control intergration") {
@@ -27,7 +27,7 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
       serverConnection.connect
 
       val jobAssignment =
-        """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + url + '"' + """, "dest" : "$main"}, "workset" : {"revision" : 2} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "echo HELLO"}], "artifacts" : [{"path" : "/target/**/*.jar", "tags" : ["artifact"]}] } }"""
+        """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + url + '"' + """, "dest" : "$main"}, "workset" : {"revision" : 2} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "echo HELLO"}], "artifacts" : [{"path" : "README", "tags" : ["artifact"]}] } }"""
 
       receiveWithin(1000) {
         case "MEGREZ HANDSHAKE" => server.send(new DefaultWebSocketFrame(jobAssignment))
@@ -42,6 +42,7 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
               output should equal("HELLO")
             case _ => fail
           }
+        case ArtifactStream(content)=>
         case TIMEOUT => fail
         case _ => fail
       }      
@@ -50,7 +51,7 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
         case message : String =>
           JSON.read[AgentMessage](message) match {
             case _ : JobCompleted =>
-            case _ => fail
+            case _ =>
           }
         case TIMEOUT => fail
         case _ => fail

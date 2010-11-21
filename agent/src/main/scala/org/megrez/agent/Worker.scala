@@ -1,13 +1,13 @@
 package org.megrez.agent
 
 import actors.Actor
-import java.io.File
 import org.megrez.vcs.VersionControl
 import org.megrez.util.{Logging, Workspace}
 import org.megrez.task.CommandLineTask
 import org.megrez._
-
-class Worker(val workspace: Workspace) extends Actor with Logging{
+import java.io.{FileInputStream, File}
+import java.util.{ArrayList, UUID}
+class Worker(val workspace: Workspace) extends Actor with Logging {
   def act() {
     loop {
       react {
@@ -17,11 +17,18 @@ class Worker(val workspace: Workspace) extends Actor with Logging{
             updateMaterials(assignment)
             for (task <- assignment.job.tasks) {
               task match {
-                case t:CommandLineTask =>
+                case t: CommandLineTask =>
                   t.onConsoleOutputChanges(actor ! ConsoleOutput(_))
                   t.execute(pipelineDir)
                 case _ => task.execute(pipelineDir)
               }
+            }
+            for (artifact <- assignment.job.artifacts) {
+              val path: String = artifact.path
+              val artifactFiles: ArrayList[File] = workspace.findFiles(pipelineDir, path)
+              var zipFileName: String = UUID.randomUUID.toString
+              zipFileName = ZipFileGenerator.getZipFile(zipFileName, artifactFiles)
+              actor ! new ArtifactStream(new FileInputStream(zipFileName))
             }
             actor ! new JobCompleted()
           } catch {

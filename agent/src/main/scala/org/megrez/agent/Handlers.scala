@@ -11,8 +11,9 @@ import org.jboss.netty.handler.codec.http.websocket._
 import java.net._
 import actors.Actor
 import actors.Actor._
-import org.megrez.{AgentMessage, JobCompleted, JobAssignment}
 import org.megrez.util.{Logging, JSON}
+import org.megrez.{ArtifactStream, AgentMessage, JobCompleted, JobAssignment}
+import org.jboss.netty.buffer.{ByteBufferBackedChannelBuffer, ChannelBuffer}
 
 class HandshakeHandler(val server: URI, val callback: ServerHandler) extends SimpleChannelUpstreamHandler {
   override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
@@ -74,6 +75,10 @@ class AgentHandler(val callback: ServerHandler, val worker: Actor) extends Simpl
       react {
         case message: AgentMessage =>
           channel.write(new DefaultWebSocketFrame(JSON.write(message)))
+        case stream: ArtifactStream =>
+          val buffer: ByteBufferBackedChannelBuffer = new ByteBufferBackedChannelBuffer(null)
+          buffer.setBytes(1, stream.input, 1)
+          channel.write(new DefaultWebSocketFrame(0, buffer))
         case channel: Channel =>
           this.channel = channel
         case _ =>

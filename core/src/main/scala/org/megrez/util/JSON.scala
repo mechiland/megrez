@@ -186,6 +186,11 @@ implicit object JobCompletedSerializer extends JsonSerializer[JobCompleted] {
   def write(message: JobCompleted) = Map("type" -> "jobcompleted")
 }
 
+  implicit object JobFailedSerializer extends JsonSerializer[JobFailed] {
+  def read(json: Map[String, Any]) = JobFailed()
+
+  def write(message: JobFailed) = Map("type" -> "jobFailed")
+}
 implicit object ConsoleOutputSerializer extends JsonSerializer[ConsoleOutput] {
   def read(json: Map[String, Any]) = ConsoleOutput(URLDecoder.decode(json / "content", "UTF-8"))
 
@@ -194,6 +199,7 @@ implicit object ConsoleOutputSerializer extends JsonSerializer[ConsoleOutput] {
 
 AgentMessageSerializer.register[JobAssignment] ("assignment")
 AgentMessageSerializer.register[JobCompleted] ("jobcompleted")
+AgentMessageSerializer.register[JobFailed] ("jobFailed")
 AgentMessageSerializer.register[ConsoleOutput] ("consoleoutput")
 
 

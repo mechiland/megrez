@@ -9,6 +9,7 @@ import actors.TIMEOUT
 import actors.Actor._
 import org.megrez._
 import util.Workspace
+import java.util.ArrayList
 
 class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
 
@@ -179,7 +180,45 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
         case _ => fail
       }
     }
+
+
+    it("should fetch artifacts after task executed") {
+      val pipeline = "pipeline"
+      val version = mock[org.megrez.vcs.VersionControl]
+      val task = mock[org.megrez.Task]
+      val job = new Job("test", Set(), List(task), List(new Artifact("abcd.txt", Set("text"))))
+
+      val assignment = JobAssignment(pipeline, Map(new Material(version, "$main") -> Some(5)), job)
+      val artifact = File.createTempFile("abcd", "txt")
+
+      val pipelineDir = new File("pipeline")
+      val workingDirectory = mock[Workspace]
+      when(workingDirectory.getFolder(pipeline)).thenReturn(pipelineDir)
+      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)
+      val list: ArrayList[File] = new ArrayList()
+      list.add(artifact)
+      when(workingDirectory.findFiles(pipelineDir, "abcd.txt")).thenReturn(list)
+      when(version.isRepository(pipelineDir)).thenReturn(true)
+
+      val worker = new Worker(workingDirectory)
+      worker.start
+      worker ! (self, assignment)
+
+      receiveWithin(1000) {
+        case stream :ArtifactStream =>
+        case TIMEOUT => fail
+        case a:Any => println(a.toString)
+      }
+
+      receiveWithin(1000) {
+        case _: JobCompleted =>
+        case TIMEOUT => fail("Timeout")
+        case _ => fail
+      }
+    }
   }
+
+
 
   def createJob(task: Task) = new Job("test", Set(), List(task))
 }
