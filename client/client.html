@@ -1,0 +1,61 @@
+<html>
+<head>
+    <meta http-equiv="Refresh" content="3">
+    <title>Megrez client</title>
+    <style type="text/css">
+        .pipeline {
+            font-weight:bold;
+        }
+        .ongoing {
+            color:orange;
+        }
+        .completed {
+            color:green;
+        }
+        .failed {
+            color:red;
+        }
+        .unknown {
+            color:gray;
+        }
+    </style>
+</head>
+<body>
+    <div id="content"/>
+    <script type="text/javascript">
+        function onStatusChange(json) {
+            var html = ""
+            for(var i=0; i<json.pipelines.length; i++) {
+                var pipeline = json.pipelines[i]
+                html += "<span class='pipeline'>" + pipeline.name + "</span><br>"
+                for(var j=0; j<pipeline.stages.length; j++) {
+                    var stage = pipeline.stages[j]
+                    html += "<span class='stage " + stage.status + "'>" + stage.name + "</span>"
+                    if(j != pipeline.stages.length - 1) {
+                        html += " -> "
+                    }
+                }
+                html += "<p>"
+            }
+            var contentDiv = document.getElementById("content")
+            contentDiv.innerHTML = html
+        }
+    </script>
+    <div id="loader">
+        <script type="text/javascript" src="http://localhost:8051/builds.js"/>
+    </div>
+    <div>for test</div>
+    <script type="text/javascript">
+        function refresh() {
+            alert("refresh")
+            var loader = document.getElementById("loader")
+            if (loader) {
+                var script = loader.innerHTML
+                loader.innerHTML = ""
+                loader.innerHTML = script
+            }
+        }
+        setInterval("refresh()", 5000);
+    </script>
+</body>
+</html>

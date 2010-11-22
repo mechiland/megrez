@@ -13,7 +13,9 @@ class PipelineController(val pipelineManager: Actor) extends Actor {
             pipelineManager ! ToPipelineManager.AddPipeline(JSON.read[Pipeline](Request.parse(content)("pipeline")))
             reply(HttpResponse.OK)
           } catch {
-            case _: Exception => reply(HttpResponse.ERROR)
+            case e: Exception =>
+              e.printStackTrace
+              reply(HttpResponse.ERROR)
           }
         case _ =>
       }
@@ -27,9 +29,13 @@ class BuildsController(val megrez: Megrez) extends Actor {
   def act {
     loop {
       react {
-        case Request(Method.GET, _, content) =>
+        case Request(Method.GET, uri, content) =>
           try {
-            reply(new HttpResponse(megrez.pipelinesJson))
+            if(uri.endsWith(".js")) {
+              reply(new HttpResponse("onStatusChange(" + megrez.pipelinesJson + ")"))
+            }
+            else
+              reply(new HttpResponse(megrez.pipelinesJson))
           } catch {
             case _: Exception => reply(HttpResponse.ERROR)
           }
