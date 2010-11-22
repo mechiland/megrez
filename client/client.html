@@ -4,58 +4,57 @@
     <title>Megrez client</title>
     <style type="text/css">
         .pipeline {
-            font-weight:bold;
+            font-weight: bold;
         }
+
         .ongoing {
-            color:orange;
+            color: orange;
         }
+
         .completed {
-            color:green;
+            color: green;
         }
+
         .failed {
-            color:red;
+            color: red;
         }
+
         .unknown {
-            color:gray;
+            color: gray;
         }
     </style>
 </head>
 <body>
-    <div id="content"/>
-    <script type="text/javascript">
-        function onStatusChange(json) {
-            var html = ""
-            for(var i=0; i<json.pipelines.length; i++) {
-                var pipeline = json.pipelines[i]
-                html += "<span class='pipeline'>" + pipeline.name + "</span><br>"
-                for(var j=0; j<pipeline.stages.length; j++) {
-                    var stage = pipeline.stages[j]
-                    html += "<span class='stage " + stage.status + "'>" + stage.name + "</span>"
-                    if(j != pipeline.stages.length - 1) {
-                        html += " -> "
-                    }
+<div id="content"></div>
+<script type="text/javascript">
+    function onStatusChange(json) {
+        var html = "";
+        for (var i = 0; i < json.pipelines.length; i++) {
+            var pipeline = json.pipelines[i]
+            html += "<p><span class='pipeline'>" + pipeline.name + "</span><br>";
+            for (var j = 0; j < pipeline.stages.length; j++) {
+                var stage = pipeline.stages[j];
+                html += "<span class='stage " + stage.status + "'>" + stage.name + "</span>";
+                if (j != pipeline.stages.length - 1) {
+                    html += " -&#62; ";
                 }
-                html += "<p>"
             }
-            var contentDiv = document.getElementById("content")
-            contentDiv.innerHTML = html
+            html += "</p>";
         }
-    </script>
-    <div id="loader">
-        <script type="text/javascript" src="http://localhost:8051/builds.js"/>
-    </div>
-    <div>for test</div>
-    <script type="text/javascript">
-        function refresh() {
-            alert("refresh")
-            var loader = document.getElementById("loader")
-            if (loader) {
-                var script = loader.innerHTML
-                loader.innerHTML = ""
-                loader.innerHTML = script
-            }
+        document.getElementById("content").innerHTML = html;
+    }
+</script>
+<div id="loader">
+    <script type="text/javascript" src="http://localhost:8051/builds.js"/>
+</div>
+<script type="text/javascript">
+    function refresh() {
+        var loader = document.getElementById("loader")
+        if (loader) {
+            loader.innerHTML = loader.innerHTML;
         }
-        setInterval("refresh()", 5000);
-    </script>
+    }
+    setInterval("refresh()", 5000);
+</script>
 </body>
 </html>
