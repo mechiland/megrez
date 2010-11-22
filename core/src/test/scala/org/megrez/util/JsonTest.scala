@@ -6,7 +6,6 @@ import org.megrez._
 import org.megrez.Pipeline.Stage
 import task.{AntTask, CommandLineTask}
 import vcs.{Git, Subversion}
-
 class JsonTest extends Spec with ShouldMatchers {
   describe("Domain object serialization") {
     it("should serialize svn material") {
@@ -227,6 +226,19 @@ class JsonTest extends Spec with ShouldMatchers {
       val json = """{"type":"jobcompleted"}"""
       JSON.read[AgentMessage](json) match {
         case message: JobCompleted =>
+        case _ => fail
+      }
+    }
+
+    it("should serialize job failed") {
+      val message = JobFailed("file not exist")
+      JSON.write(message) should equal("""{"type":"jobfailed","reason":"file not exist"}""")
+    }
+
+    it("should deserialize job faild") {
+      val json = """{"type":"jobfailed","reason":"file not exist"}"""
+      JSON.read[AgentMessage](json) match {
+        case message: JobFailed => message.reason should be equals "file not exist"
         case _ => fail
       }
     }
