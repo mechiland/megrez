@@ -1,60 +1,52 @@
 <html>
 <head>
-    <meta http-equiv="Refresh" content="3">
     <title>Megrez client</title>
-    <style type="text/css">
-        .pipeline {
-            font-weight: bold;
-        }
-
-        .ongoing {
-            color: orange;
-        }
-
-        .completed {
-            color: green;
-        }
-
-        .failed {
-            color: red;
-        }
-
-        .unknown {
-            color: gray;
-        }
-    </style>
+    <script type="text/javascript" src="js/trimpath-template-1.0.38.js"></script>
+    <link rel="stylesheet" href="css/main.css" type="text/css"/>
 </head>
+
 <body>
 <div id="content"></div>
+
+<textarea id="template" style="display:none">
+{for pipeline in pipelines}
+    <span class="pipeline">${pipeline.name}</span><br>
+    {for stage in pipeline.stages}
+        <span class="stage ${stage.status}">${stage.name}</span>
+        ({for job in stage.jobs}
+            <span class="job ${job.status}">${job.name}</span>{if job_index < stage.jobs.length - 1}, {/if}
+        {/for})
+        {if stage_index < pipeline.stages.length - 1} -> {/if}
+    {/for}
+    <p></p>
+{/for}
+</textarea>
+
 <script type="text/javascript">
     function onStatusChange(json) {
-        var html = "";
-        for (var i = 0; i < json.pipelines.length; i++) {
-            var pipeline = json.pipelines[i]
-            html += "<p><span class='pipeline'>" + pipeline.name + "</span><br>";
-            for (var j = 0; j < pipeline.stages.length; j++) {
-                var stage = pipeline.stages[j];
-                html += "<span class='stage " + stage.status + "'>" + stage.name + "</span>";
-                if (j != pipeline.stages.length - 1) {
-                    html += " -&#62; ";
-                }
-            }
-            html += "</p>";
-        }
+        var html = TrimPath.processDOMTemplate("template", json);
         document.getElementById("content").innerHTML = html;
     }
 </script>
-<div id="loader">
-    <script type="text/javascript" src="http://localhost:8051/builds.js"/>
+
+<div id="loaderDiv">
+    <div id="loader">
+        <script type="text/javascript" src="http://localhost:8051/builds.js"></script>
+    </div>
 </div>
+
 <script type="text/javascript">
     function refresh() {
+        var loaderDiv = document.getElementById("loaderDiv")
         var loader = document.getElementById("loader")
-        if (loader) {
-            loader.innerHTML = loader.innerHTML;
-        }
+        var html = loader.innerHTML
+        loaderDiv.removeChild(loader)
+        loader = document.createElement("div")
+        loader.setAttribute("id", "loader")
+        loader.innerHTML = html
+        loaderDiv.appendChild(loader)
     }
-    setInterval("refresh()", 5000);
+    setInterval("refresh()", 3000)
 </script>
 </body>
 </html>

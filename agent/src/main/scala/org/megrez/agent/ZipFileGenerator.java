@@ -5,17 +5,17 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class ZipFileGenerator {
-    static String getZipFile(String path, ArrayList<File> artifactFiles) {
+    static String getZipFile(String path, ArrayList<File> artifactFiles, String tags) {
         int b = 0;
         File temFile = null;
         try {
             temFile = File.createTempFile(path, ".zip");
             ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(temFile));
+            zipFile.setComment("tag info:" + tags);
             byte[] buf = new byte[1024];
             for (File file : artifactFiles) {
                 zipFile.putNextEntry(new ZipEntry(file.getAbsolutePath()));
