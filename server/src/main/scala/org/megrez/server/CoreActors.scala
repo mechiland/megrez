@@ -103,6 +103,8 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
               }
             case None =>
           }
+        case AgentManagerToScheduler.CancelBuild(build) =>
+          reply(AgentManagerToScheduler.CancelBuild(build))
         case Stop => exit
         case _ =>
       }
