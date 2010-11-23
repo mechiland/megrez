@@ -1,6 +1,7 @@
 package org.megrez.server
 
 import actors.Actor
+import data.Graph
 import java.util.UUID
 import json.JSON
 import trigger.{Materials, OnChanges, Trigger}
@@ -9,6 +10,7 @@ import java.io.File
 import org.megrez._
 import org.neo4j.graphdb.{DynamicRelationshipType, Direction, Node}
 import collection.mutable.{ListBuffer, HashSet, HashMap}
+import org.neo4j.kernel.EmbeddedGraphDatabase
 
 class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor with Logging {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
@@ -232,6 +234,9 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
 
   val triggerFactory: Pipeline => Trigger = pipeline => new OnChanges(new Materials(pipeline, workspace), buildScheduler, checkInterval)
 
+  val neo = new EmbeddedGraphDatabase("database/megrez")
+  Graph.from(neo)
+
   def pipelinesJson = {
     val builds = new ListBuffer[Build]()
     def accumulator(list: ListBuffer[Build], build: Build) = {
@@ -249,6 +254,7 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
     dispatcher ! Stop
     buildScheduler ! Stop
     pipelineManager ! Stop
+    neo.shutdown
   }
 }
 
