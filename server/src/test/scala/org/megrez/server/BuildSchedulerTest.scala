@@ -11,10 +11,11 @@ import org.megrez._
 
 class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
   def createStage(name: String, job: Job*) = new Stage(name, job.toSet)
+
   val job1 = new Job("job1", Set[String](), List[Task]())
   val job2 = new Job("job2", Set[String](), List[Task]())
   val job3 = new Job("job3", Set[String](), List[Task]())
-  
+
 
   describe("Build scheduler") {
     it("should send the first job in pipeline to dispatcher") {
@@ -54,7 +55,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
-        case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build: UUID, _: Set[JobAssignment]) =>
           scheduler ! DispatcherToScheduler.JobCompleted(build, job1)
         case TIMEOUT => fail
         case _ => fail
@@ -64,7 +65,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
         case SchedulerToDispatcher.JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
           assignments should have size (1)
           assignments.head.job should equal(job2)
-          assignments.head.materials should be === changes        
+          assignments.head.materials should be === changes
         case TIMEOUT => fail
         case _ => fail
       }
@@ -84,7 +85,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
-        case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build: UUID, _: Set[JobAssignment]) =>
           scheduler ! DispatcherToScheduler.JobFailed(build, job1)
         case TIMEOUT => fail
         case _ => fail
@@ -113,7 +114,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
       var id = UUID.randomUUID
       receiveWithin(1000) {
-        case SchedulerToDispatcher.JobScheduled(build: UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build: UUID, _: Set[JobAssignment]) =>
           id = build
           scheduler ! DispatcherToScheduler.JobFailed(build, job1)
         case TIMEOUT => fail
@@ -148,14 +149,14 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
-        case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build: UUID, _: Set[JobAssignment]) =>
           scheduler ! DispatcherToScheduler.JobCompleted(build, job1)
         case TIMEOUT => fail
         case _ => fail
       }
 
       receiveWithin(1000) {
-        case SchedulerToDispatcher.JobScheduled(build : UUID, _ : Set[JobAssignment]) =>
+        case SchedulerToDispatcher.JobScheduled(build: UUID, _: Set[JobAssignment]) =>
           scheduler ! DispatcherToScheduler.JobCompleted(build, job2)
         case TIMEOUT => fail
         case _ => fail
@@ -167,6 +168,30 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
         case TIMEOUT => fail
         case _ => fail
       }
+    }
+
+  }
+
+  describe("Build Cancel") {
+    it("should receive cancel job message") {
+      val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
+
+      object Context {
+        val dispatcher = self
+        val buildManager = self
+      }
+
+      val scheduler = new BuildScheduler(Context)
+      val uuid = UUID.randomUUID
+      scheduler ! AgentManagerToScheduler.CancelBuild(uuid)
+
+      receiveWithin(1000) {
+        case AgentManagerToScheduler.CancelBuild(build: UUID) =>
+          build should be === uuid
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
     }
   }
 }

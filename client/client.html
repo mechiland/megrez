@@ -10,7 +10,11 @@
 
 <textarea id="template" style="display:none">
 {for pipeline in pipelines}
-    <span class="pipeline">${pipeline.name}</span><br>
+    <span class="pipeline">${pipeline.name}</span>
+    ({for material in pipeline.materials}
+        <span class="material">${material.revision}</span>
+    {/for})
+    <br>
     {for stage in pipeline.stages}
         <span class="stage ${stage.status}">${stage.name}</span>
         ({for job in stage.jobs}

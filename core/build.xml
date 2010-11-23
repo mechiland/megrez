@@ -47,6 +47,11 @@
                 deprecation="on"
                 force="changed">
         </fsc>
+        <javac srcdir="${src.dir}"
+               destdir="${build.classes}"
+               classpathref="classpath.build"
+               includeAntRuntime="no"
+               debug="on"/>
     </target>
 
     <target name="test" depends="compile">

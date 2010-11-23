@@ -8,7 +8,6 @@ import trigger.{Materials, OnChanges, Trigger}
 import org.megrez.util.{FileWorkspace, Logging}
 import java.io.File
 import org.megrez._
-import org.neo4j.graphdb.{DynamicRelationshipType, Direction, Node}
 import collection.mutable.{ListBuffer, HashSet, HashMap}
 import org.neo4j.kernel.EmbeddedGraphDatabase
 
@@ -103,6 +102,8 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
               }
             case None =>
           }
+        case AgentManagerToScheduler.CancelBuild(build) =>
+          reply(AgentManagerToScheduler.CancelBuild(build))
         case Stop => exit
         case _ =>
       }
@@ -236,6 +237,11 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
 
   val neo = new EmbeddedGraphDatabase("database/megrez")
   Graph.of(neo)
+  Runtime.getRuntime.addShutdownHook(new Thread() {
+    override def run() {
+      neo.shutdown
+    }
+  })
 
   def pipelinesJson = {
     val builds = new ListBuffer[Build]()

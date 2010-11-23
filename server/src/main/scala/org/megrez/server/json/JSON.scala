@@ -2,8 +2,8 @@ package org.megrez.server.json
 
 import org.megrez.util.JSON.JsonSerializer
 import org.megrez.server.Build.JobStage
-import org.megrez.Pipeline
 import org.megrez.server.Build
+import org.megrez.{Material, Pipeline}
 
 object JSON {
   private val JsonParser = org.megrez.util.JSON
@@ -23,7 +23,12 @@ object JSON {
   implicit object BuildSerializer extends JsonSerializer[Build] {
     def read(json: Map[String, Any]) = null
 
-    def write(build: Build) = Map("name" -> build.pipeline.name, "stages" -> build.pipeline.stages.map(writeStage(build, _)))
+    def write(build: Build) = Map("name" -> build.pipeline.name, "materials" -> build.pipeline.materials.map(writeMaterial(build, _)).toList,
+      "stages" -> build.pipeline.stages.map(writeStage(build, _)))
+
+    private def writeMaterial(build: Build, material: Material) = {
+      Map("revision" -> build.changes.get(material).get.get)
+    }
 
     private def writeStage(build: Build, stage: Pipeline.Stage): Map[String, Any] = {
       implicit def pipeline = build.pipeline;

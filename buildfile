@@ -54,7 +54,7 @@ define "megrez" do
     package(:jar).with :manifest=>{ 'Main-Class'=>'org.megrez.server.Main' }
 
     task :run => :package do
-        system "scala -classpath $HOME/.m2/repository/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar:$HOME/.m2/repository/org/slf4j/slf4j-simple/1.6.1/slf4j-simple-1.6.1.jar:$HOME/.m2/repository/org/jboss/netty/netty/3.2.2.Final/netty-3.2.2.Final.jar:core/target/megrez-core-1.0.0.jar:server/target/megrez-server-1.0.0.jar org.megrez.server.Main 8051"
+        system "scala -classpath $HOME/.m2/repository/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar:$HOME/.m2/repository/org/slf4j/slf4j-simple/1.6.1/slf4j-simple-1.6.1.jar:$HOME/.m2/repository/org/jboss/netty/netty/3.2.2.Final/netty-3.2.2.Final.jar:core/target/megrez-core-1.0.0.jar:server/target/megrez-server-1.0.0.jar:lib/neo/neo4j-kernel-1.2-1.2.M03.jar:lib/neo/geronimo-jta_1.1_spec-1.1.1.jar org.megrez.server.Main 8051"
     end
   end
 end
