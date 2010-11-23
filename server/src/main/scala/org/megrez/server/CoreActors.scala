@@ -151,6 +151,12 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
           jobInProgress.remove(assignment)
           idleAgents.add(agent)
           dispatchJobs
+        case SchedulerToDispatcher.CancelBuild(build) =>
+          val assignmentsToRemove = jobAssignments.filter {entity => entity._2 == build}
+          assignmentsToRemove.foreach {entity => jobAssignments.remove(entity._1)}
+          val jobInProgressToRemove = jobInProgress.filter {entity => entity._2 == build}
+          jobInProgressToRemove.foreach {entity => jobInProgress.remove(entity._1)}
+          megrez.buildScheduler ! DispatcherToScheduler.BuildCanceled(build, jobInProgressToRemove.keySet.toSet union assignmentsToRemove.keySet.toSet)
         case Stop => exit
       }
     }

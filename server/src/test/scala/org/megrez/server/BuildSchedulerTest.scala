@@ -21,11 +21,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     it("should send the first job in pipeline to dispatcher") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1)))
 
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
-
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
@@ -43,11 +38,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
     it("should send jobs from next stage if first stage completed") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
-
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
 
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
@@ -74,11 +64,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     it("should fail the build if stage failed") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
-
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
@@ -101,11 +86,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
     it("should fail the build if all stage jobs failed") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1, job2), createStage("unit test", job3)))
-
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
 
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
@@ -138,11 +118,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     it("should complete build if all jobs completed") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
-
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
@@ -173,11 +148,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
   }
 
   describe("Build Cancel") {
-    it("should receive cancel job message if the build exists") {
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
+    it("should send cancel job message to dispatcher if the build exists") {
 
       val scheduler = new BuildScheduler(Context)
 
@@ -201,12 +172,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
     }
 
-    it("should not receive cancel job message if the build does not exist") {
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
-
+    it("should not send cancel job message to dispatcher if the build does not exist") {
       val scheduler = new BuildScheduler(Context)
 
       scheduler ! AgentManagerToScheduler.CancelBuild(UUID.randomUUID)
@@ -218,5 +184,10 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
       }
 
     }
+  }
+
+  object Context {
+    val dispatcher = self
+    val buildManager = self
   }
 }
