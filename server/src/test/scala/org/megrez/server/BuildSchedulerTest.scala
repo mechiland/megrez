@@ -173,22 +173,47 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
   }
 
   describe("Build Cancel") {
-    it("should receive cancel job message") {
-      val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
-
+    it("should receive cancel job message if the build exists") {
       object Context {
         val dispatcher = self
         val buildManager = self
       }
 
       val scheduler = new BuildScheduler(Context)
-      val uuid = UUID.randomUUID
-      scheduler ! AgentManagerToScheduler.CancelBuild(uuid)
+
+      val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
+      val changes = Map[Material, Option[Any]]()
+
+      scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
-        case AgentManagerToScheduler.CancelBuild(build: UUID) =>
-          build should be === uuid
+        case SchedulerToDispatcher.JobScheduled(build: UUID, _: Set[JobAssignment]) =>
+          scheduler ! AgentManagerToScheduler.CancelBuild(build)
         case TIMEOUT => fail
+        case _ => fail
+      }
+
+      receiveWithin(1000) {
+        case SchedulerToDispatcher.CancelBuild(build: UUID) =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
+    }
+
+    it("should not receive cancel job message if the build does not exist") {
+      object Context {
+        val dispatcher = self
+        val buildManager = self
+      }
+
+      val scheduler = new BuildScheduler(Context)
+
+      scheduler ! AgentManagerToScheduler.CancelBuild(UUID.randomUUID)
+
+      receiveWithin(1000) {
+        case SchedulerToDispatcher.CancelBuild(build: UUID) => fail
+        case TIMEOUT =>
         case _ => fail
       }
 

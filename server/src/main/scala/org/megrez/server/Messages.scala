@@ -39,6 +39,7 @@ object AgentManagerToDispatcher {
 
 object SchedulerToDispatcher {
   case class JobScheduled(val buildId: UUID, val assignments: Set[JobAssignment])
+  case class CancelBuild(val buildId: UUID)
 }
 
 object DispatcherToScheduler {
