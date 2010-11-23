@@ -1,0 +1,19 @@
+.pipeline {
+    font-weight: bold;
+}
+
+.ongoing {
+    color: orange;
+}
+
+.completed {
+    color: green;
+}
+
+.failed {
+    color: red;
+}
+
+.unknown {
+    color: gray;
+}
