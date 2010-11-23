@@ -3,6 +3,7 @@ package org.megrez.util
 import java.io.File
 import io.Source
 import java.util.{ArrayList}
+import java.lang.String
 
 trait Workspace {
   def getFolder(folder: String): File
@@ -34,7 +35,7 @@ class FileWorkspace(val root: File) extends Workspace {
   def findFiles(folder: File, pattern: String): ArrayList[File] = {
     val result: ArrayList[File] = new ArrayList[File]()
 
-    val process = Runtime.getRuntime().exec("ls", null, folder)
+    val process = Runtime.getRuntime().exec("find . -name "+pattern, null, folder)
     process.waitFor match {
       case 0 => Source.fromInputStream(process.getInputStream()).getLines.foreach {
         filePath: String => result.add(new File(folder.getPath + filePath))

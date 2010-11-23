@@ -3,10 +3,15 @@ package org.megrez.util
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Spec, BeforeAndAfterEach}
 import java.io.File
+import java.util.ArrayList
 
 class FileWorkspaceTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
-
   describe("File Workspace") {
+    it("should find files by regex express") {
+      val workspace = new FileWorkspace(root)
+      val files: ArrayList[File] = workspace.findFiles(root.getParentFile, "*.git")
+      files.get(0).getName should be equals (".git")
+    }
     it("should create dir for pipeline") {
       val workspace = new FileWorkspace(root)
       workspace.createFolder("pipeline")
@@ -17,7 +22,7 @@ class FileWorkspaceTest extends Spec with ShouldMatchers with BeforeAndAfterEach
     it("should returen folder if exists") {
       new File(root, "pipeline").mkdir
       val workspace = new FileWorkspace(root)
-      workspace.getFolder("pipeline") should not be(null)
+      workspace.getFolder("pipeline") should not be (null)
     }
 
     it("should return null if folder doesn't exist") {
@@ -45,9 +50,10 @@ class FileWorkspaceTest extends Spec with ShouldMatchers with BeforeAndAfterEach
     delete(root)
   }
 
-  def delete(file : File) {
-    file.listFiles.foreach {file =>
-      if (file.isDirectory) delete(file) else file.delete
+  def delete(file: File) {
+    file.listFiles.foreach {
+      file =>
+        if (file.isDirectory) delete(file) else file.delete
     }
     file.delete
   }
