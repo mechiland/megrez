@@ -4,3 +4,6 @@ To use the netty server:
 2. cd target, then run scala -classpath /$NETTYHOME/netty-3.2.2.Final.jar:megrez-server-1.0.0.jar org.megrez.server.Main
 
 then you can use curl to do simple test.
+
+
+curl --data 'pipeline={"name":"megrez2","materials":[{"type":"git","url":"git@github.com:vincentx/megrez.git","dest":"$main"}], "stages":[{"name":"compile","jobs":[{"name":"compile-job","resources":[],"tasks":[{"type":"cmd","command":"buildr clean compile"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}]},{"name":"test","jobs":[{"name":"test-on-linux","resources":["linux"],"tasks":[{"type":"cmd","command":"buildr clean test"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]},{"name":"test-on-windows","resources":["windows"],"tasks":[{"type":"cmd","command":"buildr clean test"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}]},{"name":"publish","jobs":[{"name":"publish-job","resources":[],"tasks":[{"type":"cmd","command":"buildr clean publish"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}]}]}' http://localhost:8051/pipelines -v
