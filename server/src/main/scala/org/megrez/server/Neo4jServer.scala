@@ -31,7 +31,7 @@ object Neo4jServer {
 
   /**
    * Execute instructions within a Neo4j transaction; rollback if exception is raised and
-   * commit otherwise; and return the return value from the operation.
+   * commit otherwise; and return the return value of the operation.
    */
   def exec[T <: Any](operation: GraphDatabaseService => T): T = {
     val tx = {

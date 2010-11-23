@@ -16,8 +16,8 @@ object Pipeline extends Repository[Pipeline] with Metadata[Pipeline] {
   val referenceType = DynamicRelationshipType.withName("PIPELINES")
 
   private def activePipeline = DynamicRelationshipType.withName("ACTIVE_PIPELINE")
-
-  def create(data: Map[String, Any]) = transaction {Pipeline(reference.createRelationshipTo(graph.createNode, activePipeline).getEndNode, data)}
-
+  
   def apply(node: Node) = new Pipeline(node)
+
+  override def createNode = reference.createRelationshipTo(graph.createNode, activePipeline).getEndNode
 }

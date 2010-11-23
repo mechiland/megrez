@@ -42,7 +42,7 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
   }
 
   def savePipeline(config: Pipeline) = {
-    org.megrez.server.data.Pipeline.create(Map("name" -> config.name, "stages" -> List()))
+    org.megrez.server.data.Pipeline(Map("name" -> config.name, "stages" -> List()))
   }
 
   private def triggerPipeline(config: Pipeline) = {
@@ -235,7 +235,7 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
   val triggerFactory: Pipeline => Trigger = pipeline => new OnChanges(new Materials(pipeline, workspace), buildScheduler, checkInterval)
 
   val neo = new EmbeddedGraphDatabase("database/megrez")
-  Graph.from(neo)
+  Graph.of(neo)
 
   def pipelinesJson = {
     val builds = new ListBuffer[Build]()
@@ -243,7 +243,7 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
       list.append(build)
       list
     }
-    //TODO: add pipelines from PipelineManager
+    //TODO: add pipelines of PipelineManager
     (builds /: buildScheduler.ongoingPipelines) {accumulator _}
     (builds /: buildManager.completedPipelines) {accumulator _}
     import JSON._

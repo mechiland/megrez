@@ -47,7 +47,7 @@ trait Neo4jHelper {
   def startDB {
     dbRoot.mkdirs
     neo = new EmbeddedGraphDatabase(dbRoot.getAbsolutePath)
-    Graph.from(neo)
+    Graph.of(neo)
   }
 
   def transaction[T](operation: => T): T = {

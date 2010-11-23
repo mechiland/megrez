@@ -10,24 +10,32 @@ class ActiveRecordTest extends Spec with ShouldMatchers with BeforeAndAfterEach 
   describe("Active Record like layer on top of neo4j") {
     import scala.collection.JavaConversions._
 
-    it("should create stage with details") {      
-      val stage = transaction {Stage(neo.createNode, Map("name"->"ut", "jobs" -> List(Map("name" -> "unit-test"))))}
+    it("should create stage with details") {
+      val stage = transaction {Stage(Map("name" -> "ut", "jobs" -> List(Map("name" -> "unit-test"))))}
       stage.name() should equal("ut")
-      stage.jobs() should have size(1)
+      stage.jobs() should have size (1)
     }
 
     it("created pipeline should be connected to root") {
-      val pipeline = Pipeline.create(Map("name" -> "name", "stages" -> List()))
+      val pipeline = Pipeline(Map("name" -> "name", "stages" -> List()))
       val pipelines = neo.getReferenceNode.getSingleRelationship(DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING).getEndNode
       val relationships = pipelines.getRelationships(DynamicRelationshipType.withName("ACTIVE_PIPELINE"), Direction.OUTGOING).toList
-      relationships should have size(1)            
+      relationships should have size (1)
     }
 
     it("should create pipeline with details") {
-        val pipeline = Pipeline.create(Map("name" -> "name", "stages" -> List(Map("name" -> "ut"))))
-        pipeline.name() should equal("name")
-        pipeline.stages() should have size(1)
-        pipeline.stages().head.name() should equal("ut")
+      val pipeline = Pipeline(Map("name" -> "name", "stages" -> List(Map("name" -> "ut"))))
+      pipeline.name() should equal("name")
+      pipeline.stages() should have size (1)
+      pipeline.stages().head.name() should equal("ut")
+    }
+
+    it("should create task for different type") {      
+      val task = transaction {Task(Map("type" -> "cmd", "cmd" -> "ls"))}
+      task match {
+        case cmd : CommandLine =>
+        case _ => fail
+      }
     }
   }
 
@@ -37,7 +45,7 @@ class ActiveRecordTest extends Spec with ShouldMatchers with BeforeAndAfterEach 
   override def beforeEach() {
     root.mkdirs
     neo = new EmbeddedGraphDatabase(root.getAbsolutePath)
-    Graph.from(neo)
+    Graph.of(neo).has(Pipeline, Stage, Job, Task, CommandLine)
   }
 
   override def afterEach() {
@@ -53,7 +61,7 @@ class ActiveRecordTest extends Spec with ShouldMatchers with BeforeAndAfterEach 
     file.delete
   }
 
-  def transaction[T](operation: => T):T= {
+  def transaction[T](operation: => T): T = {
     val tx = neo.beginTx
     try {
       val result = operation

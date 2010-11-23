@@ -26,7 +26,7 @@ class BuildTest extends Spec with ShouldMatchers {
       build.current.jobs should be === build.current.jobs
     }
 
-    it("should return job from next stage when first stage successful") {
+    it("should return job of next stage when first stage successful") {
       val job1 = createJob("job1")
       val job2 = createJob("job2")
       val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job1), createStage("stage1", job2)))

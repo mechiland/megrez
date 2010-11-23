@@ -51,9 +51,15 @@ object Graph {
   private var graph: GraphDatabaseService = null
   private val holders = HashSet[BelongsToGraph]()
 
-  def from(graph: GraphDatabaseService) {
+  def of(graph: GraphDatabaseService) = {
     this.graph = graph
     holders.foreach(_ assign graph)
+    this
+  }
+
+  def has(metadata : Metadata[_ <: Entity]*) = {
+    metadata.foreach(register(_))
+    this
   }
 
   private[data] def register(holder: BelongsToGraph) {
@@ -92,13 +98,15 @@ trait Metadata[EntityType <: Entity] extends BelongsToGraph {
 
   def apply(node: Node): EntityType
 
-  def apply(node: Node, data: Map[String, Any]): EntityType = {
-    val entity = apply(node)
+  def apply(data: Map[String, Any]): EntityType = transaction {
+    val entity = apply(createNode)
     updateAttributes(entity, data)
     entity
   }
 
-  def updateAttributes(entity: EntityType, data: Map[String, Any]) {
+  protected def createNode = graph.createNode
+
+  private[data] def updateAttributes(entity: EntityType, data: Map[String, Any]) {
     transaction {
       for (Pair(property, reader) <- properties)
         entity.node.setProperty(property.name, reader.read(data(property.name)))
@@ -107,21 +115,59 @@ trait Metadata[EntityType <: Entity] extends BelongsToGraph {
           case Some(listData: List[Map[String, Any]]) =>
             listData.foreach {
               data =>
-                val listEntity = list.metadata(graph.createNode, data)
+                val listEntity = list.metadata(data)
                 appendToList(entity.node, listEntity.node, list.start, list.next)
             }
           case _ =>
         }
       for (set <- sets)
         data.get(set.name) match {
-          case Some(setData : List[Map[String, Any]]) =>
-            setData.foreach { data =>
-              val setEntity = set.metadata(graph.createNode, data)
-              entity.node.createRelationshipTo(setEntity.node, set.link)
+          case Some(setData: List[Map[String, Any]]) =>
+            setData.foreach {
+              data =>
+                val setEntity = set.metadata(data)
+                entity.node.createRelationshipTo(setEntity.node, set.link)
             }
           case _ =>
         }
     }
+  }
+}
+
+trait Pluggable[EntityType <: Entity] extends Metadata[EntityType] {
+  private val types = HashMap[String, Metadata[_ <: EntityType]]()
+
+  private[data] def registerReplacement(name: String, metadata: Metadata[_ <: EntityType]) {
+    types.put(name, metadata)
+  }
+
+  def apply(node: Node): EntityType =
+    types.get(node.getProperty("type").toString) match {
+      case Some(metadata) =>
+        metadata(node)
+      case _ => throw new Exception()
+    }
+
+  override def apply(data: Map[String, Any]) = {
+    data.get("type") match {
+      case Some(nodeType: String) =>
+        types.get(nodeType) match {
+          case Some(metadata) =>
+            metadata(data)
+          case _ => throw new Exception()
+        }
+      case _ => throw new Exception()
+    }
+  }
+}
+
+abstract class Plugin[EntityType <: Entity](val pluggable: Pluggable[_ >: EntityType], val name: String) extends Metadata[EntityType] {
+  pluggable.registerReplacement(name, this)
+
+  override protected def createNode = {
+    val node = graph.createNode
+    node.setProperty("type", name)
+    node
   }
 }
 
