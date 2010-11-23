@@ -124,13 +124,17 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with B
     megrez = new Megrez(1000)
   }
 
+  override def beforeAll(){
+    startDB
+  }
+
   override def afterEach() {
     megrez.stop
     delete(root)
   }
 
   override def afterAll(){
-    cleanupDatabase
+    shutdownDB
   }
 
 

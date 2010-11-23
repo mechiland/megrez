@@ -12,7 +12,6 @@ import collection.mutable.{ListBuffer, HashSet, HashMap}
 
 class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor with Logging {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
-  private var pipelinesNode: Node = _
 
   def act {
     loop {
@@ -36,23 +35,12 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
   }
 
   private def addPipeline(config: Pipeline): Option[(Pipeline, Trigger)] = {
-    Neo4jServer.exec {
-      neo =>
-        {
-          val rel = neo.getReferenceNode.getSingleRelationship(DynamicRelationshipType.withName("PIPELINES"), Direction.OUTGOING)
-          if (rel == null) {
-            pipelinesNode = neo.createNode
-            pipelinesNode.setProperty("name", "pipelines")
-            neo.getReferenceNode.createRelationshipTo(pipelinesNode, DynamicRelationshipType.withName("PIPELINES"))
-          } else {
-            pipelinesNode = rel.getEndNode
-          }
-          val pipelineNode = neo.createNode
-          pipelineNode.setProperty("name", config.name)
-          pipelinesNode.createRelationshipTo(pipelineNode, DynamicRelationshipType.withName("PIPELINE"))
-        }
-    }
+    savePipeline(config)
     pipelines.put(config.name, Pair(config, launchTrigger(config)))
+  }
+
+  def savePipeline(config: Pipeline) = {
+    org.megrez.server.data.Pipeline.create(Map("name" -> config.name, "stages" -> List()))
   }
 
   private def triggerPipeline(config: Pipeline) = {

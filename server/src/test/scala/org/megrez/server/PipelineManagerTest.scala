@@ -87,9 +87,8 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
     }
   }
 
-
-  override def beforeEach(){
-    cleanData
+  override def beforeAll(){
+    startDB
   }
 
   override def afterEach() {
@@ -97,7 +96,7 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
   }
 
   override def afterAll() {
-    cleanupDatabase
+    shutdownDB
   }
 
   class ActorBasedTrigger(val name: String, val actor: Actor) extends Trigger {
