@@ -77,7 +77,7 @@ class AgentHandler(val callback: ServerHandler, val worker: Actor) extends Simpl
           channel.write(new DefaultWebSocketFrame(JSON.write(message)))
         case stream: ArtifactStream =>
           val buffer: ByteBufferBackedChannelBuffer = new ByteBufferBackedChannelBuffer(null)
-          buffer.setBytes(1, stream.input, 1)
+          buffer.setBytes(0, stream.input, 1024)
           channel.write(new DefaultWebSocketFrame(0, buffer))
         case channel: Channel =>
           this.channel = channel

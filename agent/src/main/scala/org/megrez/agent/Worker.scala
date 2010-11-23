@@ -25,9 +25,10 @@ class Worker(val workspace: Workspace) extends Actor with Logging {
             }
             for (artifact <- assignment.job.artifacts) {
               val path: String = artifact.path
+              val tags:String = artifact.tags.mkString(":")
               val artifactFiles: ArrayList[File] = workspace.findFiles(pipelineDir, path)
               var zipFileName: String = UUID.randomUUID.toString
-              zipFileName = ZipFileGenerator.getZipFile(zipFileName, artifactFiles)
+              zipFileName = ZipFileGenerator.getZipFile(zipFileName, artifactFiles, tags)
               actor ! new ArtifactStream(new FileInputStream(zipFileName))
             }
             actor ! new JobCompleted()
