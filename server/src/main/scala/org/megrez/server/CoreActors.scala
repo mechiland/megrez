@@ -236,6 +236,11 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
 
   val neo = new EmbeddedGraphDatabase("database/megrez")
   Graph.from(neo)
+  Runtime.getRuntime.addShutdownHook(new Thread() {
+    override def run() {
+      neo.shutdown
+    }
+  })
 
   def pipelinesJson = {
     val builds = new ListBuffer[Build]()
