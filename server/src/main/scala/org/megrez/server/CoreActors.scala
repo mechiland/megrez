@@ -102,8 +102,14 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
               }
             case None =>
           }
-        case AgentManagerToScheduler.CancelBuild(build) =>
-          reply(AgentManagerToScheduler.CancelBuild(build))
+        case AgentManagerToScheduler.CancelBuild(id) =>
+          builds.get(id) match {
+            case Some(build: Build) =>
+              info("Cancel build for " + build.pipeline.name + " build " + id)
+              builds.remove(id)
+              megrez.dispatcher ! SchedulerToDispatcher.CancelBuild(id)
+            case None =>
+          }
         case Stop => exit
         case _ =>
       }
@@ -145,6 +151,12 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
           jobInProgress.remove(assignment)
           idleAgents.add(agent)
           dispatchJobs
+        case SchedulerToDispatcher.CancelBuild(build) =>
+          val assignmentsToRemove = jobAssignments.filter {entity => entity._2 == build}
+          assignmentsToRemove.foreach {entity => jobAssignments.remove(entity._1)}
+          val jobInProgressToRemove = jobInProgress.filter {entity => entity._2 == build}
+          jobInProgressToRemove.foreach {entity => jobInProgress.remove(entity._1)}
+          megrez.buildScheduler ! DispatcherToScheduler.BuildCanceled(build, jobInProgressToRemove.keySet.toSet union assignmentsToRemove.keySet.toSet)
         case Stop => exit
       }
     }

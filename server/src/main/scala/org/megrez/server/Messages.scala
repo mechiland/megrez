@@ -39,11 +39,13 @@ object AgentManagerToDispatcher {
 
 object SchedulerToDispatcher {
   case class JobScheduled(val buildId: UUID, val assignments: Set[JobAssignment])
+  case class CancelBuild(val buildId: UUID)
 }
 
 object DispatcherToScheduler {
   case class JobCompleted(val build: UUID, val job: Job)
   case class JobFailed(val build: UUID, val job: Job)
+  case class BuildCanceled(val build: UUID, val assignments: Set[JobAssignment])
 }
 
 object SchedulerToBuildManager {

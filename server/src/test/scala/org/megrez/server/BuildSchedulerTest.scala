@@ -21,11 +21,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     it("should send the first job in pipeline to dispatcher") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1)))
 
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
-
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
@@ -43,11 +38,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
     it("should send jobs from next stage if first stage completed") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
-
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
 
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
@@ -74,11 +64,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     it("should fail the build if stage failed") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
-
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
@@ -101,11 +86,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
 
     it("should fail the build if all stage jobs failed") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1, job2), createStage("unit test", job3)))
-
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
 
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
@@ -138,11 +118,6 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
     it("should complete build if all jobs completed") {
       val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
 
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
-
       val scheduler = new BuildScheduler(Context)
       val changes = Map[Material, Option[Any]]()
 
@@ -173,25 +148,46 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
   }
 
   describe("Build Cancel") {
-    it("should receive cancel job message") {
-      val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
-
-      object Context {
-        val dispatcher = self
-        val buildManager = self
-      }
+    it("should send cancel job message to dispatcher if the build exists") {
 
       val scheduler = new BuildScheduler(Context)
-      val uuid = UUID.randomUUID
-      scheduler ! AgentManagerToScheduler.CancelBuild(uuid)
+
+      val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
+      val changes = Map[Material, Option[Any]]()
+
+      scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
       receiveWithin(1000) {
-        case AgentManagerToScheduler.CancelBuild(build: UUID) =>
-          build should be === uuid
+        case SchedulerToDispatcher.JobScheduled(build: UUID, _: Set[JobAssignment]) =>
+          scheduler ! AgentManagerToScheduler.CancelBuild(build)
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
+      receiveWithin(1000) {
+        case SchedulerToDispatcher.CancelBuild(build: UUID) =>
         case TIMEOUT => fail
         case _ => fail
       }
 
     }
+
+    it("should not send cancel job message to dispatcher if the build does not exist") {
+      val scheduler = new BuildScheduler(Context)
+
+      scheduler ! AgentManagerToScheduler.CancelBuild(UUID.randomUUID)
+
+      receiveWithin(1000) {
+        case SchedulerToDispatcher.CancelBuild(build: UUID) => fail
+        case TIMEOUT =>
+        case _ => fail
+      }
+
+    }
+  }
+
+  object Context {
+    val dispatcher = self
+    val buildManager = self
   }
 }

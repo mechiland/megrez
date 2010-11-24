@@ -11,7 +11,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   val job = new Job("unit test", Set(), List())
 
   describe("Dispatcher") {
-    it("should assign job to idle agent") {      
+    it("should assign job to idle agent") {
       val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
 
       val dispatcher = new Dispatcher(Context)
@@ -133,7 +133,42 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         case TIMEOUT => fail
         case _ => fail
       }
-    }    
+    }
+
+    describe("Cancel Build") {
+      it("should notify build scheduler canceled jobs") {
+        val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
+        val assignment2 = JobAssignment("pipeline", Map[Material, Option[Any]](), new Job("function test", Set(), List()))
+
+        val dispatcher = new Dispatcher(Context)
+        dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
+
+        val build = UUID.randomUUID
+        dispatcher ! SchedulerToDispatcher.JobScheduled(build, Set(assignment))
+
+        receiveWithin(1000) {
+          case jobAssignment: JobAssignment =>
+            jobAssignment should be === assignment
+            reply(AgentToDispatcher.Confirm)
+          case TIMEOUT => fail
+          case _ => fail
+        }
+
+        dispatcher ! SchedulerToDispatcher.JobScheduled(build, Set(assignment2))
+
+        dispatcher ! SchedulerToDispatcher.CancelBuild(build)
+
+        receiveWithin(1000) {
+          case DispatcherToScheduler.BuildCanceled(id: UUID, jobAssignments: Set[JobAssignment]) =>
+            id should be === build
+            jobAssignments.contains(assignment) should be === true
+            jobAssignments.contains(assignment2) should be === true
+          case TIMEOUT => fail
+          case _ => fail
+        }
+
+      }
+    }
   }
 
   object Context {
