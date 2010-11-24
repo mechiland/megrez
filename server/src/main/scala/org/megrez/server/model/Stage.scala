@@ -1,11 +1,16 @@
 package org.megrez.server.model
 
-/**
- * Created by IntelliJ IDEA.
- * User: vincentx
- * Date: Nov 24, 2010
- * Time: 7:05:42 AM
- * To change this template use File | Settings | File Templates.
- */
+import data.{Meta, Entity}
+import org.neo4j.graphdb.{Node, DynamicRelationshipType}
 
-class Stage
+class Stage private (val node : Node) extends Entity with org.megrez.model.Stage {
+  val name = read(Stage.name)
+  val jobs = read(Stage.jobs)
+}
+
+object Stage extends Meta[Stage] {
+  val name = property[String]("name")
+  val jobs = set("jobs", Job, DynamicRelationshipType.withName("RUN"))
+
+  def apply(node : Node) = new Stage(node)
+}

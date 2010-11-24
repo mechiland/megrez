@@ -14,7 +14,7 @@ trait Entity {
 
   protected def reader[T <: Entity](list: ReferenceList[T]) = new ReferenceListReader[T] {val reference = list}
 
-  protected def reader[T <: Entity](set: ReferenceSet[T]) = new ReferenceSetReader[T] {val node = Entity.this.node; val reference = set}
+  protected def reader[T <: Entity](set: ReferenceSet[T]) = new ReferenceSetReader[T] {val reference = set}
 
   protected def reader[T <: Entity](target: Reference[T]) = new ReferenceReader[T] {val node = Entity.this.node; val reference = target}
 
@@ -25,7 +25,8 @@ trait Entity {
       rel.getEndNode.traverse(Order.DEPTH_FIRST, StopEvaluator.END_OF_GRAPH, ReturnableEvaluator.ALL,
         DynamicRelationshipType.withName("NEXT"), Direction.OUTGOING).getAllNodes.map(list.meta(_)).toList
   }.getOrElse(List[T]())
-  
+
+  protected def read[T <: Entity](set : ReferenceSet[T]) = node.getRelationships(set.relationship, Direction.OUTGOING).map(rel => set.meta(rel.getEndNode)).toSet
 
   trait PropertyReader[T] {
     val property: Property[T]
@@ -56,11 +57,8 @@ trait Entity {
   }
 
   trait ReferenceSetReader[T <: Entity] {
-    val node: Node
     val reference: ReferenceSet[T]
 
-    import scala.collection.JavaConversions._
-
-    def apply() = node.getRelationships(reference.relationship, Direction.OUTGOING).map(rel => reference.meta(rel.getEndNode)).toSet
+    def apply() = read(reference)
   }
 }
