@@ -20,20 +20,8 @@ trait Neo4jHelper {
   val dbRoot: File = new File(System.getProperty("user.dir"), "database/test")
 
   def shutdownDB {
-    cleanData
     neo.shutdown
     delete(dbRoot)
-  }
-
-  def cleanData {
-    transaction {
-      allPipelineNodes.foreach {
-        node: Node => {
-          node.getRelationships.foreach(_.delete)
-          node.delete
-        }
-      }
-    }
   }
 
   private def delete(file: File) {

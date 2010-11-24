@@ -247,14 +247,6 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
 
   val triggerFactory: Pipeline => Trigger = pipeline => new OnChanges(new Materials(pipeline, workspace), buildScheduler, checkInterval)
 
-  val neo = new EmbeddedGraphDatabase("database/megrez")
-  Graph.of(neo)
-  Runtime.getRuntime.addShutdownHook(new Thread() {
-    override def run() {
-      neo.shutdown
-    }
-  })
-
   def pipelinesJson = {
     val builds = new ListBuffer[Build]()
     def accumulator(list: ListBuffer[Build], build: Build) = {
@@ -272,7 +264,6 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
     dispatcher ! Stop
     buildScheduler ! Stop
     pipelineManager ! Stop
-    neo.shutdown
   }
 }
 

@@ -11,7 +11,7 @@ import actors.{TIMEOUT, Actor}
 import scala.io.Source
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Spec}
 
-class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with BeforeAndAfterAll{
+class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with BeforeAndAfterAll with Neo4jHelper{
   val job = new Job("linux-firefox", Set(), List[Task](),List[Artifact]( new Artifact("/target/**/*.jar", Set("artifact"))))
   
   describe("Core Actors") {
@@ -122,11 +122,13 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with B
 
     url = "file://" + new File(root, "repository/" + repositoryName).getAbsolutePath
     megrez = new Megrez(1000)
+    startDB
   }
 
   override def afterEach() {
     megrez.stop
     delete(root)
+    shutdownDB
   }
 
   private def delete(file: File) {
