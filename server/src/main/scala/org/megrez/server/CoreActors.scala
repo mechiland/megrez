@@ -41,7 +41,7 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
   }
 
   def savePipeline(config: Pipeline) = {
-    org.megrez.server.data.Pipeline(Map("name" -> config.name, "stages" -> List()))
+//    org.megrez.server.data.Pipeline(Map("name" -> config.name, "stages" -> List()))
   }
 
   private def triggerPipeline(config: Pipeline) = {
