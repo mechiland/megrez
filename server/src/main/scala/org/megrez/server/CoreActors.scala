@@ -41,7 +41,7 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
   }
 
   def savePipeline(config: Pipeline) = {
-//    org.megrez.server.data.Pipeline(Map("name" -> config.name, "stages" -> List()))
+    //    org.megrez.server.data.Pipeline(Map("name" -> config.name, "stages" -> List()))
   }
 
   private def triggerPipeline(config: Pipeline) = {
@@ -159,6 +159,11 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
           idleAgents.add(agent)
           dispatchJobs
         case SchedulerToDispatcher.CancelBuild(build) =>
+          def filterAssignments(jobAssignments: HashMap[JobAssignment, UUID], build: UUID): Set[JobAssignment] = {
+            val assignmentsToRemove = jobAssignments.filter(build == _._2)
+            assignmentsToRemove.foreach {entity => jobAssignments.remove(entity._1)}
+            return assignmentsToRemove.keySet.toSet
+          }
           val removedJobs = (filterAssignments(jobAssignments, build) union filterAssignments(jobInProgress, build)).map(_.job)
           megrez.buildScheduler ! DispatcherToScheduler.BuildCanceled(build, removedJobs)
         case Stop => exit
@@ -195,12 +200,6 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
         Some(agent -> job)
       case None => None
     }
-  }
-
-  private def filterAssignments(jobAssignments: HashMap[JobAssignment, UUID], build: UUID): Set[JobAssignment] = {
-    val assignmentsToRemove = jobAssignments.filter(build == _._2)
-    assignmentsToRemove.foreach {entity => jobAssignments.remove(entity._1)}
-    return assignmentsToRemove.keySet.toSet
   }
 
   start
