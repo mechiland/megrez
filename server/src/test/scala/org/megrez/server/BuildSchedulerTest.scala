@@ -148,41 +148,68 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with MockitoSugar {
   }
 
   describe("Build Cancel") {
-    it("should send cancel job message to dispatcher if the build exists") {
+    describe("Cancel Build Request") {
+      it("should send cancel build request to dispatcher if the build exists") {
 
-      val scheduler = new BuildScheduler(Context)
+        val scheduler = new BuildScheduler(Context)
 
-      val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
-      val changes = Map[Material, Option[Any]]()
+        val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1), createStage("unit test", job2)))
+        val changes = Map[Material, Option[Any]]()
 
-      scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
+        scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
 
-      receiveWithin(1000) {
-        case SchedulerToDispatcher.JobScheduled(build: UUID, _: Set[JobAssignment]) =>
-          scheduler ! AgentManagerToScheduler.CancelBuild(build)
-        case TIMEOUT => fail
-        case _ => fail
+        receiveWithin(1000) {
+          case SchedulerToDispatcher.JobScheduled(build: UUID, _: Set[JobAssignment]) =>
+            scheduler ! AgentManagerToScheduler.CancelBuild(build)
+          case TIMEOUT => fail
+          case _ => fail
+        }
+
+        receiveWithin(1000) {
+          case SchedulerToDispatcher.CancelBuild(build: UUID) =>
+          case TIMEOUT => fail
+          case _ => fail
+        }
+
       }
 
-      receiveWithin(1000) {
-        case SchedulerToDispatcher.CancelBuild(build: UUID) =>
-        case TIMEOUT => fail
-        case _ => fail
-      }
+      it("should not send cancel build request to dispatcher if the build does not exist") {
+        val scheduler = new BuildScheduler(Context)
 
+        scheduler ! AgentManagerToScheduler.CancelBuild(UUID.randomUUID)
+
+        receiveWithin(1000) {
+          case SchedulerToDispatcher.CancelBuild(build: UUID) => fail
+          case TIMEOUT =>
+          case _ => fail
+        }
+
+      }
     }
 
-    it("should not send cancel job message to dispatcher if the build does not exist") {
-      val scheduler = new BuildScheduler(Context)
+    describe("Build Canceled") {
+      it("should send build canceled message to build manager") {
+        val pipeline = new Pipeline("pipeline", null, List(createStage("unit test", job1)))
 
-      scheduler ! AgentManagerToScheduler.CancelBuild(UUID.randomUUID)
+        val scheduler = new BuildScheduler(Context)
+        val changes = Map[Material, Option[Any]]()
 
-      receiveWithin(1000) {
-        case SchedulerToDispatcher.CancelBuild(build: UUID) => fail
-        case TIMEOUT =>
-        case _ => fail
+        scheduler ! TriggerToScheduler.TrigBuild(pipeline, changes)
+
+        receiveWithin(1000) {
+          case SchedulerToDispatcher.JobScheduled(build: UUID, assignments: Set[JobAssignment]) =>
+            assignments.map(_.job) should be === Set(job1)
+            scheduler ! DispatcherToScheduler.BuildCanceled(build, assignments.map(_.job))
+          case TIMEOUT => fail
+          case _ => fail
+        }
+
+        receiveWithin(1000) {
+          case SchedulerToBuildManager.BuildCanceled(build: Build) =>
+          case TIMEOUT => fail
+          case _ => fail
+        }
       }
-
     }
   }
 

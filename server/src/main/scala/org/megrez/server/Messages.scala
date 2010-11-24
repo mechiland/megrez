@@ -51,4 +51,5 @@ object DispatcherToScheduler {
 object SchedulerToBuildManager {
   case class BuildFailed(build: Build)
   case class BuildCompleted(build: Build)
+  case class BuildCanceled(build: Build)
 }

@@ -105,9 +105,16 @@ class BuildScheduler(megrez: {val dispatcher: Actor; val buildManager: Actor}) e
         case AgentManagerToScheduler.CancelBuild(id) =>
           builds.get(id) match {
             case Some(build: Build) =>
-              info("Cancel build for " + build.pipeline.name + " build " + id)
-              builds.remove(id)
+              info("Cancel build request for " + build.pipeline.name + " build " + id)
               megrez.dispatcher ! SchedulerToDispatcher.CancelBuild(id)
+            case None =>
+          }
+        case DispatcherToScheduler.BuildCanceled(id, jobs) =>
+          builds.get(id) match {
+            case Some(build: Build) =>
+              info("Build canceled for " + build.pipeline.name + " build " + id)
+              builds.remove(id)
+              megrez.buildManager ! SchedulerToBuildManager.BuildCanceled(build)
             case None =>
           }
         case Stop => exit
