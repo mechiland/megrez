@@ -122,13 +122,13 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with B
 
     url = "file://" + new File(root, "repository/" + repositoryName).getAbsolutePath
     megrez = new Megrez(1000)
-    startDB
+//    startDB
   }
 
   override def afterEach() {
     megrez.stop
     delete(root)
-    shutdownDB
+//    shutdownDB
   }
 
   private def delete(file: File) {
