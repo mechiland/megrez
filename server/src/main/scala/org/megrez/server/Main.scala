@@ -1,9 +1,9 @@
 package org.megrez.server
 
-import data.Graph
 import http.Route._
 import actors.Actor
 import http.{Controllers, AgentWebSocketHandler, Server}
+import model.data.Graph
 import org.jboss.netty.channel.Channel
 import org.megrez.util.Logging
 import org.neo4j.kernel.EmbeddedGraphDatabase

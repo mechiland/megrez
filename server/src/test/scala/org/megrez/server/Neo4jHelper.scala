@@ -1,6 +1,7 @@
 package org.megrez.server
 
-import data.Graph
+
+import model.data.Graph
 import org.neo4j.graphdb.Traverser.Order
 import scala.collection.JavaConversions._
 import org.neo4j.graphdb._
