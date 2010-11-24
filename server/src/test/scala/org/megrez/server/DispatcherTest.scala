@@ -9,6 +9,7 @@ import org.megrez.{JobAssignment, Material, Job}
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   val job = new Job("unit test", Set(), List())
+  val job2 = new Job("function test", Set(), List())
 
   describe("Dispatcher") {
     it("should assign job to idle agent") {
@@ -138,7 +139,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
     describe("Cancel Build") {
       it("should notify build scheduler canceled jobs") {
         val assignment = JobAssignment("pipeline", Map[Material, Option[Any]](), job)
-        val assignment2 = JobAssignment("pipeline", Map[Material, Option[Any]](), new Job("function test", Set(), List()))
+        val assignment2 = JobAssignment("pipeline", Map[Material, Option[Any]](), job2)
 
         val dispatcher = new Dispatcher(Context)
         dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
@@ -159,10 +160,9 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
         dispatcher ! SchedulerToDispatcher.CancelBuild(build)
 
         receiveWithin(1000) {
-          case DispatcherToScheduler.BuildCanceled(id: UUID, jobAssignments: Set[JobAssignment]) =>
+          case DispatcherToScheduler.BuildCanceled(id: UUID, jobs: Set[Job]) =>
             id should be === build
-            jobAssignments.contains(assignment) should be === true
-            jobAssignments.contains(assignment2) should be === true
+            jobs should be === Set(job, job2)
           case TIMEOUT => fail
           case _ => fail
         }

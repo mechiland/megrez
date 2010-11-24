@@ -45,7 +45,7 @@ object SchedulerToDispatcher {
 object DispatcherToScheduler {
   case class JobCompleted(val build: UUID, val job: Job)
   case class JobFailed(val build: UUID, val job: Job)
-  case class BuildCanceled(val build: UUID, val assignments: Set[JobAssignment])
+  case class BuildCanceled(val build: UUID, val assignments: Set[Job])
 }
 
 object SchedulerToBuildManager {

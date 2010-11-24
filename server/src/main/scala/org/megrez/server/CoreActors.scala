@@ -152,11 +152,8 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
           idleAgents.add(agent)
           dispatchJobs
         case SchedulerToDispatcher.CancelBuild(build) =>
-          val assignmentsToRemove = jobAssignments.filter {entity => entity._2 == build}
-          assignmentsToRemove.foreach {entity => jobAssignments.remove(entity._1)}
-          val jobInProgressToRemove = jobInProgress.filter {entity => entity._2 == build}
-          jobInProgressToRemove.foreach {entity => jobInProgress.remove(entity._1)}
-          megrez.buildScheduler ! DispatcherToScheduler.BuildCanceled(build, jobInProgressToRemove.keySet.toSet union assignmentsToRemove.keySet.toSet)
+          val removedJobs = (filterAssignments(jobAssignments, build) union filterAssignments(jobInProgress, build)).map(_.job)
+          megrez.buildScheduler ! DispatcherToScheduler.BuildCanceled(build, removedJobs)
         case Stop => exit
       }
     }
@@ -192,6 +189,13 @@ class Dispatcher(megrez: {val buildScheduler: Actor}) extends Actor with Logging
       case None => None
     }
   }
+
+  private def filterAssignments(jobAssignments: HashMap[JobAssignment, UUID], build: UUID): Set[JobAssignment] = {
+    val assignmentsToRemove = jobAssignments.filter(build == _._2)
+    assignmentsToRemove.foreach {entity => jobAssignments.remove(entity._1)}
+    return assignmentsToRemove.keySet.toSet
+  }
+
   start
 }
 
