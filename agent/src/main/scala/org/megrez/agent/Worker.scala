@@ -1,12 +1,14 @@
 package org.megrez.agent
 
 import actors.Actor
-import org.megrez.vcs.VersionControl
-import org.megrez.util.{Logging, Workspace}
+import org.megrez.util.Workspace
 import org.megrez.task.CommandLineTask
 import org.megrez._
 import java.io.{FileInputStream, File}
 import java.util.{ArrayList, UUID}
+import org.megrez.util.Logging
+import vcs.VersionControl
+
 class Worker(val workspace: Workspace) extends Actor with Logging {
   def act() {
     loop {
@@ -23,19 +25,27 @@ class Worker(val workspace: Workspace) extends Actor with Logging {
                 case _ => task.execute(pipelineDir)
               }
             }
-            for (artifact <- assignment.job.artifacts) {
-              val path: String = artifact.path
-              val tags:String = artifact.tags.mkString(":")
-              val artifactFiles: ArrayList[File] = workspace.findFiles(pipelineDir, path)
-              var zipFileName: String = UUID.randomUUID.toString
-              zipFileName = ZipFileGenerator.getZipFile(zipFileName, artifactFiles, tags)
-              actor ! new ArtifactStream(new FileInputStream(zipFileName))
-            }
-            actor ! new JobCompleted()
+            sendArtifactBack(assignment, pipelineDir, actor)
+            actor ! new JobCompleted("done")
           } catch {
             case e: Exception => actor ! new JobFailed(e.getMessage)
+            info(e.getMessage, e)
           }
         case _ =>
+      }
+    }
+  }
+
+  private def sendArtifactBack(assignment: JobAssignment, pipelineDir: File, actor: Actor) = {
+    for (artifact <- assignment.job.artifacts) {
+      val path: String = artifact.path
+      if (path != "") {
+        val tags: String = artifact.tags.mkString(":")
+        val artifactFiles: ArrayList[File] = workspace.findFiles(pipelineDir, path)
+        var zipFileName: String = UUID.randomUUID.toString
+        zipFileName = ZipFileGenerator.getZipFile(zipFileName, artifactFiles, tags)
+        if (zipFileName != "")
+          actor ! new ArtifactStream(new FileInputStream(zipFileName))
       }
     }
   }

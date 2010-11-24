@@ -12,6 +12,11 @@ class FileWorkspaceTest extends Spec with ShouldMatchers with BeforeAndAfterEach
       val files: ArrayList[File] = workspace.findFiles(root.getParentFile, "*.git")
       files.get(0).getName should be equals (".git")
     }
+    it("should find files by file name") {
+      val workspace = new FileWorkspace(root)
+      val files: ArrayList[File] = workspace.findFiles(root.getParentFile, ".git")
+      files.get(0).getName should be equals (".git")
+    }
     it("should create dir for pipeline") {
       val workspace = new FileWorkspace(root)
       workspace.createFolder("pipeline")

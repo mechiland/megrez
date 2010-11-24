@@ -108,6 +108,12 @@ class WebSocketServer extends SimpleChannelUpstreamHandler {
     webSocketChannel = context.getChannel
     websocketBehaviours.dequeue.handleWebSocketFrame(context, request)
   }
+  override def exceptionCaught(context: ChannelHandlerContext, event: ExceptionEvent) {
+    event.getCause match {
+      case exception: NotMegrezServerException =>
+      case exception :NoSuchElementException =>
+    }
+  }
 }
 
 trait ActorBasedServerHandlerMixin extends ServerHandler {

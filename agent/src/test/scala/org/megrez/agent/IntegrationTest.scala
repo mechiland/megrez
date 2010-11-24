@@ -3,7 +3,6 @@ package org.megrez.agent
 import org.scalatest.matchers.ShouldMatchers
 import java.io.File
 import java.lang.String
-import org.scalatest._
 import org.jboss.netty.handler.codec.http.websocket.DefaultWebSocketFrame
 import scala.actors._
 import scala.actors.Actor._
@@ -27,7 +26,7 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
       serverConnection.connect
 
       val jobAssignment =
-        """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + url + '"' + """, "dest" : "$main"}, "workset" : {"revision" : 2} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "echo HELLO"}], "artifacts" : [{"path" : "README", "tags" : ["artifact"]}] } }"""
+      """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + url + '"' + """, "dest" : "$main"}, "workset" : {"revision" : 2} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "echo HELLO"}], "artifacts" : [{"path" : "README", "tags" : ["artifact"]}] } }"""
 
       receiveWithin(1000) {
         case "MEGREZ HANDSHAKE" => server.send(new DefaultWebSocketFrame(jobAssignment))
@@ -36,21 +35,22 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
       }
 
       receiveWithin(2000) {
-        case message : String =>
+        case message: String =>
           JSON.read[AgentMessage](message) match {
             case ConsoleOutput(output) =>
               output should equal("HELLO")
             case _ => fail
           }
-        case ArtifactStream(content)=>
+        case ArtifactStream(content) =>
         case TIMEOUT => fail
         case _ => fail
-      }      
+      }
 
       receiveWithin(2000) {
-        case message : String =>
+        case message: String =>
+          if(!message.isEmpty)
           JSON.read[AgentMessage](message) match {
-            case _ : JobCompleted =>
+            case _: JobCompleted =>
             case _ =>
           }
         case TIMEOUT => fail
@@ -124,7 +124,7 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
     run(command, root)
   }
 
-  private def run(command: String, workingDir : File) {
+  private def run(command: String, workingDir: File) {
     val cmd = Runtime.getRuntime().exec(command, null, workingDir)
     cmd.waitFor match {
       case 0 =>

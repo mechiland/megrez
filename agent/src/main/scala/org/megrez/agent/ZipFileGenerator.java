@@ -29,6 +29,7 @@ public class ZipFileGenerator {
             zipFile.close();
             return temFile.getAbsolutePath();
         } catch (IOException e) {
+            System.out.println(e.getMessage());
             return "";
         }
     }
