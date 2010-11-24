@@ -48,9 +48,9 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
         case _ => fail
       }
 
-      val nodes = allPipelineNodes
-      nodes.size should be === 1
-      nodes.iterator.next.getProperty("name") should be === "pipeline"
+//      val nodes = allPipelineNodes
+//      nodes.size should be === 1
+//      nodes.iterator.next.getProperty("name") should be === "pipeline"
 
     }
 
@@ -87,13 +87,13 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
     }
   }
 
-  override def beforeEach(){
-    startDB
-  }
-
-  override def afterEach() {
-    shutdownDB
-  }
+//  override def beforeEach(){
+//    startDB
+//  }
+//
+//  override def afterEach() {
+//    shutdownDB
+//  }
 
   class ActorBasedTrigger(val name: String, val actor: Actor) extends Trigger {
     val pipeline: Pipeline = null

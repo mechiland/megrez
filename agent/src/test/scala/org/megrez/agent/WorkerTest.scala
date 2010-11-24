@@ -33,7 +33,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       worker ! (self, assignment)
 
       receiveWithin(1000) {
-        case completed: JobCompleted =>          
+        case completed: JobCompleted =>
           verify(version).checkout(pipelineDir, Some(5))
           verify(task).execute(pipelineDir)
         case TIMEOUT => fail("Timeout")
@@ -60,7 +60,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       worker ! (self, assignment)
 
       receiveWithin(1000) {
-        case completed: JobCompleted =>          
+        case completed: JobCompleted =>
           verify(version, never).checkout(pipelineDir, Some(5))
           verify(version).update(pipelineDir, Some(5))
         case TIMEOUT => fail("Timeout")
@@ -79,7 +79,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
       when(workingDirectory.getFolder(pipeline)).thenReturn(pipelineDir)
-      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)      
+      when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)
       when(version.isRepository(pipelineDir)).thenReturn(false)
 
       val worker = new Worker(workingDirectory)
