@@ -3,11 +3,11 @@ package org.megrez.server.model
 import data.Graph
 import org.scalatest.matchers.ShouldMatchers
 import org.megrez.server.{Neo4JSupport, IoSupport}
-import org.scalatest.{BeforeAndAfterEach, Spec}
 import tasks.CommandLine
 import vcs.Subversion
+import org.scalatest.{BeforeAndAfterAll, Spec}
 
-class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterEach with IoSupport with Neo4JSupport {
+class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Model persistent") {
     it("should create Task for specified type") {
       val task = Task(Map("type" -> "cmd", "command" -> "ls"))
@@ -76,13 +76,13 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Io
     }
   }
 
-  override def beforeEach() {
+  override def beforeAll() {
     Neo4J.start
     Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline)
     Graph.consistOf(CommandLine, Subversion)
   }
 
-  override def afterEach() {
+  override def afterAll() {
     Neo4J.shutdown
   }
 }

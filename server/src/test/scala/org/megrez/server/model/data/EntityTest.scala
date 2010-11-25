@@ -2,10 +2,10 @@ package org.megrez.server.model.data
 
 import org.scalatest.matchers.ShouldMatchers
 import org.megrez.server.{IoSupport, Neo4JSupport}
-import org.scalatest.{BeforeAndAfterEach, Spec}
 import org.neo4j.graphdb.{DynamicRelationshipType, Node}
+import org.scalatest.{BeforeAndAfterAll, Spec}
 
-class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterEach with IoSupport with Neo4JSupport {
+class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Properties") {
     it("should create model with primitive value") {
       val entity = PrimitiveValues(Map("string" -> "string", "num" -> 5))
@@ -72,13 +72,13 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterEach with I
     }
   }
 
-  override def beforeEach() {
+  override def beforeAll() {
     Neo4J.start
     Graph.of(neo).consistOf(PrimitiveValues, PrimitiveArrays, One, Another, ListAnother, SetAnother,
       PluggableEntity, PluginEntity)
   }
 
-  override def afterEach() {
+  override def afterAll() {
     Neo4J.shutdown
   }
 
