@@ -18,7 +18,7 @@ trait Entity {
 
   protected def reader[T <: Entity](target: Reference[T]) = new ReferenceReader[T] {val reference = target}
 
-  protected def read[T](property: Property[T]) = property.converter.from(if(node.hasProperty(property.name)) node.getProperty(property.name) else null)
+  protected def read[T](property: Property[T]) = property.converter.from(if (node.hasProperty(property.name)) node.getProperty(property.name) else null)
 
   protected def read[T <: Entity](reference: Reference[T]) = Option(node.getSingleRelationship(reference.relationship, Direction.OUTGOING)).map(rel => reference.meta(rel.getEndNode)).getOrElse(null).asInstanceOf[T]
 
@@ -62,4 +62,9 @@ trait Entity {
 
     def apply() = read(reference)
   }
+
+
+  override def hashCode = node.hashCode
+
+  override def equals(other: Any) = if (other.isInstanceOf[Entity]) other.asInstanceOf[Entity].node.getId == node.getId else false
 }

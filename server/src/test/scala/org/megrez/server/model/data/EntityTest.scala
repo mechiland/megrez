@@ -40,6 +40,17 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
       }
     }
 
+    it("should create model with reference instance") {
+      val another = Another(Map("name" -> "name"))
+      val entity = One(Map("name" -> "name", "another" -> another))
+      entity.name() should equal(Some("name"))
+      entity.another() match {
+        case Some(another) =>
+          another.name() should equal(Some("name"))
+        case _ => fail
+      }      
+    }
+
     it("should create model with list references") {
       val entity = ListAnother(Map("name" -> "name", "others" -> List(Map("name" -> "name"))))
       entity.others() match {

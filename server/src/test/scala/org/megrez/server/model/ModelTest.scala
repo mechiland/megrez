@@ -6,6 +6,7 @@ import org.megrez.server.{Neo4JSupport, IoSupport}
 import tasks.{Ant, CommandLine}
 import vcs.Subversion
 import org.scalatest.{BeforeAndAfterAll, Spec}
+import org.neo4j.graphdb.{Relationship, Direction, DynamicRelationshipType}
 
 class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Model persistent") {
@@ -98,11 +99,46 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
         case _ => fail
       }
     }
+
+    it("should create build") {
+      val build = Build(Map("pipeline" -> Pipeline(Map("name" -> "pipeline",       
+        "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
+        "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))))
+
+      val pipeline = build.pipeline
+      pipeline.name should equal("pipeline")
+      pipeline.materials should have size (1)
+      val material = pipeline.materials.head
+      material.destination should equal("dest")
+      material.changeSource match {
+        case svn: Subversion =>
+          svn.url should equal("svn_url")
+        case _ => fail
+      }
+      pipeline.stages should have size (1)
+      val stage = pipeline.stages.head
+      stage.name should equal("test")
+      stage.jobs should have size (1)
+      val job = stage.jobs.head
+      job.name should equal("ut")
+      job.tasks should have size (1)
+      job.tasks.head match {
+        case task: CommandLine => task.command should equal("ls")
+        case _ => fail
+      }
+
+      import scala.collection.JavaConversions._
+
+      val relationships = build.pipeline.node.getRelationships(DynamicRelationshipType.withName("FOR_PIPELINE"), Direction.INCOMING)
+      val list = relationships.toList
+      list should have size(1)
+      list.head.getStartNode should equal(build.node)
+    }
   }
 
   override def beforeAll() {
     Neo4J.start
-    Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline)
+    Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline, Build)
     Graph.consistOf(CommandLine, Ant, Subversion)
   }
 

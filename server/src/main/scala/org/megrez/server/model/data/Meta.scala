@@ -28,6 +28,10 @@ trait Meta[EntityType <: Entity] {
           attributes.get(reference.name) match {
             case Some(data: Map[String, Any]) =>
               node.createRelationshipTo(reference.meta(data).node, reference.relationship)
+            case Some(entity : Entity) =>              
+              if (reference.manifest.erasure.isAssignableFrom(entity.getClass))
+                node.createRelationshipTo(entity.node, reference.relationship)
+              else throw new Exception() 
             case _ => throw new Exception()
           }
 
@@ -51,26 +55,26 @@ trait Meta[EntityType <: Entity] {
     node
   }
 
-  def property[T](name: String)(implicit converter: PropertyConverter[T]) = {
-    val property = Property[T](name, converter)
+  def property[T](name: String)(implicit converter: PropertyConverter[T], manifest : Manifest[T]) = {
+    val property = Property[T](name, converter, manifest)
     _properties += property
     property
   }
 
-  def reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType) = {
-    val reference = Reference[T](name, meta, relationship)
+  def reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest : Manifest[T]) = {
+    val reference = Reference[T](name, meta, relationship, manifest)
     _references += reference
     reference
   }
 
-  def list[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType) = {
-    val list = ReferenceList[T](name, meta, relationship)
+  def list[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest : Manifest[T]) = {
+    val list = ReferenceList[T](name, meta, relationship, manifest)
     _referenceLists += list
     list
   }
 
-  def set[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType) = {
-    val set = ReferenceSet[T](name, meta, relationship)
+  def set[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest : Manifest[T]) = {
+    val set = ReferenceSet[T](name, meta, relationship, manifest)
     _referenceSets += set
     set
   }
@@ -128,8 +132,8 @@ trait PropertyConverter[T] {
   def to(value: Any): Any
 }
 
-case class Property[T](name: String, converter: PropertyConverter[T])
-case class Reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)
-case class ReferenceList[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)
-case class ReferenceSet[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)
+case class Property[T](name: String, converter: PropertyConverter[T], manifest : Manifest[T])
+case class Reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest : Manifest[T])
+case class ReferenceList[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest : Manifest[T])
+case class ReferenceSet[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest : Manifest[T])
 //case class ReferenceMap[T <: Entity]
