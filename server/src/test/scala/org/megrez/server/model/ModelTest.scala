@@ -3,16 +3,27 @@ package org.megrez.server.model
 import data.Graph
 import org.scalatest.matchers.ShouldMatchers
 import org.megrez.server.{Neo4JSupport, IoSupport}
-import tasks.CommandLine
+import tasks.{Ant, CommandLine}
 import vcs.Subversion
 import org.scalatest.{BeforeAndAfterAll, Spec}
 
 class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Model persistent") {
-    it("should create Task for specified type") {
+    it("should create Task for command task") {
       val task = Task(Map("type" -> "cmd", "command" -> "ls"))
       task match {
         case task: CommandLine => task.command should equal("ls")
+        case _ => fail
+      }
+    }
+
+    it("should create Task for ant task") {
+      val task = Task(Map("type" -> "ant", "target" -> "compile", "buildfile" -> "build.xml"))
+      task match {
+        case task: Ant => {
+          task.target should equal("compile")
+          task.buildFile should equal("build.xml")
+        }
         case _ => fail
       }
     }
@@ -92,7 +103,7 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
   override def beforeAll() {
     Neo4J.start
     Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline)
-    Graph.consistOf(CommandLine, Subversion)
+    Graph.consistOf(CommandLine, Ant, Subversion)
   }
 
   override def afterAll() {
