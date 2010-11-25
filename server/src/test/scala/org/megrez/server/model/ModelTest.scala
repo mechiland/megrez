@@ -43,7 +43,7 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
     it("should create change source") {
       val changeSource = ChangeSource(Map("type" -> "svn", "url" -> "svn_url"))
       changeSource match {
-        case svn : Subversion =>
+        case svn: Subversion =>
           svn.url should equal("svn_url")
         case _ => fail
       }
@@ -53,15 +53,25 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val material = Material(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url")))
       material.destination should equal("dest")
       material.changeSource match {
-        case svn : Subversion =>
+        case svn: Subversion =>
           svn.url should equal("svn_url")
         case _ => fail
       }
     }
 
     it("should create pipeline") {
-      val pipeline = Pipeline(Map("name" -> "pipeline", "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))
+      val pipeline = Pipeline(Map("name" -> "pipeline",
+        "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
+        "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))
       pipeline.name should equal("pipeline")
+      pipeline.materials should have size (1)
+      val material = pipeline.materials.head
+      material.destination should equal("dest")
+      material.changeSource match {
+        case svn: Subversion =>
+          svn.url should equal("svn_url")
+        case _ => fail
+      }
       pipeline.stages should have size (1)
       val stage = pipeline.stages.head
       stage.name should equal("test")
