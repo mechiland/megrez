@@ -18,9 +18,9 @@ trait Entity {
 
   protected def reader[T <: Entity](target: Reference[T]) = new ReferenceReader[T] {val reference = target}
 
-  protected def read[T](property: Property[T]) = node.getProperty(property.name).asInstanceOf[T]
+  protected def read[T](property: Property[T]) = property.converter.from(if(node.hasProperty(property.name)) node.getProperty(property.name) else null)
 
-  protected def read[T <: Entity](reference: Reference[T]) = Option(node.getSingleRelationship(reference.relationship, Direction.OUTGOING)).map(rel => reference.meta(rel.getEndNode)).getOrElse(null).asInstanceOf[T]  
+  protected def read[T <: Entity](reference: Reference[T]) = Option(node.getSingleRelationship(reference.relationship, Direction.OUTGOING)).map(rel => reference.meta(rel.getEndNode)).getOrElse(null).asInstanceOf[T]
 
   protected def read[T <: Entity](list: ReferenceList[T]) = Option(node.getSingleRelationship(list.relationship, Direction.OUTGOING)).map {
     rel =>
@@ -28,7 +28,7 @@ trait Entity {
         DynamicRelationshipType.withName("NEXT"), Direction.OUTGOING).getAllNodes.map(list.meta(_)).toList
   }.getOrElse(List[T]())
 
-  protected def read[T <: Entity](set : ReferenceSet[T]) = node.getRelationships(set.relationship, Direction.OUTGOING).map(rel => set.meta(rel.getEndNode)).toSet
+  protected def read[T <: Entity](set: ReferenceSet[T]) = node.getRelationships(set.relationship, Direction.OUTGOING).map(rel => set.meta(rel.getEndNode)).toSet
 
   trait PropertyReader[T] {
     val property: Property[T]
@@ -45,7 +45,7 @@ trait Entity {
 
   class PropertyAccessor[T](val node: Node, val property: Property[T]) extends PropertyReader[T] with PropertyWriter[T]
 
-  trait ReferenceReader[T <: Entity] {    
+  trait ReferenceReader[T <: Entity] {
     val reference: Reference[T]
 
     def apply() = Option(node.getSingleRelationship(reference.relationship, Direction.OUTGOING)).map(rel => reference.meta(rel.getEndNode))

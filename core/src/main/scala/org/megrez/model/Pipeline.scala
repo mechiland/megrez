@@ -13,6 +13,7 @@ trait Stage {
 
 trait Job {
   val name : String
+  val resources : Set[String]
   val tasks : List[_ <: Task]
 }
 

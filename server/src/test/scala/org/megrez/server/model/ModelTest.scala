@@ -18,8 +18,11 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
     }
 
     it("should create Job") {
-      val job = Job(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))
+      val job = Job(Map("name" -> "ut",
+        "resources" -> List("Windows"),
+        "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))
       job.name should equal("ut")
+      job.resources should equal(Set("Windows"))
       job.tasks should have size (1)
       job.tasks.head match {
         case task: CommandLine => task.command should equal("ls")
@@ -60,7 +63,7 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
     }
 
     it("should create pipeline") {
-      val pipeline = Pipeline(Map("name" -> "pipeline",
+      val pipeline = Pipeline(Map("name" -> "pipeline",       
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))
       pipeline.name should equal("pipeline")

@@ -1,11 +1,11 @@
 package org.megrez.server.model.data
 
-import collection.mutable.{HashMap, HashSet}
+import collection.mutable.HashSet
 import org.neo4j.graphdb.{DynamicRelationshipType, GraphDatabaseService, RelationshipType, Node}
 
 trait Meta[EntityType <: Entity] {
   import Graph._
-  private val _properties = HashMap[Property[_], PropertyConverter[_]]()
+  private val _properties = HashSet[Property[_]]()
   private val _references = HashSet[Reference[_ <: Entity]]()
   private val _referenceLists = HashSet[ReferenceList[_ <: Entity]]()
   private val _referenceSets = HashSet[ReferenceSet[_ <: Entity]]()
@@ -21,9 +21,9 @@ trait Meta[EntityType <: Entity] {
   private def updateAttribute(node: Node, attributes: Map[String, Any]): Node = {
     node.update {
       node =>
-        for ((property, converter) <- _properties)
-          attributes.get(property.name).map(value => node.setProperty(property.name, converter.from(value)))
-        
+        for (property <- _properties)
+          attributes.get(property.name).map(value => node.setProperty(property.name, property.converter.to(value)))
+
         for (reference <- _references)
           attributes.get(reference.name) match {
             case Some(data: Map[String, Any]) =>
@@ -46,14 +46,14 @@ trait Meta[EntityType <: Entity] {
             case Some(data: List[Map[String, Any]]) =>
               data.foreach(data => node.createRelationshipTo(set.meta(data).node, set.relationship))
             case _ => throw new Exception()
-          }      
+          }
     }
     node
   }
 
   def property[T](name: String)(implicit converter: PropertyConverter[T]) = {
-    val property = Property[T](name)
-    _properties.put(property, converter)
+    val property = Property[T](name, converter)
+    _properties += property
     property
   }
 
@@ -75,38 +75,60 @@ trait Meta[EntityType <: Entity] {
     set
   }
 
-
-  trait PropertyConverter[T] {
-    def from(value: Any): T
-
-    def to(value: T): Any
-  }
-
   class PrimitiveConverter[T] extends PropertyConverter[T] {
     def from(value: Any): T = value.asInstanceOf[T]
 
-    def to(value: T): Any = value
+    def to(value: Any): Any = value
   }
 
-  class ArrayConverter[T](func: List[T] => Array[T]) extends PropertyConverter[Array[T]] {
+  class ArrayConverter[T](implicit func: List[T] => Array[T]) extends PropertyConverter[Array[T]] {
     def from(value: Any): Array[T] = value match {
-      case list: List[T] => func(list)
+      case list: Array[T] => list
       case _ => throw new Exception()
     }
 
-    def to(value: Array[T]) = value.toList
+    def to(value: Any) = value match {
+      case set: List[T] => func(set)
+      case array: Array[T] => array
+      case _ => throw new Exception()
+    }
+  }
+
+  class SetPropertyConverter[T](implicit func: List[T] => Array[T]) extends PropertyConverter[Set[T]] {
+    def from(value: Any): Set[T] = value match {
+      case list: Array[T] => list.toSet
+      case null => Set[T]()
+      case _ => throw new Exception()
+    }
+
+    def to(value: Any) = value match {
+      case set: List[T] => func(set)
+      case _ => println(value); throw new Exception()
+    }
   }
 
   protected implicit def stringConverter = new PrimitiveConverter[String]()
 
   protected implicit def intConverter = new PrimitiveConverter[Int]()
 
-  protected implicit def stringArrayConverter = new ArrayConverter[String](_.toArray)
+  protected implicit def stringArrayConverter = new ArrayConverter[String]()
 
-  protected implicit def intArrayConverter = new ArrayConverter[Int](_.toArray)
+  protected implicit def intArrayConverter = new ArrayConverter[Int]()
+
+  protected implicit def stringSetConverter = new SetPropertyConverter[String]()
+
+  private implicit def stringListToArray: List[String] => Array[String] = _.toArray
+
+  private implicit def intListToArray: List[Int] => Array[Int] = _.toArray
 }
 
-case class Property[T](name: String)
+trait PropertyConverter[T] {
+  def from(value: Any): T
+
+  def to(value: Any): Any
+}
+
+case class Property[T](name: String, converter: PropertyConverter[T])
 case class Reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)
 case class ReferenceList[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)
 case class ReferenceSet[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)
