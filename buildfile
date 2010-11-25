@@ -29,7 +29,7 @@ define "megrez" do
   project.group = GROUP  
 
   test.using :scalatest
-  test.using :java_args => ["-server" "-Xmx512M"]
+  test.using :java_args => ["-server" "-Xmx1024M"]
   test.with MOCKITO
 
   define "core" do

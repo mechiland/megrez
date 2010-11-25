@@ -23,6 +23,7 @@ trait Meta[EntityType <: Entity] {
       node =>
         for ((property, converter) <- _properties)
           attributes.get(property.name).map(value => node.setProperty(property.name, converter.from(value)))
+        
         for (reference <- _references)
           attributes.get(reference.name) match {
             case Some(data: Map[String, Any]) =>
@@ -109,3 +110,4 @@ case class Property[T](name: String)
 case class Reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)
 case class ReferenceList[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)
 case class ReferenceSet[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)
+//case class ReferenceMap[T <: Entity]

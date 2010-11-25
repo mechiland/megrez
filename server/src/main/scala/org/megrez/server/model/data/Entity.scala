@@ -16,9 +16,11 @@ trait Entity {
 
   protected def reader[T <: Entity](set: ReferenceSet[T]) = new ReferenceSetReader[T] {val reference = set}
 
-  protected def reader[T <: Entity](target: Reference[T]) = new ReferenceReader[T] {val node = Entity.this.node; val reference = target}
+  protected def reader[T <: Entity](target: Reference[T]) = new ReferenceReader[T] {val reference = target}
 
   protected def read[T](property: Property[T]) = node.getProperty(property.name).asInstanceOf[T]
+
+  protected def read[T <: Entity](reference: Reference[T]) = Option(node.getSingleRelationship(reference.relationship, Direction.OUTGOING)).map(rel => reference.meta(rel.getEndNode)).getOrElse(null).asInstanceOf[T]  
 
   protected def read[T <: Entity](list: ReferenceList[T]) = Option(node.getSingleRelationship(list.relationship, Direction.OUTGOING)).map {
     rel =>
@@ -43,8 +45,7 @@ trait Entity {
 
   class PropertyAccessor[T](val node: Node, val property: Property[T]) extends PropertyReader[T] with PropertyWriter[T]
 
-  trait ReferenceReader[T <: Entity] {
-    val node: Node
+  trait ReferenceReader[T <: Entity] {    
     val reference: Reference[T]
 
     def apply() = Option(node.getSingleRelationship(reference.relationship, Direction.OUTGOING)).map(rel => reference.meta(rel.getEndNode))

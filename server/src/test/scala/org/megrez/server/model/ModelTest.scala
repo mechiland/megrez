@@ -5,6 +5,7 @@ import org.scalatest.matchers.ShouldMatchers
 import org.megrez.server.{Neo4JSupport, IoSupport}
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import tasks.CommandLine
+import vcs.Subversion
 
 class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterEach with IoSupport with Neo4JSupport {
   describe("Model persistent") {
@@ -15,11 +16,11 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Io
         case _ => fail
       }
     }
-    
+
     it("should create Job") {
       val job = Job(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))
       job.name should equal("ut")
-      job.tasks should have size(1)
+      job.tasks should have size (1)
       job.tasks.head match {
         case task: CommandLine => task.command should equal("ls")
         case _ => fail
@@ -27,38 +28,58 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterEach with Io
     }
 
     it("should create stage") {
-      val stage = Stage(Map("name" -> "test", "jobs"->List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))
+      val stage = Stage(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))
       stage.name should equal("test")
-      stage.jobs should have size(1)
+      stage.jobs should have size (1)
       val job = stage.jobs.head
       job.name should equal("ut")
-      job.tasks should have size(1)
+      job.tasks should have size (1)
       job.tasks.head match {
         case task: CommandLine => task.command should equal("ls")
         case _ => fail
-      }      
+      }
+    }
+
+    it("should create change source") {
+      val changeSource = ChangeSource(Map("type" -> "svn", "url" -> "svn_url"))
+      changeSource match {
+        case svn : Subversion =>
+          svn.url should equal("svn_url")
+        case _ => fail
+      }
+    }
+
+    it("should create material with source") {
+      val material = Material(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url")))
+      material.destination should equal("dest")
+      material.changeSource match {
+        case svn : Subversion =>
+          svn.url should equal("svn_url")
+        case _ => fail
+      }
     }
 
     it("should create pipeline") {
-      val pipeline = Pipeline(Map("name" -> "pipeline", "stages"-> List(Map("name" -> "test", "jobs"->List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))
+      val pipeline = Pipeline(Map("name" -> "pipeline", "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))
       pipeline.name should equal("pipeline")
-      pipeline.stages should have size(1)
+      pipeline.stages should have size (1)
       val stage = pipeline.stages.head
       stage.name should equal("test")
-      stage.jobs should have size(1)
+      stage.jobs should have size (1)
       val job = stage.jobs.head
       job.name should equal("ut")
-      job.tasks should have size(1)
+      job.tasks should have size (1)
       job.tasks.head match {
         case task: CommandLine => task.command should equal("ls")
         case _ => fail
-      }    
+      }
     }
   }
 
   override def beforeEach() {
     Neo4J.start
-    Graph.of(neo).consistOf(Task, CommandLine, Job, Stage, Pipeline)
+    Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline)
+    Graph.consistOf(CommandLine, Subversion)
   }
 
   override def afterEach() {
