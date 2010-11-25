@@ -4,7 +4,7 @@ import org.neo4j.graphdb.Node
 import org.megrez.server.model.data.Plugin
 import org.megrez.server.model.ChangeSource
 
-class Subversion private (val node : Node) extends ChangeSource {
+class Subversion private (val node : Node) extends ChangeSource with org.megrez.model.vcs.Subversion {
   val url = read(Subversion.url)
 }
 
