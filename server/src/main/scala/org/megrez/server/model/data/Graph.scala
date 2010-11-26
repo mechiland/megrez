@@ -1,7 +1,7 @@
 package org.megrez.server.model.data
 
 import collection.mutable.HashSet
-import org.neo4j.graphdb.{TraversalPosition, ReturnableEvaluator, Node, GraphDatabaseService}
+import org.neo4j.graphdb._
 
 object Graph {
   private var graph: GraphDatabaseService = null
@@ -50,5 +50,7 @@ object Graph {
   implicit def returnableEvaluator(func: TraversalPosition => Boolean) = new ReturnableEvaluator {
     def isReturnableNode(traversalPosition: TraversalPosition ) = func(traversalPosition)
   }
+
+  def last(name : String) = returnableEvaluator(position => !position.currentNode.hasRelationship(DynamicRelationshipType.withName(name), Direction.OUTGOING))
 }
 

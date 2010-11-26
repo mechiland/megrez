@@ -16,6 +16,10 @@ trait Entity {
 
   protected def write[T](property: Property[T], value: T) = node.update(_.setProperty(property.name, property.converter.to(value)))
 
+  protected def read[T <: Enumeration](enum: Enum[T]) = enum.enumeration.withName(node.getProperty(enum.name).toString)
+
+  protected def write[T <: Enumeration](enum: Enum[T], value: T#Value) = node.update(_.setProperty(enum.name, value.toString))
+
   protected def read[T <: Entity](reference: Reference[T]) = Option(node.getSingleRelationship(reference.relationship, Direction.OUTGOING)).map(rel => reference.meta(rel.getEndNode)).getOrElse(null).asInstanceOf[T]
 
   protected def write[T <: Entity](reference: Reference[T], value: T) {
@@ -34,11 +38,10 @@ trait Entity {
   }.getOrElse(List[T]())
 
   protected def append[T <: Entity](list: ReferenceList[T], entity: T) {
-    def last: TraversalPosition => Boolean = position => !position.currentNode.hasRelationship(withName("NEXT"), Direction.OUTGOING)
     node.update {
       node =>
         Option(node.getSingleRelationship(list.relationship, Direction.OUTGOING)).map(rel =>
-          rel.getEndNode.traverse(Order.DEPTH_FIRST, StopEvaluator.END_OF_GRAPH, last, withName("NEXT")).head.createRelationshipTo(entity.node, withName("NEXT"))
+          rel.getEndNode.traverse(Order.DEPTH_FIRST, StopEvaluator.END_OF_GRAPH, last("NEXT"), withName("NEXT")).head.createRelationshipTo(entity.node, withName("NEXT"))
           ).getOrElse(node.createRelationshipTo(entity.node, list.relationship))
     }
   }
@@ -65,7 +68,14 @@ trait Entity {
     def apply(value: T) = write(reference, value)
   }
 
-  protected def reader[T <: Entity](ref: Reference[T]) = new ReferenceReader[T] {val reference = ref}
+  trait EnumReader[T <: Enumeration] {
+    val reference : Enum[T]
+    def apply() =  read(reference)
+  }
+
+  protected def reader[T <: Enumeration](ref: Enum[T]) = new EnumReader[T] {val reference = ref}
+
+  protected def reader[T <: Entity](ref: Reference[T]) = new ReferenceReader[T] {val reference = ref}  
 
   protected def reader[T <: Entity](ref: ReferenceList[T]) = new ReferenceListReader[T] {val reference = ref}
 

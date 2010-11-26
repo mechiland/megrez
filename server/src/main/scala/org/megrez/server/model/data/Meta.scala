@@ -6,6 +6,7 @@ import org.neo4j.graphdb.{DynamicRelationshipType, GraphDatabaseService, Relatio
 trait Meta[EntityType <: Entity] {
   import Graph._
   private val _properties = HashSet[Property[_]]()
+  private val _enumerations = HashSet[Enum[_]]()
   private val _references = HashSet[Reference[_ <: Entity]]()
   private val _referenceLists = HashSet[ReferenceList[_ <: Entity]]()
   private val _referenceSets = HashSet[ReferenceSet[_ <: Entity]]()
@@ -20,8 +21,9 @@ trait Meta[EntityType <: Entity] {
 
   private def updateAttribute(node: Node, attributes: Map[String, Any]): Node = {
     node.update {
-      node =>
+      node =>        
         updateProperties(attributes, node)
+        updateEnumerations(attributes, node)
         updateReferences(attributes, node)
         updateReferenceLists(attributes, node)
         updateReferenceSets(attributes, node)
@@ -32,6 +34,11 @@ trait Meta[EntityType <: Entity] {
   private def updateProperties(attributes: Map[String, Any], node: Node) {
     for (property <- _properties)
       attributes.get(property.name).map(value => node.setProperty(property.name, property.converter.to(value)))
+  }
+
+  private def updateEnumerations(attributes: Map[String, Any], node: Node) {
+    for (enum <- _enumerations)
+      attributes.get(enum.name).map(value => node.setProperty(enum.name, value.toString))
   }
 
   private def updateReferences(attributes: Map[String, Any], node: Node) {
@@ -60,7 +67,7 @@ trait Meta[EntityType <: Entity] {
               DynamicRelationshipType.withName("NEXT")).getEndNode)
             node.createRelationshipTo(entities.head.node, list.relationship)
           }
-        case _ => 
+        case _ =>
       }
   }
 
@@ -80,6 +87,12 @@ trait Meta[EntityType <: Entity] {
     val property = Property[T](name, converter, manifest)
     _properties += property
     property
+  }
+
+  def enum[T <: Enumeration](name: String, enumeration: T) = {    
+    val enum = Enum[T](name, enumeration)
+    _enumerations += enum
+    enum
   }
 
   def reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest: Manifest[T]) = {
@@ -154,7 +167,8 @@ trait PropertyConverter[T] {
 }
 
 case class Property[T](name: String, converter: PropertyConverter[T], manifest: Manifest[T])
+case class Enum[T <: Enumeration](name: String, enumeration: T)
 case class Reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest: Manifest[T])
 case class ReferenceList[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest: Manifest[T])
 case class ReferenceSet[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest: Manifest[T])
-//case class ReferenceMap[T <: Entity]
+
