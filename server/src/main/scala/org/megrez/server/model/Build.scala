@@ -12,14 +12,14 @@ class Build private(val node: Node) extends Entity {
   val stages = reader(Build.stages)
 
   def next = {    
-    if (status() == READY_FOR_NEXT) {
+    if (status() == Advance) {
       nextStage match {
         case Some(execution) =>
           append(Build.stages, execution)
-          write(Build.status, RUNNING)
+          write(Build.status, Running)
           execution.jobs
         case None =>          
-          write(Build.status, COMPLETED)
+          write(Build.status, Completed)
           Nil
       }
     } else Nil
@@ -32,10 +32,6 @@ class Build private(val node: Node) extends Entity {
     else
       executions.last.stage.next.map(StageExecution(_))
   }
-
-  def complete(job: Job) {
-
-  }
 }
 
 object Build extends Meta[Build] {
@@ -45,11 +41,11 @@ object Build extends Meta[Build] {
 
   def apply(node: Node) = new Build(node)
 
-  def apply(pipeline: Pipeline): Build = Build(Map("pipeline" -> pipeline, "status" -> Status.READY_FOR_NEXT))
+  def apply(pipeline: Pipeline): Build = Build(Map("pipeline" -> pipeline, "status" -> Status.Advance))
 
   object Status extends Enumeration {
     type Status = Value
-    val READY_FOR_NEXT, RUNNING, FAILING, COMPLETED, FAILED = Value
+    val Advance, Running, Failing, Completed, Failed = Value
   }
 }
 

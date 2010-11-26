@@ -20,6 +20,17 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       jobs.head.job should equal(job)
     }
 
+    it("should not return anything if current stage not finished") {
+      val job = Job(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))
+      val pipeline = Pipeline(Map("name" -> "pipeline",
+        "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
+        "stages" -> List(Map("name" -> "test", "jobs" -> List(job)))))
+      val build = Build(pipeline)
+      build.next
+      val jobs = build.next
+      jobs should have size (0)
+    }
+
     it("should return jobs of next stage when first stage successful") {
       val job1 = Job(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))
       val job2 = Job(Map("name" -> "publish", "tasks" -> List(Map("type" -> "cmd", "command" -> "publish"))))
@@ -27,6 +38,11 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job1)), Map("name" -> "publish", "jobs" -> List(job2)))))
       val build = Build(pipeline)
+//      build.next.
+//
+//      val jobs = build.next
+//      jobs should have size (1)
+//      jobs.head.job should equal(job2)
     }
   }
   override def beforeAll() {
