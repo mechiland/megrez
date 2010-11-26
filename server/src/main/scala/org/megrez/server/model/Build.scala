@@ -11,26 +11,32 @@ class Build private(val node: Node) extends Entity {
   val status = reader(Build.status)
   val stages = reader(Build.stages)
 
-  def next = {    
-    if (status() == Advance) {
-      nextStage match {
-        case Some(execution) =>
-          append(Build.stages, execution)
-          write(Build.status, Running)
-          execution.jobs
-        case None =>          
-          write(Build.status, Completed)
-          Nil
-      }
-    } else Nil
+  def next = current.map(checkCurrentStage(_)).getOrElse(advance)
+
+  private def checkCurrentStage(current: StageExecution) =
+    current.status match {
+      case StageExecution.Status.Completed => advance
+      case StageExecution.Status.Failed => write(Build.status, Failed); Nil
+      case StageExecution.Status.Failing => write(Build.status, Failing); Nil
+      case _ => Nil
+    }
+
+  private def nextStage = current.map(_.stage.next.map(stage => StageExecution(stage))).getOrElse(Some(StageExecution(pipeline.stages.head)))
+
+  private def current = {
+    val executions = stages()
+    if (executions.isEmpty) None else Some(executions.last)
   }
 
-  private def nextStage: Option[StageExecution] = {
-    val executions = stages()
-    if (executions.isEmpty)
-      Some(StageExecution(pipeline.stages.head))
-    else
-      executions.last.stage.next.map(StageExecution(_))
+  private[Build] def advance = {
+    nextStage match {
+      case Some(execution) =>
+        append(Build.stages, execution)
+        execution.jobs
+      case None =>
+        write(Build.status, Completed)
+        Nil
+    }
   }
 }
 
@@ -41,11 +47,11 @@ object Build extends Meta[Build] {
 
   def apply(node: Node) = new Build(node)
 
-  def apply(pipeline: Pipeline): Build = Build(Map("pipeline" -> pipeline, "status" -> Status.Advance))
+  def apply(pipeline: Pipeline): Build = Build(Map("pipeline" -> pipeline, "status" -> Status.Building))
 
   object Status extends Enumeration {
     type Status = Value
-    val Advance, Running, Failing, Completed, Failed = Value
+    val Building, Failing, Completed, Failed = Value
   }
 }
 

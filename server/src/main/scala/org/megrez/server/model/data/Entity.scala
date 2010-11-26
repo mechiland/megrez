@@ -7,6 +7,9 @@ trait Entity {
   import Graph._
   import scala.collection.JavaConversions._
   import DynamicRelationshipType._
+  import Order._
+  import StopEvaluator._
+  import Direction._
 
   val node: Node
 
@@ -33,15 +36,15 @@ trait Entity {
 
   protected def read[T <: Entity](list: ReferenceList[T]) = Option(node.getSingleRelationship(list.relationship, Direction.OUTGOING)).map {
     rel =>
-      rel.getEndNode.traverse(Order.DEPTH_FIRST, StopEvaluator.END_OF_GRAPH, ReturnableEvaluator.ALL,
-        withName("NEXT"), Direction.OUTGOING).getAllNodes.map(list.meta(_)).toList
+      rel.getEndNode.traverse(DEPTH_FIRST, END_OF_GRAPH, ReturnableEvaluator.ALL,
+        withName("NEXT"), OUTGOING).getAllNodes.map(list.meta(_)).toList
   }.getOrElse(List[T]())
 
   protected def append[T <: Entity](list: ReferenceList[T], entity: T) {
     node.update {
       node =>
-        Option(node.getSingleRelationship(list.relationship, Direction.OUTGOING)).map(rel =>
-          rel.getEndNode.traverse(Order.DEPTH_FIRST, StopEvaluator.END_OF_GRAPH, last("NEXT"), withName("NEXT")).head.createRelationshipTo(entity.node, withName("NEXT"))
+        Option(node.getSingleRelationship(list.relationship, OUTGOING)).map(rel =>
+          rel.getEndNode.traverse(DEPTH_FIRST, END_OF_GRAPH, last("NEXT"), withName("NEXT"), OUTGOING).head.createRelationshipTo(entity.node, withName("NEXT"))
           ).getOrElse(node.createRelationshipTo(entity.node, list.relationship))
     }
   }
@@ -69,18 +72,17 @@ trait Entity {
   }
 
   trait EnumReader[T <: Enumeration] {
-    val reference : Enum[T]
-    def apply() =  read(reference)
+    val reference: Enum[T]
+
+    def apply() = read(reference)
   }
 
   protected def reader[T <: Enumeration](ref: Enum[T]) = new EnumReader[T] {val reference = ref}
 
-  protected def reader[T <: Entity](ref: Reference[T]) = new ReferenceReader[T] {val reference = ref}  
+  protected def reader[T <: Entity](ref: Reference[T]) = new ReferenceReader[T] {val reference = ref}
 
   protected def reader[T <: Entity](ref: ReferenceList[T]) = new ReferenceListReader[T] {val reference = ref}
 
   protected def accessor[T <: Entity](ref: Reference[T]) = new ReferenceAccessor[T](ref)
-
-
 }
 
