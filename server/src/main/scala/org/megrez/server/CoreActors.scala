@@ -8,6 +8,7 @@ import org.megrez.util.{FileWorkspace, Logging}
 import java.io.File
 import org.megrez._
 import collection.mutable.{ListBuffer, HashSet, HashMap}
+
 class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends Actor with Logging {
   private val pipelines = HashMap[String, Pair[Pipeline, Trigger]]()
 
@@ -42,6 +43,8 @@ class PipelineManager(megrez: {val triggerFactory: Pipeline => Trigger}) extends
   }
 
   private def triggerPipeline(config: Pipeline) = {
+    val manualTrigger = megrez.triggerFactory(config)
+    manualTrigger.startTrigger ! Trigger.ExecuteOnce
   }
 
   private def launchTrigger(config: Pipeline): Trigger = {

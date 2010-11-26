@@ -11,11 +11,11 @@ import actors.{TIMEOUT, Actor}
 import scala.io.Source
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Spec}
 
-class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with BeforeAndAfterAll with Neo4jHelper{
-  val job = new Job("linux-firefox", Set(), List[Task](),List[Artifact]( new Artifact("/target/**/*.jar", Set("artifact"))))
-  
+class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with BeforeAndAfterAll with Neo4jHelper {
+  val job = new Job("linux-firefox", Set(), List[Task](), List[Artifact](new Artifact("/target/**/*.jar", Set("artifact"))))
+
   describe("Core Actors") {
-    it("should trig build for pipeline when pipeline first added") {      
+    it("should trig build for pipeline when pipeline first added") {
       val pipeline = new Pipeline("pipeline", Set(new Material(new Subversion(url))), List(new Stage("name", Set(job))))
 
       megrez.pipelineManager ! ToPipelineManager.AddPipeline(pipeline)
@@ -33,7 +33,7 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with B
       }
     }
 
-    it("should trig build for pipeline when pipeline material changes") {      
+    it("should trig build for pipeline when pipeline material changes") {
       val pipeline = new Pipeline("pipeline", Set(new Material(new Subversion(url))), List(new Stage("name", Set(job))))
       val handler = new ActorBasedAgentHandler(self)
 
@@ -60,33 +60,25 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with B
       }
     }
 
-//    it("should trig build for pipeline when pipeline triggered manually") {
-//      val job = new Job("linux-firefox", Set(), List[Task]())
-//      val pipeline = new Pipeline("pipeline", Set(new Material(new Subversion(url))), List(new Stage("name", Set(job))))
-//      val handler = new ActorBasedAgentHandler(self)
-//
-//      megrez.pipelineManager ! ToPipelineManager.AddPipeline(pipeline)
-//      megrez.agentManager ! ToAgentManager.RemoteAgentConnected(handler)
-//
-//      receiveWithin(200) {
-//        case message: String =>
-//          JSON.read[AgentMessage](message) match {
-//            case assignment: JobAssignment =>
-//              assignment.job.name should equal("linux-firefox")
-//            case _ => fail
-//          }
-//          handler.agent ! JobCompleted()
-//          megrez.pipelineManager ! ToPipelineManager.TriggerPipeline(pipeline)
-//        case TIMEOUT => fail
-//        case _ => fail
-//      }
-//
-//      receiveWithin(1000) {
-//        case message: String =>
-//        case TIMEOUT => fail
-//        case _ => fail
-//      }
-//    }
+    it("should trig build for pipeline when pipeline triggered manually") {
+      val pipeline = new Pipeline("pipeline", Set(new Material(new Subversion(url))), List(new Stage("name", Set(job))))
+      val handler = new ActorBasedAgentHandler(self)
+
+      megrez.agentManager ! ToAgentManager.RemoteAgentConnected(handler)
+      megrez.pipelineManager ! ToPipelineManager.TriggerPipeline(pipeline)
+
+      receiveWithin(200) {
+        case message: String =>
+          JSON.read[AgentMessage](message) match {
+            case assignment: JobAssignment =>
+              assignment.job.name should equal("linux-firefox")
+            case _ => fail
+          }
+          handler.agent ! JobCompleted()
+        case TIMEOUT => fail
+        case _ => fail
+      }
+    }
   }
 
   class ActorBasedAgentHandler(val main: Actor) extends AgentHandler {
@@ -122,13 +114,13 @@ class MegrezTest extends Spec with ShouldMatchers with BeforeAndAfterEach with B
 
     url = "file://" + new File(root, "repository/" + repositoryName).getAbsolutePath
     megrez = new Megrez(1000)
-//    startDB
+    //    startDB
   }
 
   override def afterEach() {
     megrez.stop
     delete(root)
-//    shutdownDB
+    //    shutdownDB
   }
 
   private def delete(file: File) {
