@@ -8,10 +8,13 @@ trait Trigger {
   def start
 
   def stop
+
+  def startTrigger: Actor
 }
 
 object Trigger extends Logging {
   object Execute
+  object ExecuteOnce
 
   private val timer = new Timer
 

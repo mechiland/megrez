@@ -106,5 +106,7 @@ class PipelineManagerTest extends Spec with ShouldMatchers with MockitoSugar wit
     def stop {
       actor ! ("TRIGGER STOP " + name)
     }
+
+    def startTrigger = null
   }
 }

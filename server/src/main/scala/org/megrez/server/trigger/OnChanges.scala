@@ -16,12 +16,11 @@ class OnChanges(val materials: Materials, val scheduler: Actor, every: Long) ext
             info("Changes detected, pipeline: " + materials.pipeline.name)
             scheduler ! TriggerToScheduler.TrigBuild(materials.pipeline, materials.changes)
           }
-        case Some(everyTime: Long) => if (everyTime < 0) {
+        case Trigger.ExecuteOnce =>
           if (materials.previous.values.head == None)
             materials.hasChanges
           info("manual trigger, pipeline:" + materials.pipeline.name)
           scheduler ! TriggerToScheduler.TrigBuild(materials.pipeline, materials.changes)
-        }
         case Stop => exit
         case _ =>
       }
@@ -30,13 +29,13 @@ class OnChanges(val materials: Materials, val scheduler: Actor, every: Long) ext
 
   private var task: TimerTask = null
 
-  def start {
+  def startTrigger: Actor = {
     buildTrigger.start
-    if (every >= 0)
-      task = Trigger.schedule(every, buildTrigger)
-    else {
-      buildTrigger ! Some(every)
-    }
+    return buildTrigger
+  }
+
+  def start {
+    task = Trigger.schedule(every, startTrigger)
   }
 
   def stop {
