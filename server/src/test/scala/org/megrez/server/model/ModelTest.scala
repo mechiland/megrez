@@ -4,9 +4,9 @@ import data.Graph
 import org.scalatest.matchers.ShouldMatchers
 import org.megrez.server.{Neo4JSupport, IoSupport}
 import tasks.{Ant, CommandLine}
-import vcs.Subversion
 import org.scalatest.{BeforeAndAfterAll, Spec}
 import org.neo4j.graphdb.{Direction, DynamicRelationshipType}
+import vcs.{Git, Subversion}
 
 class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Model persistent") {
@@ -55,11 +55,20 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       }
     }
 
-    it("should create change source") {
+    it("should create svn change source") {
       val changeSource = ChangeSource(Map("type" -> "svn", "url" -> "svn_url"))
       changeSource match {
         case svn: Subversion =>
           svn.url should equal("svn_url")
+        case _ => fail
+      }
+    }
+
+    it("should create git change source") {
+      val changeSource = ChangeSource(Map("type" -> "git", "url" -> "svn_url"))
+      changeSource match {
+        case git: Git =>
+          git.url should equal("svn_url")
         case _ => fail
       }
     }
@@ -75,7 +84,7 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
     }
 
     it("should create pipeline") {
-      val pipeline = Pipeline(Map("name" -> "pipeline",       
+      val pipeline = Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))
       pipeline.name should equal("pipeline")
@@ -101,7 +110,7 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
     }
 
     it("should create build") {
-      val build = Build(Map("pipeline" -> Pipeline(Map("name" -> "pipeline",       
+      val build = Build(Map("pipeline" -> Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))))
 
@@ -131,7 +140,7 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
 
       val relationships = build.pipeline.node.getRelationships(DynamicRelationshipType.withName("FOR_PIPELINE"), Direction.INCOMING)
       val list = relationships.toList
-      list should have size(1)
+      list should have size (1)
       list.head.getStartNode should equal(build.node)
     }
   }
@@ -139,7 +148,7 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
   override def beforeAll() {
     Neo4J.start
     Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline, Build)
-    Graph.consistOf(CommandLine, Ant, Subversion)
+    Graph.consistOf(CommandLine, Ant, Subversion, Git)
   }
 
   override def afterAll() {
