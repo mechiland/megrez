@@ -21,59 +21,80 @@ trait Meta[EntityType <: Entity] {
   private def updateAttribute(node: Node, attributes: Map[String, Any]): Node = {
     node.update {
       node =>
-        for (property <- _properties)
-          attributes.get(property.name).map(value => node.setProperty(property.name, property.converter.to(value)))
-
-        for (reference <- _references)
-          attributes.get(reference.name) match {
-            case Some(data: Map[String, Any]) =>
-              node.createRelationshipTo(reference.meta(data).node, reference.relationship)
-            case Some(entity : Entity) =>              
-              if (reference.manifest.erasure.isAssignableFrom(entity.getClass))
-                node.createRelationshipTo(entity.node, reference.relationship)
-              else throw new Exception() 
-            case _ => throw new Exception()
-          }
-
-        for (list <- _referenceLists)
-          attributes.get(list.name) match {
-            case Some(data: List[Map[String, Any]]) =>
-              val start = list.meta(data.head)
-              data.tail.foldLeft(start.node)((pre, next) => pre.createRelationshipTo(list.meta(next).node,
-                DynamicRelationshipType.withName("NEXT")).getEndNode)
-              node.createRelationshipTo(start.node, list.relationship)
-            case _ => throw new Exception()
-          }
-
-        for (set <- _referenceSets)
-          attributes.get(set.name) match {
-            case Some(data: List[Map[String, Any]]) =>
-              data.foreach(data => node.createRelationshipTo(set.meta(data).node, set.relationship))
-            case _ => throw new Exception()
-          }
+        updateProperties(attributes, node)
+        updateReferences(attributes, node)
+        updateReferenceLists(attributes, node)
+        updateReferenceSets(attributes, node)
     }
     node
   }
 
-  def property[T](name: String)(implicit converter: PropertyConverter[T], manifest : Manifest[T]) = {
+  private def updateProperties(attributes: Map[String, Any], node: Node) {
+    for (property <- _properties)
+      attributes.get(property.name).map(value => node.setProperty(property.name, property.converter.to(value)))
+  }
+
+  private def updateReferences(attributes: Map[String, Any], node: Node) {
+    for (reference <- _references)
+      attributes.get(reference.name) match {
+        case Some(data: Map[String, Any]) =>
+          node.createRelationshipTo(reference.meta(data).node, reference.relationship)
+        case Some(entity: Entity) =>
+          if (reference.manifest.erasure.isAssignableFrom(entity.getClass))
+            node.createRelationshipTo(entity.node, reference.relationship)
+          else throw new Exception()
+        case _ =>
+      }
+  }
+
+  private def updateReferenceLists(attributes: Map[String, Any], node: Node) {
+    for (list <- _referenceLists)
+      attributes.get(list.name) match {
+        case Some(data: List[_]) =>
+          val entities = data.map(_ match {
+            case data: Map[String, Any] => list.meta(data)
+            case entity: Entity => entity
+          })
+          if (!entities.isEmpty) {
+            entities.tail.foldLeft(entities.head.node)((pre, next) => pre.createRelationshipTo(next.node,
+              DynamicRelationshipType.withName("NEXT")).getEndNode)
+            node.createRelationshipTo(entities.head.node, list.relationship)
+          }
+        case _ => 
+      }
+  }
+
+  private def updateReferenceSets(attributes: Map[String, Any], node: Node) {
+    for (set <- _referenceSets)
+      attributes.get(set.name) match {
+        case Some(data: List[_]) =>
+          data.foreach(data => node.createRelationshipTo((data match {
+            case data: Map[String, Any] => set.meta(data)
+            case entity: Entity => entity
+          }).node, set.relationship))
+        case _ => throw new Exception()
+      }
+  }
+
+  def property[T](name: String)(implicit converter: PropertyConverter[T], manifest: Manifest[T]) = {
     val property = Property[T](name, converter, manifest)
     _properties += property
     property
   }
 
-  def reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest : Manifest[T]) = {
+  def reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest: Manifest[T]) = {
     val reference = Reference[T](name, meta, relationship, manifest)
     _references += reference
     reference
   }
 
-  def list[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest : Manifest[T]) = {
+  def list[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest: Manifest[T]) = {
     val list = ReferenceList[T](name, meta, relationship, manifest)
     _referenceLists += list
     list
   }
 
-  def set[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest : Manifest[T]) = {
+  def set[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType)(implicit manifest: Manifest[T]) = {
     val set = ReferenceSet[T](name, meta, relationship, manifest)
     _referenceSets += set
     set
@@ -132,8 +153,8 @@ trait PropertyConverter[T] {
   def to(value: Any): Any
 }
 
-case class Property[T](name: String, converter: PropertyConverter[T], manifest : Manifest[T])
-case class Reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest : Manifest[T])
-case class ReferenceList[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest : Manifest[T])
-case class ReferenceSet[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest : Manifest[T])
+case class Property[T](name: String, converter: PropertyConverter[T], manifest: Manifest[T])
+case class Reference[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest: Manifest[T])
+case class ReferenceList[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest: Manifest[T])
+case class ReferenceSet[T <: Entity](name: String, meta: Meta[T], relationship: RelationshipType, manifest: Manifest[T])
 //case class ReferenceMap[T <: Entity]

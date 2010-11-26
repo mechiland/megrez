@@ -6,7 +6,7 @@ import org.megrez.server.{Neo4JSupport, IoSupport}
 import tasks.{Ant, CommandLine}
 import vcs.Subversion
 import org.scalatest.{BeforeAndAfterAll, Spec}
-import org.neo4j.graphdb.{Relationship, Direction, DynamicRelationshipType}
+import org.neo4j.graphdb.{Direction, DynamicRelationshipType}
 
 class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Model persistent") {

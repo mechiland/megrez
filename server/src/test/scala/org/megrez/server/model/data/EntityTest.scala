@@ -9,66 +9,41 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
   describe("Properties") {
     it("should create model with primitive value") {
       val entity = PrimitiveValues(Map("string" -> "string", "num" -> 5))
-      entity.string() should equal(Some("string"))
-      entity.num() should equal(Some(5))
+      entity.string should equal("string")
+      entity.num should equal(5)
     }
 
     it("should create model with array of primative value") {
       val entity = PrimitiveArrays(Map("string" -> List("string", "array"), "num" -> List(5, 6, 7)))
-      entity.string() match {
-        case Some(array) =>
-          array should equal(Array("string", "array"))
-        case _ => fail
-      }
-      entity.num() match {
-        case Some(array) =>
-          array should equal(Array(5, 6, 7))
-        case _ => fail
-      }
+      entity.string should equal(Array("string", "array"))
+      entity.num should equal(Array(5, 6, 7))
     }
   }
 
   describe("References") {
     it("should create model with refernece to other model") {
       val entity = One(Map("name" -> "name", "another" -> Map("name" -> "name")))
-
-      entity.name() should equal(Some("name"))
-      entity.another() match {
-        case Some(another) =>
-          another.name() should equal(Some("name"))
-        case _ => fail
-      }
+      entity.name should equal("name")
+      entity.another.name should equal("name")
     }
 
     it("should create model with reference instance") {
       val another = Another(Map("name" -> "name"))
       val entity = One(Map("name" -> "name", "another" -> another))
-      entity.name() should equal(Some("name"))
-      entity.another() match {
-        case Some(another) =>
-          another.name() should equal(Some("name"))
-        case _ => fail
-      }      
+      entity.name should equal("name")
+      entity.another.name should equal("name")
     }
 
     it("should create model with list references") {
       val entity = ListAnother(Map("name" -> "name", "others" -> List(Map("name" -> "name"))))
-      entity.others() match {
-        case list: List[Another] =>
-          list should have size (1)
-          list.head.name() should equal(Some("name"))
-        case _ => fail
-      }
+      entity.others should have size(1)
+      entity.others.head.name should equal("name")
     }
 
     it("should create model with set references") {
       val entity = SetAnother(Map("name" -> "name", "others" -> List(Map("name" -> "name"))))
-      entity.others() match {
-        case list: Set[Another] =>
-          list should have size (1)
-          list.head.name() should equal(Some("name"))
-        case _ => fail
-      }
+      entity.others should have size (1)
+      entity.others.head.name should equal("name")
     }
   }
 
@@ -77,7 +52,7 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
       val entity = PluggableEntity(Map("type" -> "plugin", "name" -> "name"))
       entity match {
         case plugin : PluginEntity =>
-          plugin.name() should equal(Some("name"))
+          plugin.name should equal("name")
         case _ => fail
       }
     }
@@ -94,8 +69,8 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
   }
 
   class PrimitiveValues private(val node: Node) extends Entity {
-    val string = accessor(PrimitiveValues.string)
-    val num = accessor(PrimitiveValues.num)
+    val string = read(PrimitiveValues.string)
+    val num = read(PrimitiveValues.num)
   }
 
   object PrimitiveValues extends Meta[PrimitiveValues] {
@@ -106,8 +81,8 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
   }
 
   class PrimitiveArrays private(val node: Node) extends Entity {
-    val string = accessor(PrimitiveArrays.string)
-    val num = accessor(PrimitiveArrays.num)
+    val string = read(PrimitiveArrays.string)
+    val num = read(PrimitiveArrays.num)
   }
 
   object PrimitiveArrays extends Meta[PrimitiveArrays] {
@@ -118,8 +93,8 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
   }
 
   class One private(val node: Node) extends Entity {
-    val name = accessor(One.name)
-    val another = reader(One.another)
+    val name = read(One.name)
+    val another = read(One.another)
   }
 
   object One extends Meta[One] {
@@ -130,7 +105,7 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
   }
 
   class Another private(val node: Node) extends Entity {
-    val name = accessor(Another.name)
+    val name = read(Another.name)
   }
 
   object Another extends Meta[Another] {
@@ -140,7 +115,7 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
   }
 
   class ListAnother private(val node: Node) extends Entity {
-    val others = reader(ListAnother.others)
+    val others = read(ListAnother.others)
   }
 
   object ListAnother extends Meta[ListAnother] {
@@ -150,7 +125,7 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
   }
 
   class SetAnother private(val node: Node) extends Entity {
-    val others = reader(SetAnother.others)
+    val others = read(SetAnother.others)
   }
 
   object SetAnother extends Meta[SetAnother] {
@@ -164,7 +139,7 @@ class EntityTest extends Spec with ShouldMatchers with BeforeAndAfterAll with Io
   object PluggableEntity extends Pluggable[PluggableEntity]
 
   class PluginEntity private (val node : Node) extends PluggableEntity {
-    val name = accessor(PluginEntity.name)
+    val name = read(PluginEntity.name)
   }
 
   object PluginEntity extends Plugin(PluggableEntity, "plugin") {
