@@ -13,8 +13,8 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val pipeline = Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))
-      val build = Build(Map("pipeline" -> pipeline))
-      val jobs = build.current().jobs
+      val build = Build.start(pipeline)
+      val jobs = build.current.jobs
       jobs should have size (1)
       jobs.head.name should equal("ut")
     }
@@ -31,7 +31,7 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
   }
   override def beforeAll() {
     Neo4J.start
-    Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline, Build)
+    Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline, Build, StageExecution)
     Graph.consistOf(CommandLine, Ant, Subversion)
 
 

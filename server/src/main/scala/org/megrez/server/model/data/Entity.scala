@@ -5,8 +5,8 @@ import org.neo4j.graphdb._
 
 trait Entity {
   import Graph._
-
   import scala.collection.JavaConversions._
+  import DynamicRelationshipType._
 
   val node: Node
 
@@ -22,7 +22,7 @@ trait Entity {
     val relationship = node.getSingleRelationship(reference.relationship, Direction.OUTGOING)
     node.update {
       node =>
-        Option(relationship).map(_.delete)        
+        Option(relationship).map(_.delete)
         node.createRelationshipTo(value.node, reference.relationship)
     }
   }
@@ -30,8 +30,18 @@ trait Entity {
   protected def read[T <: Entity](list: ReferenceList[T]) = Option(node.getSingleRelationship(list.relationship, Direction.OUTGOING)).map {
     rel =>
       rel.getEndNode.traverse(Order.DEPTH_FIRST, StopEvaluator.END_OF_GRAPH, ReturnableEvaluator.ALL,
-        DynamicRelationshipType.withName("NEXT"), Direction.OUTGOING).getAllNodes.map(list.meta(_)).toList
+        withName("NEXT"), Direction.OUTGOING).getAllNodes.map(list.meta(_)).toList
   }.getOrElse(List[T]())
+
+  protected def append[T <: Entity](list: ReferenceList[T], entity: T) {
+    def last: TraversalPosition => Boolean = position => !position.currentNode.hasRelationship(withName("NEXT"), Direction.OUTGOING)
+    node.update {
+      node =>
+        Option(node.getSingleRelationship(list.relationship, Direction.OUTGOING)).map(rel =>
+          rel.getEndNode.traverse(Order.DEPTH_FIRST, StopEvaluator.END_OF_GRAPH, last, withName("NEXT")).head.createRelationshipTo(entity.node, withName("NEXT"))
+          ).getOrElse(node.createRelationshipTo(entity.node, list.relationship))
+    }
+  }
 
   protected def read[T <: Entity](set: ReferenceSet[T]) = node.getRelationships(set.relationship, Direction.OUTGOING).map(rel => set.meta(rel.getEndNode)).toSet
 
@@ -45,12 +55,22 @@ trait Entity {
     def apply() = read(reference)
   }
 
+  trait ReferenceListReader[T <: Entity] {
+    val reference: ReferenceList[T]
+
+    def apply() = read(reference)
+  }
+
   class ReferenceAccessor[T <: Entity](val reference: Reference[T]) extends ReferenceReader[T] {
     def apply(value: T) = write(reference, value)
   }
 
   protected def reader[T <: Entity](ref: Reference[T]) = new ReferenceReader[T] {val reference = ref}
 
+  protected def reader[T <: Entity](ref: ReferenceList[T]) = new ReferenceListReader[T] {val reference = ref}
+
   protected def accessor[T <: Entity](ref: Reference[T]) = new ReferenceAccessor[T](ref)
+
+
 }
 
