@@ -238,6 +238,11 @@ class BuildManager extends Actor with Logging {
         case SchedulerToBuildManager.BuildFailed(build) =>
           pipelines.put(build.pipeline, build)
           info("build failed for pipeline " + build.pipeline.name)
+        case SchedulerToBuildManager.BuildCanceled(build) =>
+          pipelines.put(build.pipeline, build)
+          info("build canceled for pipeline " + build.pipeline.name)
+        case ToBuildManager.CompletedPipelines =>
+          reply(pipelines.values)
         case Stop =>
           exit
         case _ =>
