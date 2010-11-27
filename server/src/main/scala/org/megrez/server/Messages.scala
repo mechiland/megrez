@@ -19,7 +19,7 @@ object ToPipelineManager {
 }
 
 object ToBuildManager {
-  case class CompletedPipelines
+  case class CompletedPipelines()
 }
 
 object AgentToDispatcher {

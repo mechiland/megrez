@@ -249,9 +249,7 @@ class BuildManager extends Actor with Logging {
       }
     }
   }
-
-  def completedPipelines = pipelines.values
-
+  
   start
 }
 
@@ -275,7 +273,11 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
     import JSON._
     //TODO: add pipelines of PipelineManager
     (builds /: buildScheduler.ongoingPipelines) {accumulator _}
-    (builds /: buildManager.completedPipelines) {accumulator _}
+    buildManager !? ToBuildManager.CompletedPipelines match {
+      case completedPipelines : Iterable[Build] =>
+        (builds /: completedPipelines) {accumulator _}
+      case _ =>
+    }
     """{"pipelines":""" + builds.map(JSON.write(_)).mkString("[", ",", "]") + "}"
   }
 
