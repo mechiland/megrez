@@ -18,6 +18,10 @@ object ToPipelineManager {
   case class TriggerPipeline(val pipeline: Pipeline)
 }
 
+object ToBuildManager {
+  case class CompletedBuilds()
+}
+
 object AgentToDispatcher {
   object Confirm
   object Reject
