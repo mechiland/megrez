@@ -1,6 +1,6 @@
 package org.megrez.server.model
 
-import data.{Entity, Meta}
+import data.{Repository, Entity, Meta}
 import org.neo4j.graphdb.{DynamicRelationshipType, Node}
 import DynamicRelationshipType._
 
@@ -40,7 +40,10 @@ class Build private(val node: Node) extends Entity {
   }
 }
 
-object Build extends Meta[Build] {
+object Build extends Repository[Build] {
+  val root = withName("BUILDS")
+  val entity = withName("BUILD")  
+
   val pipeline = reference("pipeline", Pipeline, withName("FOR_PIPELINE"))
   val status = enum("status", Status)
   val stages = list("stages", StageExecution, withName("STARTED"))

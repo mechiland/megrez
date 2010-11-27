@@ -55,6 +55,12 @@ trait Entity {
 
   override def equals(other: Any) = if (other.isInstanceOf[Entity]) other.asInstanceOf[Entity].id == id else false
 
+  trait PropertyReader[T] {
+    val reference : Property[T]
+
+    def apply() = read(reference)
+  }
+
   trait ReferenceReader[T <: Entity] {
     val reference: Reference[T]
 
@@ -76,6 +82,8 @@ trait Entity {
 
     def apply() = read(reference)
   }
+
+  protected def reader[T](property: Property[T]) = new PropertyReader[T] {val reference = property}
 
   protected def reader[T <: Enumeration](ref: Enum[T]) = new EnumReader[T] {val reference = ref}
 

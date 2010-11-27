@@ -143,11 +143,16 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       list should have size (1)
       list.head.getStartNode should equal(build.node)
     }
+
+    it("should create agent") {
+      val agent = Agent(Map("resources" -> List("WINDOWS")))
+      agent.resources() should equal(Set("WINDOWS"))
+    }
   }
 
   override def beforeAll() {
     Neo4J.start
-    Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline, Build)
+    Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline, Build, Agent)
     Graph.consistOf(CommandLine, Ant, Subversion, Git)
   }
 
