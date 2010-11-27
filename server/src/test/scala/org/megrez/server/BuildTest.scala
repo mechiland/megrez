@@ -78,6 +78,18 @@ class BuildTest extends Spec with ShouldMatchers {
         case _ => fail
       }
     }
+
+    it("should cancel current stage when receive any cancel message") {
+      val job1 = createJob("job1")
+      val job2 = createJob("job2")
+      val pipeline = new Pipeline("pipeline", null, List(createStage("stage1", job1), createStage("stage2", job2)))
+
+      val build = new Build(pipeline)
+      build.cancel(Set(job1)) match{
+        case Some(Build.Canceled) =>
+        case _ => fail
+      }
+    }
   }
 
   def createJob(name: String): Job = new Job(name, Set[String](), List[Task]())

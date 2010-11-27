@@ -26,6 +26,10 @@ class JSONTest extends Spec with ShouldMatchers {
       val failedStage = new JobStage(stage)
       failedStage.fail(job)
       JSON.write(failedStage) should equal("""{"name":"stage","status":"failed","jobs":[{"name":"job","status":"failed"}]}""")
+
+      val canceledStage = new JobStage(stage)
+      canceledStage.cancel(Set(job))
+      JSON.write(canceledStage) should equal("""{"name":"stage","status":"canceled","jobs":[{"name":"job","status":"canceled"}]}""")
     }
 
     it("should serialize Build") {
@@ -48,6 +52,10 @@ class JSONTest extends Spec with ShouldMatchers {
       failedOnSecondStage.complete(job)
       failedOnSecondStage.fail(job)
       JSON.write(failedOnSecondStage) should equal("""{"name":"pipeline","materials":[],"stages":[{"name":"stage","status":"completed","jobs":[{"name":"job","status":"completed"}]},{"name":"stage2","status":"failed","jobs":[{"name":"job","status":"failed"}]}]}""")
+
+      val canceledStage = new Build(new Pipeline("pipeline", Set(), List(new Stage("stage", Set(job)), new Stage("stage2", Set(job)))))
+      canceledStage.cancel(Set(job))
+      JSON.write(canceledStage) should equal("""{"name":"pipeline","materials":[],"stages":[{"name":"stage","status":"canceled","jobs":[{"name":"job","status":"canceled"}]},{"name":"stage2","status":"unknown","jobs":[{"name":"job","status":"unknown"}]}]}""")
     }
   }
 }
