@@ -241,7 +241,7 @@ class BuildManager extends Actor with Logging {
         case SchedulerToBuildManager.BuildCanceled(build) =>
           pipelines.put(build.pipeline, build)
           info("build canceled for pipeline " + build.pipeline.name)
-        case ToBuildManager.CompletedPipelines =>
+        case ToBuildManager.CompletedBuilds =>
           reply(pipelines.values)
         case Stop =>
           exit
@@ -273,9 +273,9 @@ class Megrez(val checkInterval: Long = 5 * 60 * 1000) {
     import JSON._
     //TODO: add pipelines of PipelineManager
     (builds /: buildScheduler.ongoingPipelines) {accumulator _}
-    buildManager !? ToBuildManager.CompletedPipelines match {
-      case completedPipelines : Iterable[Build] =>
-        (builds /: completedPipelines) {accumulator _}
+    buildManager !? ToBuildManager.CompletedBuilds match {
+      case completedBuilds : Iterable[Build] =>
+        (builds /: completedBuilds) {accumulator _}
       case _ =>
     }
     """{"pipelines":""" + builds.map(JSON.write(_)).mkString("[", ",", "]") + "}"

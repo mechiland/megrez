@@ -5,21 +5,32 @@ import org.scalatest.Spec
 import org.megrez.Pipeline
 
 class BuildManagerTest extends Spec with ShouldMatchers {
+  val build = new Build(new Pipeline("pipeline", null, List()))
+  val buildManager = new BuildManager()
 
   describe("Completed Pipelines") {
     it("should add canceled build to completed pipelines") {
-      val pipeline = new Pipeline("pipeline", null, List())
-      val build = new Build(pipeline)
-      val buildManager = new BuildManager()
-
       buildManager ! SchedulerToBuildManager.BuildCanceled(build)
+      assertResult
+    }
 
-      buildManager !? ToBuildManager.CompletedPipelines match {
-        case pipelines : Iterable[Build] =>
-          pipelines.size should be === 1
-        case _ => fail
-      }
+    it("should add completed build to completed pipelines") {
+      buildManager ! SchedulerToBuildManager.BuildCompleted(build)
+      assertResult
+    }
 
+    it("should add failed build to completed pipelines") {
+      buildManager ! SchedulerToBuildManager.BuildFailed(build)
+      assertResult
+    }
+  }
+
+  private def assertResult() {
+    buildManager !? ToBuildManager.CompletedBuilds match {
+      case builds: Iterable[Build] =>
+        builds.size should be === 1
+        builds.head should be === build
+      case _ => fail
     }
   }
 
