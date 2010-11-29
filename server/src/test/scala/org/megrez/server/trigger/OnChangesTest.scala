@@ -31,7 +31,7 @@ class OnChangesTest extends Spec with ShouldMatchers with MockitoSugar {
 
       trigger.start
 
-      receiveWithin(100) {
+      receiveWithin(500) {
         case TriggerToScheduler.TrigBuild(pipeline: Pipeline, changes: Map[Material, Option[Any]]) =>
           pipeline should be === pipeline
           changes should have size (1)
@@ -78,7 +78,7 @@ class OnChangesTest extends Spec with ShouldMatchers with MockitoSugar {
       val manualTrigger = new OnChanges(materials, self, 1)
 
       manualTrigger.start
-      receiveWithin(100) {
+      receiveWithin(500) {
         case TriggerToScheduler.TrigBuild(pipeline: Pipeline, changes: Map[Material, Option[Any]]) =>
           pipeline should be === pipeline
           changes should have size (1)
@@ -112,7 +112,7 @@ class OnChangesTest extends Spec with ShouldMatchers with MockitoSugar {
       val manualTrigger = new OnChanges(materials, self, 1)
 
       manualTrigger.startTrigger ! Trigger.ExecuteOnce
-      receiveWithin(100) {
+      receiveWithin(500) {
         case TriggerToScheduler.TrigBuild(pipeline: Pipeline, changes: Map[Material, Option[Any]]) =>
           pipeline should be === pipeline
           changes should have size (1)
