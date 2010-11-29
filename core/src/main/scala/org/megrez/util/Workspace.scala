@@ -2,7 +2,6 @@ package org.megrez.util
 
 import java.io.File
 import io.Source
-import java.util.ArrayList
 import java.lang.String
 
 trait Workspace {
@@ -12,7 +11,7 @@ trait Workspace {
 
   def removeFolder(folder: String)
 
-  def findFiles(folder: File, pattern: String): ArrayList[File]
+  def findFiles(folder: File, pattern: String): List[File]
 }
 
 class FileWorkspace(val root: File) extends Workspace {
@@ -32,13 +31,13 @@ class FileWorkspace(val root: File) extends Workspace {
     delete(getFolder(folder))
   }
 
-  def findFiles(folder: File, pattern: String): ArrayList[File] = {
-    val result: ArrayList[File] = new ArrayList[File]()
+  def findFiles(folder: File, pattern: String): List[File] = {
+    var result: List[File] = List[File]()
 
     val process = Runtime.getRuntime().exec("find . -name " + pattern, null, folder)
     process.waitFor match {
       case 0 => Source.fromInputStream(process.getInputStream()).getLines.foreach {
-        filePath: String => result.add(new File(folder.getPath + filePath.replaceFirst(".","")))
+        filePath: String => result = new File(folder.getPath + filePath.replaceFirst(".", "")):: result
       }
       case exitCode: Int => throw new ShellException("exit code " + exitCode + "\n" + Source.fromInputStream(process.getErrorStream).mkString)
     }

@@ -3,19 +3,18 @@ package org.megrez.util
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Spec, BeforeAndAfterEach}
 import java.io.File
-import java.util.ArrayList
 
 class FileWorkspaceTest extends Spec with ShouldMatchers with BeforeAndAfterEach {
   describe("File Workspace") {
     it("should find files by regex express") {
       val workspace = new FileWorkspace(root)
-      val files: ArrayList[File] = workspace.findFiles(root.getParentFile, "*.git")
-      files.get(0).getName should be equals (".git")
+      val files: List[File] = workspace.findFiles(root.getParentFile, "*.git")
+      files.head.getName should be equals (".git")
     }
     it("should find files by file name") {
       val workspace = new FileWorkspace(root)
-      val files: ArrayList[File] = workspace.findFiles(root.getParentFile, ".git")
-      files.get(0).getName should be equals (".git")
+      val files: List[File] = workspace.findFiles(root.getParentFile, ".git")
+      files.head.getName should be equals (".git")
     }
     it("should create dir for pipeline") {
       val workspace = new FileWorkspace(root)

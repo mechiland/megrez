@@ -9,7 +9,6 @@ import actors.TIMEOUT
 import actors.Actor._
 import org.megrez._
 import util.Workspace
-import java.util.ArrayList
 
 class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
 
@@ -195,8 +194,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val workingDirectory = mock[Workspace]
       when(workingDirectory.getFolder(pipeline)).thenReturn(pipelineDir)
       when(workingDirectory.createFolder(pipeline)).thenReturn(pipelineDir)
-      val list: ArrayList[File] = new ArrayList()
-      list.add(artifact)
+      val list: List[File] = List(artifact)
       when(workingDirectory.findFiles(pipelineDir, "abcd.txt")).thenReturn(list)
       when(version.isRepository(pipelineDir)).thenReturn(true)
 
