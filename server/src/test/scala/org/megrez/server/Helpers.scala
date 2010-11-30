@@ -4,6 +4,7 @@ import java.io.File
 import org.neo4j.graphdb.GraphDatabaseService
 import org.neo4j.kernel.EmbeddedGraphDatabase
 import io.Source
+import java.util.UUID
 
 trait IoSupport {
   def delete(file: File) {
@@ -17,7 +18,7 @@ trait IoSupport {
 
 trait Neo4JSupport {
   self: IoSupport =>
-  private val database = new File(System.getProperty("user.dir"), "database")
+  private val database = new File(System.getProperty("user.dir"), "database_" + UUID.randomUUID.toString)
 
   protected var neo: GraphDatabaseService = null
 
@@ -37,7 +38,7 @@ trait Neo4JSupport {
 trait SvnSupport {
   self: IoSupport =>
 
-  private val subversion: File = new File(System.getProperty("user.dir"), "subversion")
+  private val subversion: File = new File(System.getProperty("user.dir"), "subversion_" + UUID.randomUUID.toString)
 
   object Svn {
     def create(name: String) = {
