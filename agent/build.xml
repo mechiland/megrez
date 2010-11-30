@@ -4,6 +4,7 @@
 
     <property environment="env"/>
     <property name="scala.home" value="${env.SCALA_HOME}"/>
+    <property name="root" location=".."/>
 
     <property name="src.dir" value="src/main/scala"/>
     <property name="test.dir" value="src/test/scala"/>
@@ -64,12 +65,13 @@
              classpathref="classpath.test"
              force="changed">
         </fsc>
-        <scalatest haltonfailure="true">
+        <scalatest haltonfailure="true" fork="true" parallel="true" numthreads="10">
             <runpath>
                 <pathelement location="${build.test}"/>
             </runpath>
             <reporter type="stdout"/>
-            <wildcard package="org.megrez.server"/>
+            <wildcard package="org.megrez"/>
+            <jvmarg value="-Duser.dir=${root}"/>
         </scalatest>
     </target>
 
