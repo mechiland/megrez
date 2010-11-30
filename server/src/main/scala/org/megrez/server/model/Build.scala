@@ -28,7 +28,7 @@ class Build private(val node: Node) extends Entity {
     if (executions.isEmpty) None else Some(executions.last)
   }
 
-  private[Build] def advance = {
+  private def advance = {
     nextStage match {
       case Some(execution) =>
         append(Build.stages, execution)
@@ -45,6 +45,8 @@ object Build extends Repository[Build] {
   val entity = withName("BUILD")  
 
   val pipeline = reference("pipeline", Pipeline, withName("FOR_PIPELINE"))
+//  val changes = set("changes", Change, withName("OF_CHANGES"))
+  
   val status = enum("status", Status)
   val stages = list("stages", StageExecution, withName("STARTED"))
 

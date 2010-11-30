@@ -149,6 +149,8 @@ trait Meta[EntityType <: Entity] {
 
   protected implicit def intConverter = new PrimitiveConverter[Int]()
 
+  protected implicit def longConverter = new PrimitiveConverter[Long]()
+
   protected implicit def stringArrayConverter = new ArrayConverter[String]()
 
   protected implicit def intArrayConverter = new ArrayConverter[Int]()
