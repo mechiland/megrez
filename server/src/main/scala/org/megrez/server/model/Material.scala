@@ -4,7 +4,7 @@ import data.{Meta, Entity}
 import org.neo4j.graphdb.{Node, DynamicRelationshipType}
 import java.io.File
 
-class Material private(val node: Node) extends Entity with org.megrez.model.Material {
+class Material private(val node: Node) extends Entity {
   val destination = read(Material.destination)
   val changeSource = read(Material.changeSource)
   val lastChange = reader(Material.lastChange)

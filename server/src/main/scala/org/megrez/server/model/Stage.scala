@@ -3,7 +3,7 @@ package org.megrez.server.model
 import data.{Meta, Entity}
 import org.neo4j.graphdb.{Direction, Node, DynamicRelationshipType}
 
-class Stage private (val node : Node) extends Entity with org.megrez.model.Stage {
+class Stage private (val node : Node) extends Entity {
   val name = read(Stage.name)
   val jobs = read(Stage.jobs)
 

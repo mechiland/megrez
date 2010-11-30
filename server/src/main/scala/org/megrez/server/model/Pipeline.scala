@@ -4,7 +4,7 @@ import data.{Repository, Entity}
 import org.neo4j.graphdb.DynamicRelationshipType._
 import org.neo4j.graphdb.Node
 
-class Pipeline private(val node: Node) extends Entity with org.megrez.model.Pipeline {
+class Pipeline private(val node: Node) extends Entity {
   val name = read(Pipeline.name)
   val materials = read(Pipeline.materials)
   val stages = read(Pipeline.stages)
