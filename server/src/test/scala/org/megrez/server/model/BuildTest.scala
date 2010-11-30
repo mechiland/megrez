@@ -14,7 +14,7 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val pipeline = Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job)))))
-      val build = Build(pipeline)
+      val build = Build(pipeline, Set())
       val jobs = build.next
       jobs should have size (1)
       jobs.head.job should equal(job)
@@ -25,7 +25,7 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val pipeline = Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job)))))
-      val build = Build(pipeline)
+      val build = Build(pipeline, Set())
       build.next
       val jobs = build.next
       jobs should have size (0)
@@ -37,7 +37,7 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val pipeline = Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job1)), Map("name" -> "publish", "jobs" -> List(job2)))))
-      val build = Build(pipeline)
+      val build = Build(pipeline, Set())
       build.next.head.completed
       val jobs = build.next
       jobs should have size (1)
@@ -49,7 +49,7 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val pipeline = Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job)))))
-      val build = Build(pipeline)
+      val build = Build(pipeline, Set())
       build.next.head.completed
       build.next should have size(0)
       build.status() should equal(Build.Status.Completed)
@@ -61,7 +61,7 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val pipeline = Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job1)), Map("name" -> "publish", "jobs" -> List(job2)))))
-      val build = Build(pipeline)
+      val build = Build(pipeline, Set())
       build.next.head.failed
       build.next should have size(0)
       build.status() should equal(Build.Status.Failed)
@@ -74,7 +74,7 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val pipeline = Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job1, job2)), Map("name" -> "publish", "jobs" -> List(job3)))))
-      val build = Build(pipeline)
+      val build = Build(pipeline, Set())
       build.next.head.failed
       build.next should have size(0)
       build.status() should equal(Build.Status.Failing)

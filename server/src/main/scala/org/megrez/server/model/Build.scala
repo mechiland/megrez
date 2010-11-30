@@ -8,6 +8,7 @@ class Build private(val node: Node) extends Entity {
   import Build.Status._
 
   val pipeline = read(Build.pipeline)
+  val changes = read(Build.changes)
   val status = reader(Build.status)
   val stages = reader(Build.stages)
 
@@ -45,14 +46,14 @@ object Build extends Repository[Build] {
   val entity = withName("BUILD")  
 
   val pipeline = reference("pipeline", Pipeline, withName("FOR_PIPELINE"))
-//  val changes = set("changes", Change, withName("OF_CHANGES"))
+  val changes = set("changes", Change, withName("OF_CHANGES"))
   
   val status = enum("status", Status)
   val stages = list("stages", StageExecution, withName("STARTED"))
 
   def apply(node: Node) = new Build(node)
 
-  def apply(pipeline: Pipeline): Build = Build(Map("pipeline" -> pipeline, "status" -> Status.Building))
+  def apply(pipeline: Pipeline, changes : Set[Change]): Build = Build(Map("pipeline" -> pipeline, "status" -> Status.Building, "changes" -> changes.toList))
 
   object Status extends Enumeration {
     type Status = Value

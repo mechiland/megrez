@@ -65,7 +65,7 @@
              classpathref="classpath.test"
              force="changed">
         </fsc>
-        <scalatest haltonfailure="true" fork="true" parallel="true" numthreads="10">
+        <scalatest haltonfailure="true" fork="false" parallel="true" numthreads="10">
             <runpath>
                 <pathelement location="${build.test}"/>
             </runpath>

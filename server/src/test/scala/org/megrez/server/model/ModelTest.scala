@@ -112,7 +112,8 @@ class ModelTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
     it("should create build") {
       val build = Build(Map("pipeline" -> Pipeline(Map("name" -> "pipeline",
         "materials" -> List(Map("destination" -> "dest", "source" -> Map("type" -> "svn", "url" -> "svn_url"))),
-        "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls"))))))))))
+        "stages" -> List(Map("name" -> "test", "jobs" -> List(Map("name" -> "ut", "tasks" -> List(Map("type" -> "cmd", "command" -> "ls")))))))),
+        "changes" -> List()))
 
       val pipeline = build.pipeline
       pipeline.name should equal("pipeline")
