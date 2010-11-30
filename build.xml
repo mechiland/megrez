@@ -22,5 +22,14 @@
     <target name="test">
         <megrez target="test"/>
     </target>
+
+    <target name="runserver">
+        <ant dir="core" target="compile"/>
+        <ant dir="server" target="runserver"/>
+    </target>
+
+    <target name="runagent">
+        <ant dir="agent" target="runagent"/>
+    </target>
 </project>
 
