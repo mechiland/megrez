@@ -10,10 +10,9 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 import org.jboss.netty.handler.codec.http.websocket._
 import java.net._
 import actors.Actor
-import actors.Actor._
 import org.megrez.util.{Logging, JSON}
-import org.megrez.{ArtifactStream, AgentMessage, JobCompleted, JobAssignment}
-import org.jboss.netty.buffer.{ChannelBuffers, ByteBufferBackedChannelBuffer, ChannelBuffer}
+import org.megrez.{ArtifactStream, AgentMessage}
+import org.jboss.netty.buffer.{ChannelBuffers, ChannelBuffer}
 
 class HandshakeHandler(val server: URI, val callback: ServerHandler) extends SimpleChannelUpstreamHandler {
   override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {
