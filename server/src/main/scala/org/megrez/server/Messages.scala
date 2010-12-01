@@ -31,6 +31,7 @@ object AgentToDispatcher {
 
 object TriggerToScheduler {
   case class TrigBuild(val pipeline: Pipeline, val changes: Map[Material, Option[Any]])
+  case class TrigBuildFuture(val pipeline: org.megrez.server.model.Pipeline, val changes: Map[org.megrez.server.model.Material, Option[Any]])
 }
 
 object AgentManagerToScheduler {
