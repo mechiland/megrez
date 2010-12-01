@@ -14,11 +14,11 @@ class Worker(val workspace: Workspace) extends Actor with Logging {
   def act() {
     loop {
       react {
-        case (actor: Actor, assignment: JobAssignment) =>
+        case (actor: Actor, assignment: JobAssignmentFuture) =>
           try {
             val pipelineDir = workspace.createFolder(assignment.pipeline)
             updateMaterials(assignment)
-            for (task <- assignment.job.tasks) {
+            for (task <- assignment.tasks) {
               task match {
                 case t: CommandLineTask =>
                   t.onConsoleOutputChanges(actor ! ConsoleOutput(_))
@@ -26,7 +26,7 @@ class Worker(val workspace: Workspace) extends Actor with Logging {
                 case _ => task.execute(pipelineDir)
               }
             }
-            sendArtifactBack(assignment, pipelineDir, actor)
+//            sendArtifactBack(assignment, pipelineDir, actor)
             actor ! new JobCompleted("done")
           } catch {
             case e: Exception => actor ! new JobFailed(e.getMessage)
@@ -37,19 +37,19 @@ class Worker(val workspace: Workspace) extends Actor with Logging {
     }
   }
 
-  private def sendArtifactBack(assignment: JobAssignment, pipelineDir: File, actor: Actor) = {
-    for (artifact <- assignment.job.artifacts) {
-      val path: String = artifact.path
-      if (path != "") {
-        val tags: String = artifact.tags.mkString(":")
-        val artifactFiles: List[File] = workspace.findFiles(pipelineDir, path)
-        var zipFileName: String = UUID.randomUUID.toString
-        zipFileName = generateZipFile(zipFileName, artifactFiles, tags)
-        if (zipFileName != "")
-          actor ! new ArtifactStream(new FileInputStream(zipFileName))
-      }
-    }
-  }
+//  private def sendArtifactBack(assignment: JobAssignmentFuture, pipelineDir: File, actor: Actor) = {
+//    for (artifact <- assignment.job.artifacts) {
+//      val path: String = artifact.path
+//      if (path != "") {
+//        val tags: String = artifact.tags.mkString(":")
+//        val artifactFiles: List[File] = workspace.findFiles(pipelineDir, path)
+//        var zipFileName: String = UUID.randomUUID.toString
+//        zipFileName = generateZipFile(zipFileName, artifactFiles, tags)
+//        if (zipFileName != "")
+//          actor ! new ArtifactStream(new FileInputStream(zipFileName))
+//      }
+//    }
+//  }
 
   private def generateZipFile(path: String, artifactFiles: List[File], tags: String): String = {
     try {
@@ -80,11 +80,11 @@ class Worker(val workspace: Workspace) extends Actor with Logging {
     }
   }
 
-  private def updateMaterials(assignment: JobAssignment) {
-    for ((material, workset) <- assignment.materials)
-      material.source match {
+  private def updateMaterials(assignment: JobAssignmentFuture) {
+    for (((source, destination), workset) <- assignment.sources)
+      source match {
         case versionControl: VersionControl =>
-          val folder = if (material.destination != "$main") assignment.pipeline + "/" + material.destination else assignment.pipeline
+          val folder = if (destination != "$main") assignment.pipeline + "/" + destination else assignment.pipeline
           workspace.getFolder(folder) match {
             case null =>
               val dir = workspace.createFolder(folder)

@@ -2,15 +2,14 @@ package org.megrez.agent
 
 import org.mockito.Mockito._
 import org.scalatest.matchers.ShouldMatchers
-import java.net.URI
 import org.jboss.netty.channel.MessageEvent
 import actors.Actor._
 import actors._
 import org.mockito._
 import org.jboss.netty.handler.codec.http.websocket.{WebSocketFrame, DefaultWebSocketFrame}
 import org.megrez.vcs.Subversion
-import org.megrez.{JobCompleted, JobAssignment}
 import org.megrez.util.JSON
+import org.megrez.{JobAssignmentFuture, JobCompleted}
 
 class AgentHandlerTest extends HandlerTest with ShouldMatchers {
   describe("Agent handler") {
@@ -22,11 +21,11 @@ class AgentHandlerTest extends HandlerTest with ShouldMatchers {
       handler.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case (actor : Actor, assignment : JobAssignment) =>
+        case (actor : Actor, assignment : JobAssignmentFuture) =>
           assignment.pipeline should equal("pipeline")
-          assignment.materials should have size(1)
-          val (material, workset) = assignment.materials.head
-          material.source match {
+          assignment.sources should have size(1)
+          val ((source, destination), workset) = assignment.sources.head
+          source match {
             case subversion : Subversion =>
               subversion.url should equal("svn_url")
             case _ => fail
