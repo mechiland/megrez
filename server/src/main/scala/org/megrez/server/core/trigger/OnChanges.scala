@@ -7,13 +7,14 @@ import org.megrez.server.model.{Material, Pipeline}
 import java.io.File
 import java.util.TimerTask
 import org.megrez.Stop
+import org.megrez.server.core.TriggerBuild
 
 class OnChanges(val pipeline: Pipeline, val workingDir: File, val scheduler: Actor) extends Trigger  {
   private val buildTrigger = actor {
     loop {
       react {
         case Trigger.Execute =>
-          scheduler ! Pair(pipeline, pipeline.materials.map { _.getChange(workingDir).get })
+          scheduler ! TriggerBuild(pipeline, pipeline.materials.map { _.getChange(workingDir).get })
       }
     }
   }

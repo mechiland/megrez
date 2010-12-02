@@ -12,6 +12,7 @@ import org.megrez.server.trigger.Trigger
 import actors.TIMEOUT
 import java.io.File
 import org.neo4j.graphdb.Node
+import org.megrez.server.core.TriggerBuild
 
 class OnChangesTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("OnChanges Trigger") {
@@ -20,7 +21,7 @@ class OnChangesTest extends Spec with ShouldMatchers with BeforeAndAfterAll with
       trigger.start
       
       receiveWithin(1000) {
-        case Pair(triggeredPipeline: Pipeline, changes: Set[Change]) =>
+        case TriggerBuild(triggeredPipeline: Pipeline, changes: Set[Change]) =>
           triggeredPipeline should equal(pipeline)
           changes should have size (1)
           changes.head match {
