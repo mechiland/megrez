@@ -7,6 +7,9 @@ import org.scalatest.{BeforeAndAfterAll, Spec}
 import tasks.{CommandLine, Ant}
 import vcs.Subversion
 
+import actors.Actor._
+import actors.TIMEOUT
+
 class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Build") {
     it("should return jobs from current stage") {
@@ -51,7 +54,7 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job)))))
       val build = Build(pipeline, Set())
       build.next.head.completed
-      build.next should have size(0)
+      build.next should have size (0)
       build.status() should equal(Build.Status.Completed)
     }
 
@@ -63,7 +66,7 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job1)), Map("name" -> "publish", "jobs" -> List(job2)))))
       val build = Build(pipeline, Set())
       build.next.head.failed
-      build.next should have size(0)
+      build.next should have size (0)
       build.status() should equal(Build.Status.Failed)
     }
 
@@ -76,12 +79,11 @@ class BuildTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
         "stages" -> List(Map("name" -> "test", "jobs" -> List(job1, job2)), Map("name" -> "publish", "jobs" -> List(job3)))))
       val build = Build(pipeline, Set())
       build.next.head.failed
-      build.next should have size(0)
+      build.next should have size (0)
       build.status() should equal(Build.Status.Failing)
     }
-
   }
-  
+
   override def beforeAll() {
     Neo4J.start
     Graph.of(neo).consistOf(Task, Job, Stage, ChangeSource, Material, Pipeline, Build, StageExecution, JobExecution)

@@ -40,8 +40,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterAll
         case jobs: List[Pair[Build, JobExecution]] =>
           jobs.foreach {
             pair =>
-              pair._2.completed
-              scheduler ! JobFinishedOnBuild(pair._1)
+              scheduler ! JobFinished(pair._1, () => pair._2.completed)
           }
         case TIMEOUT => fail
         case _ => fail

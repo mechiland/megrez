@@ -12,7 +12,7 @@ class Build private(val node: Node) extends Entity {
   val status = reader(Build.status)
   val stages = reader(Build.stages)
 
-  def next = current.map(checkCurrentStage(_)).getOrElse(advance)
+  def next = read { node => current.map(checkCurrentStage(_)).getOrElse(advance)}
 
   private def checkCurrentStage(current: StageExecution) =
     current.status match {

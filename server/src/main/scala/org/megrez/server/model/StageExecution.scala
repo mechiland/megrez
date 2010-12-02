@@ -9,8 +9,8 @@ class StageExecution private(val node: Node) extends Entity {
   val stage = read(StageExecution.stage)
   val jobs = read(StageExecution.jobs)
 
-  def status = {
-    val executions = jobs.groupBy(_.status().asInstanceOf[Enumeration#Value])
+  def status = {    
+    val executions = read(StageExecution.jobs).groupBy(_.status().asInstanceOf[Enumeration#Value])
     def count(status: Enumeration#Value) = executions.get(status).map(_.size).getOrElse(0)
     val numberOfScheduled = count(JobExecution.Status.Scheduled)
     val numberOfRunning = count(JobExecution.Status.Running)

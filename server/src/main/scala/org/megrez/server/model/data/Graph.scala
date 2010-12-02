@@ -30,6 +30,18 @@ object Graph {
         transaction.finish
       }
     }
+
+    def read[T](operation: Node => T) = {
+      val transaction = node.getGraphDatabase.beginTx
+      try {
+        val result = operation(node)
+        transaction.success
+        result
+      } finally {
+        transaction.finish
+      }
+    }
+
   }
 
   class GraphHelper(val graph: GraphDatabaseService) {
