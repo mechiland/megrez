@@ -72,6 +72,7 @@
             <reporter type="stdout"/>
             <wildcard package="org.megrez"/>
             <jvmarg value="-Duser.dir=${root}"/>
+            <jvmarg value="-J-Xmx512m"/>
         </scalatest>
     </target>
 
