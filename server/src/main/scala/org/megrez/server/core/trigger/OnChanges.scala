@@ -25,7 +25,7 @@ class OnChanges(val pipeline: Pipeline, val workingDir: File, val scheduler: Act
   private def getLastChange(material: Material): Change = {
     Option(material.lastChange()) match {
       case None => material.getChange(workingDir).get
-      case _ => null
+      case Some(r: Subversion.Revision) => r
     }
   }
 

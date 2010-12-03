@@ -63,6 +63,31 @@ class OnChangesTest extends Spec with ShouldMatchers with BeforeAndAfterAll with
           fail
       }
     }
+
+    it("should manually trigger build with has previous changes") {
+      val trigger = new OnChanges(pipeline, workingDir, self)
+      material.getChange(workingDir)
+      trigger.startTrigger ! Trigger.ExecuteOnce
+
+      receiveWithin(1000) {
+        case TriggerBuild(triggeredPipeline: Pipeline, changes: Set[Change]) =>
+          triggeredPipeline should equal(pipeline)
+          changes should have size (1)
+          changes.head match {
+            case r: Subversion.Revision =>
+              r.revision should equal(42)
+              r.material should equal(material)
+            case _ => fail
+          }
+          trigger.stop
+        case TIMEOUT =>
+          trigger.stop
+          fail
+        case _ =>
+          trigger.stop
+          fail
+      }
+    }
   }
 
   var material: Material = null
