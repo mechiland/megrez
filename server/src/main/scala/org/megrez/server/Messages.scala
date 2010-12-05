@@ -2,7 +2,7 @@ package org.megrez.server
 
 import actors._
 import java.util.UUID
-import org.megrez.{JobAssignment, Material, Pipeline, Job}
+import org.megrez._
 
 object ToAgentManager {
   case class RemoteAgentConnected(val handler: AgentHandler)
@@ -26,6 +26,7 @@ object AgentToDispatcher {
   object Confirm
   object Reject
   case class JobCompleted(val agent: Actor, val assignment: JobAssignment)
+  case class JobFinished(val agent: Actor, val assignment: JobAssignmentFuture, val isFailed : Boolean =false)
   case class JobFailed(val agent: Actor, val assignment: JobAssignment)
 }
 

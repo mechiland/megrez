@@ -1,7 +1,7 @@
 package org.megrez.server.core
 
 import scala.actors.Actor
-import org.megrez.server.model.{JobExecution, Build, Change, Pipeline}
+import org.megrez.server.model.{Build, Change, Pipeline}
 
 class BuildScheduler(val dispatcher: Actor) extends Actor {
   def act() {
@@ -17,7 +17,7 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
     }
   }
 
-  private def schedule(build: Build) {    
+  private def schedule(build: Build) {
     val assignment = build.next.map((build, _))
     if (!assignment.isEmpty) dispatcher ! assignment
   }
@@ -26,4 +26,4 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
 }
 
 case class TriggerBuild(val pipeline: Pipeline, val changes: Set[Change])
-case class JobFinished(val build: Build, val operation : () => Unit)
+case class JobFinished(val build: Build, val operation: () => Unit)

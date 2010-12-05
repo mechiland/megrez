@@ -3,15 +3,16 @@ package org.megrez.server.core
 import actors.Actor
 import collection.mutable.{HashMap, HashSet}
 import org.megrez.server.AgentToDispatcher
-import org.megrez.JobAssignmentFuture
 import collection.immutable.Set
 import org.megrez.server.model.{Pipeline, Material, Build, JobExecution}
 import org.megrez.util.Logging
+import org.megrez.JobAssignmentFuture
 
-class Dispatcher extends Actor with Logging {
+class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
   private val idleAgents = new HashSet[Actor]()
   private val jobAssignments = new HashMap[JobExecution, Build]()
   private val jobInProgress = new HashMap[JobExecution, Build]()
+  val assignedJobs = new HashMap[Int, JobExecution]()
 
   def act() {
     loop {
@@ -24,6 +25,21 @@ class Dispatcher extends Actor with Logging {
           info("Job scheduled for build " + jobs.head._1 + " " + jobs.size + " jobs")
           jobs.foreach((item: Pair[Build, JobExecution]) => jobAssignments.put(item._2, item._1))
           dispatchJobs
+        case AgentToDispatcher.JobFinished(agent, jobAssignmentFuture, isFailed) =>
+          info("Job finished")
+
+          val jobExecution = assignedJobs.get(jobAssignmentFuture.buildId).get
+          val operation = {
+            if (!isFailed) jobExecution.completed
+            else
+              jobExecution.failed
+          }
+          buildScheduler ! JobFinished(jobInProgress.get(jobExecution).get, () => operation)
+          jobInProgress.remove(jobExecution)
+          idleAgents.add(agent)
+          dispatchJobs
+          info("dispatchJobs")
+        case "STOP" => exit
       }
     }
   }
@@ -48,6 +64,7 @@ class Dispatcher extends Actor with Logging {
         val pipeline: Pipeline = build.pipeline
         val materials: Set[Material] = pipeline.materials
         val jobAssignmentFuture: JobAssignmentFuture = new JobAssignmentFuture(build.id.toInt, pipeline.name, null, null)
+        assignedJobs.put(jobAssignmentFuture.buildId, job)
         agent !? jobAssignmentFuture match {
           case AgentToDispatcher.Confirm =>
             Some(agent)

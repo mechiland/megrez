@@ -1,6 +1,5 @@
 package org.megrez.server.core
 
-import org.megrez.server.{IoSupport, Neo4JSupport}
 import org.scalatest.{Spec, BeforeAndAfterAll}
 import org.scalatest.matchers.ShouldMatchers
 import org.megrez.server.model._
@@ -10,13 +9,14 @@ import vcs.Subversion
 import scala.actors.Actor._
 import scala.actors.TIMEOUT
 import org.megrez.JobAssignmentFuture
+import org.megrez.server.{AgentToDispatcher, IoSupport, Neo4JSupport}
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Dispatcher") {
     it("should assign job to the idle agent") {
       val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
 
-      val dispatcher = new Dispatcher()
+      val dispatcher = new Dispatcher(null)
       val build = Build(pipeline, Set(change))
       dispatcher ! AgentConnect(self)
       dispatcher ! build.next.map((build, _))
@@ -25,6 +25,31 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
         case jobAssignment: JobAssignmentFuture => jobAssignment.pipeline should equal("WGSN-bundles")
         case TIMEOUT => fail
         case _ => fail
+      }
+    }
+    it("should send JobFinished message to scheduler if agent finished job") {
+      val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
+      val build = Build(pipeline, Set(change))
+
+      val dispatcher = new Dispatcher(self)
+      val assignJobs: List[Pair[Build, JobExecution]] = build.next.map((build, _))
+
+      dispatcher ! AgentConnect(self)
+      dispatcher ! assignJobs
+
+      receiveWithin(1000) {
+        case jobAssignment: JobAssignmentFuture => jobAssignment.pipeline should equal("WGSN-bundles")
+        reply(AgentToDispatcher.Confirm)
+        dispatcher.assignedJobs.put(1, assignJobs.head._2)
+        dispatcher ! AgentToDispatcher.JobFinished(self, new JobAssignmentFuture(1, "WGSN-bundles", null, null))
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
+      receiveWithin(5000) {
+        case JobFinished(build, operation) => build.pipeline.name should equal("WGSN-bundles")
+        case TIMEOUT => fail
+        case any: Any => println(any.toString)
       }
     }
   }
