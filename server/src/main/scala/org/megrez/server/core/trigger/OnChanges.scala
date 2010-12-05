@@ -7,8 +7,7 @@ import java.io.File
 import java.util.TimerTask
 import org.megrez.Stop
 import org.megrez.server.core.TriggerBuild
-import org.megrez.server.model.{Change, Material, Pipeline}
-import org.megrez.server.model.vcs.Subversion
+import org.megrez.server.model.Pipeline
 
 class OnChanges(val pipeline: Pipeline, val workingDir: File, val scheduler: Actor) extends Trigger {
   private val buildTrigger = actor {
@@ -17,15 +16,12 @@ class OnChanges(val pipeline: Pipeline, val workingDir: File, val scheduler: Act
         case Trigger.Execute =>
           scheduler ! TriggerBuild(pipeline, pipeline.materials.map {_.getChange(workingDir).get})
         case Trigger.ExecuteOnce =>
-          scheduler ! TriggerBuild(pipeline, pipeline.materials.map {material => getLastChange(material)})
+          scheduler ! TriggerBuild(pipeline, pipeline.materials.map {
+            material => Option(material.lastChange()).orElse(material.getChange(workingDir)).get
+          })
+        case Stop => exit
+        case _ =>
       }
-    }
-  }
-
-  private def getLastChange(material: Material): Change = {
-    Option(material.lastChange()) match {
-      case None => material.getChange(workingDir).get
-      case Some(r: Subversion.Revision) => r
     }
   }
 
