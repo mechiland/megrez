@@ -40,8 +40,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       receiveWithin(1000) {
         case jobAssignment: JobAssignmentFuture => jobAssignment.pipeline should equal("WGSN-bundles")
         reply(AgentToDispatcher.Confirm)
-        dispatcher.assignedJobs.put(1, assignJobs.head._2)
-        dispatcher ! AgentToDispatcher.JobFinished(self, new JobAssignmentFuture(1, "WGSN-bundles", null, null))
+        dispatcher ! AgentToDispatcher.JobFinished(self, new JobAssignmentFuture(jobAssignment.buildId, "WGSN-bundles", null, null))
         case TIMEOUT => fail
         case _ => fail
       }

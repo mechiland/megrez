@@ -12,7 +12,7 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
   private val idleAgents = new HashSet[Actor]()
   private val jobAssignments = new HashMap[JobExecution, Build]()
   private val jobInProgress = new HashMap[JobExecution, Build]()
-  val assignedJobs = new HashMap[Int, JobExecution]()
+  private val assignedJobs = new HashMap[Int, JobExecution]()
 
   def act() {
     loop {
