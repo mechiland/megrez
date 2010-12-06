@@ -26,7 +26,6 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
           dispatchJobs
         case AgentToDispatcher.JobFinished(agent, jobAssignmentFuture, isFailed) =>
           info("Job finished")
-
           val jobExecution = assignedJobs.get(jobAssignmentFuture.buildId).get
           val operation = {
             if (!isFailed) jobExecution.completed
@@ -37,23 +36,43 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
           jobInProgress.remove(jobExecution)
           idleAgents.add(agent)
           dispatchJobs
-          info("dispatchJobs")
         case "STOP" => exit
       }
     }
   }
 
   private def dispatchJobs() {
-    if (jobAssignments.size == 0 || idleAgents.size == 0) return
-    val (jobExecution, build) = jobAssignments.head
-    val idleAgent = idleAgents.head
-    idleAgent !? JobAssignmentFuture(build.id.toInt, build.pipeline.name, Map(), List()) match {
-      case AgentToDispatcher.Confirm =>
-        jobAssignments.remove(jobExecution)
-        idleAgents.remove(idleAgent)
-        jobInProgress.put(jobExecution, build)
-        assignedJobs.put(build.id.toInt, jobExecution)
+    jobAssignments.map(dispatchJob(_)).foreach {
+      _ match {
+        case Some(Triple(agent, jobExecution, build)) =>
+          jobAssignments.remove(jobExecution)
+          idleAgents.remove(agent)
+          jobInProgress.put(jobExecution, build)
+          assignedJobs.put(build.id.toInt, jobExecution)
+        case None =>
+      }
     }
+  }
+
+  def dispatchJob(jobAssignment: (JobExecution, Build)): Option[(Actor, JobExecution, Build)] = {
+    val agents = idleAgents.iterator
+    val (jobExecution, build) = jobAssignment
+
+    def assignJob(): Option[(Actor, JobExecution, Build)] = {
+      if (agents.hasNext) {
+        val agent = agents.next
+        agent !? JobAssignmentFuture(build.id.toInt, build.pipeline.name, Map(), List()) match {
+          case AgentToDispatcher.Confirm =>
+            info("get confirm from agent")
+            Some(Triple(agent, jobExecution, build))
+          case AgentToDispatcher.Reject =>
+            info("get reject from agent")
+            assignJob
+        }
+      } else None
+    }
+
+    assignJob
   }
 
   start

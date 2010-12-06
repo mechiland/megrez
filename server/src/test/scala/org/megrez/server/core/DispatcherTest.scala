@@ -48,7 +48,32 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
     }
 
     it("should try next agent if the job is rejected") {
+      val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
 
+      val dispatcher = new Dispatcher(null)
+      val build = Build(pipeline, Set(change))
+
+      val agent = actor {
+        react {
+          case jobAssignment: JobAssignmentFuture =>
+            reply(AgentToDispatcher.Reject)
+          case TIMEOUT => fail
+          case _ => fail
+        }
+      }
+
+      dispatcher ! AgentConnect(agent)
+      dispatcher ! AgentConnect(self)
+
+      dispatcher ! build.next.map((build, _))
+
+      receiveWithin(1000) {
+        case jobAssignment: JobAssignmentFuture =>
+          jobAssignment.pipeline should equal("WGSN-bundles")
+          reply(AgentToDispatcher.Confirm)
+        case TIMEOUT => fail
+        case _ => fail
+      }
     }
 
     it("should send the job status to sheduler and do another assigning after job finished") {
@@ -75,21 +100,11 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
         case _ => fail
       }
 
-      receiveWithin(1000) {
-        case job: JobAssignmentFuture =>
-          job.pipeline should equal("WGSN-bundles")
-          reply(AgentToDispatcher.Confirm)
-        case TIMEOUT => fail
-        case _ => fail
-      }
     }
   }
 
   var pipeline: Pipeline = null
   var material: Material = null
-  var change: Change = null
-  var author: Job = null
-  var publish: Job = null
   var packageJob: Job = null
 
   override def beforeAll() {
@@ -99,12 +114,9 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
 
     val changeSource = ChangeSource(Map("type" -> "svn", "url" -> "svn_url"))
     material = Material(Map("source" -> changeSource))
-    author = Job(Map("name" -> "author", "tasks" -> List()))
-    publish = Job(Map("name" -> "publish", "tasks" -> List()))
     packageJob = Job(Map("name" -> "package", "tasks" -> List()))
-    val ut = Stage(Map("name" -> "UT", "jobs" -> List(author, publish)))
     val packageStage = Stage(Map("name" -> "package", "jobs" -> List(packageJob)))
-    pipeline = Pipeline(Map("name" -> "WGSN-bundles", "materials" -> List(material), "stages" -> List(ut, packageStage)))
+    pipeline = Pipeline(Map("name" -> "WGSN-bundles", "materials" -> List(material), "stages" -> List(packageStage)))
   }
 
   override def afterAll() {
