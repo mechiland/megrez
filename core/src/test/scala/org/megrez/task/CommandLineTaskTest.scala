@@ -33,5 +33,9 @@ class CommandLineTaskTest extends Spec with ShouldMatchers with MockitoSugar {
       }
     }
 
+    it("should be equal if command matches") {
+      new CommandLineTask("ls") should equal(new CommandLineTask("ls"))
+    }
+
   }
 }

@@ -165,56 +165,15 @@ class JsonTest extends Spec with ShouldMatchers {
   }
 
   describe("Agent message serialization") {
+
     it("should serialize job assignment") {
-      val material = new Material(new Subversion("svn_url"), "dest")
-      val job = new Job("job", Set("LINUX"), List(new CommandLineTask("ls")))
-      val assignment = JobAssignment("pipeline", Map(material -> Some(5)), job)
-      JSON.write(assignment) should equal("""{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"svn","url":"svn_url","dest":"dest"},"workset":{"revision":5}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}""")
+      val assignment = JobAssignmentFuture(1, "pipeline", Map((new Subversion("svn_url"), "dest") -> Some(5)), List(new CommandLineTask("ls")))
+      JSON.write(assignment) should equal("""{"materials":[{"material":{"type":"svn","url":"svn_url","dest":"dest"},"workset":{"revision":5}}],"pipeline":"pipeline","tasks":[{"type":"cmd","command":"ls"}],"type":"assignment","buildId":1}""")
     }
 
     it("should serialize job assignment for git") {
-      val material = new Material(new Git("git_url"), "dest")
-      val job = new Job("job", Set("LINUX"), List(new CommandLineTask("ls")))
-      val assignment = JobAssignment("pipeline", Map(material -> Some("abc")), job)
-      JSON.write(assignment) should equal("""{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"git","url":"git_url","dest":"dest"},"workset":{"commit":"abc"}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}]}}""")
-    }
-
-    it("should deserialize job assignment for git") {
-      val json = """{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"git","url":"git_url","dest":"dest"},"workset":{"commit":"abc"}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}}"""
-      val assignment = JSON.read[JobAssignment](json)
-      assignment.materials should have size (1)
-      val (material, workset) = assignment.materials.head
-      material.source match {
-        case git: Git =>
-          git.url should equal("git_url")
-        case _ => fail
-      }
-      workset match {
-        case Some("abc") =>
-        case _ => fail
-      }
-    }
-
-
-    it("should deserialize job assignment") {
-      val json = """{"type":"assignment","pipeline":"pipeline","materials":[{"material":{"type":"svn","url":"svn_url","dest":"dest"},"workset":{"revision":5}}],"job":{"name":"job","resources":["LINUX"],"tasks":[{"type":"cmd","command":"ls"}],"artifacts":[{"path":"/target/**/*.jar","tags":["artifact"]}]}}"""
-      JSON.read[AgentMessage](json) match {
-        case JobAssignment(pipeline, materials, job) =>
-          pipeline should equal("pipeline")
-          materials should have size (1)
-          val (material, workset) = materials.head
-          material.source match {
-            case subversion: Subversion =>
-              subversion.url should equal("svn_url")
-            case _ => fail
-          }
-          material.destination should equal("dest")
-          workset match {
-            case Some(5) =>
-            case _ => fail
-          }
-        case _ => fail
-      }
+      val assignment = JobAssignmentFuture(1, "pipeline", Map((new Git("git_url"), "dest") -> Some("abc")), List(new CommandLineTask("ls")))
+      JSON.write(assignment) should equal("""{"materials":[{"material":{"type":"git","url":"git_url","dest":"dest"},"workset":{"commit":"abc"}}],"pipeline":"pipeline","tasks":[{"type":"cmd","command":"ls"}],"type":"assignment","buildId":1}""")
     }
 
     it("should serialize job complete") {

@@ -4,7 +4,6 @@ import actors.Actor
 import org.megrez.util.Workspace
 import org.megrez.task.CommandLineTask
 import org.megrez._
-import java.util.UUID
 import org.megrez.util.Logging
 import vcs.VersionControl
 import java.util.zip.{ZipOutputStream, ZipEntry}
@@ -84,6 +83,20 @@ class Worker(val workspace: Workspace) extends Actor with Logging {
     for (((source, destination), workset) <- assignment.sources)
       source match {
         case versionControl: VersionControl =>
+          val folder = if (destination != "$main") assignment.pipeline + "/" + destination else assignment.pipeline
+          workspace.getFolder(folder) match {
+            case null =>
+              val dir = workspace.createFolder(folder)
+              versionControl.checkout(dir, workset)
+            case dir: File if (versionControl.isRepository(dir)) =>
+              versionControl.update(dir, workset)
+            case dir: File =>
+              workspace.removeFolder(folder)
+              val dir = workspace.createFolder(folder)
+              versionControl.checkout(dir, workset)
+          }
+        //TODO: duplicat the above statements for now to avoid too many changes
+        case versionControl: org.megrez.model.vcs.VersionControl =>
           val folder = if (destination != "$main") assignment.pipeline + "/" + destination else assignment.pipeline
           workspace.getFolder(folder) match {
             case null =>

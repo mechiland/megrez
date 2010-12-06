@@ -180,6 +180,29 @@ object JSON {
           ).toList, "job" -> writeObject(assignment.job))
   }
 
+  implicit object JobAssignmentFutureSerializer extends JsonSerializer[JobAssignmentFuture] {
+
+    private def readMaterial(json: Map[String, Any]): (ChangeSource, String) = {
+      val vcs = readObject[ChangeSource](json)
+      (vcs, json / "dest")
+    }
+
+    private def readMaterialWorkset(json: Map[String, Any]) = {
+      val material = readMaterial(json / "material")
+      val workset = ChangeSourceSerializer.readWorkset(material._1, json / "workset")
+      material -> workset
+    }
+
+    def read(json: Map[String, Any]) = JobAssignmentFuture((json / "buildId").asInstanceOf[Double].toInt, json / "pipeline", (json > ("materials", readMaterialWorkset)).toMap,
+                                                          json > ("tasks", readObject[Task](_)))
+
+    def write(assignment: JobAssignmentFuture) =
+      Map("type" -> "assignment", "buildId" -> assignment.buildId, "pipeline" -> assignment.pipeline,
+        "materials" -> assignment.sources.map(keyValue =>
+          Map("material" -> (writeObject(keyValue._1._1) + ("dest" -> keyValue._1._2)), "workset" -> ChangeSourceSerializer.writeWorkset(keyValue._1._1, keyValue._2))
+          ).toList, "tasks" -> assignment.tasks.map(writeObject(_)))
+  }
+
   implicit object JobCompletedSerializer extends JsonSerializer[JobCompleted] {
     def read(json: Map[String, Any]) = JobCompleted()
 
@@ -209,7 +232,7 @@ object JSON {
     def /[T](name: String): T =
       json.get(name) match {
         case Some(result: T) => result
-        case _ => throw new Exception()
+        case _ => throw new Exception(name)
       }
 
     def /?[T](name: String, default: T): T =
@@ -221,7 +244,7 @@ object JSON {
     def >[V](name: String, map: Map[String, Any] => V) =
       json.get(name) match {
         case Some(list: List[Map[String, Any]]) => list.map(map)
-        case _ => throw new Exception()
+        case _ => throw new Exception(name)
       }
 
 

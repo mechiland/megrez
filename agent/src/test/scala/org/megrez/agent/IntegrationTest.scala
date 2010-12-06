@@ -7,9 +7,10 @@ import org.jboss.netty.handler.codec.http.websocket.DefaultWebSocketFrame
 import scala.actors._
 import scala.actors.Actor._
 import java.net.URI
-import org.megrez.util._
 import io.Source
 import org.megrez.{ArtifactStream, ConsoleOutput, AgentMessage, JobCompleted}
+import util.JSON
+import org.megrez.util.FileWorkspace
 
 class IntegrationTest extends ServerIntegration with ShouldMatchers {
   describe("Version control intergration") {
@@ -26,7 +27,7 @@ class IntegrationTest extends ServerIntegration with ShouldMatchers {
       serverConnection.connect
 
       val jobAssignment =
-      """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + url + '"' + """, "dest" : "$main"}, "workset" : {"revision" : 2} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "echo HELLO"}], "artifacts" : [{"path" : "README", "tags" : ["artifact"]}] } }"""
+      """{"type" : "assignment", "buildId":1, "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : """ + '"' + url + '"' + """, "dest" : "$main"}, "workset" : {"revision" : 2} }], "tasks" : [{ "type" : "cmd", "command": "echo HELLO"}] }"""
 
       receiveWithin(1000) {
         case "MEGREZ HANDSHAKE" => server.send(new DefaultWebSocketFrame(jobAssignment))

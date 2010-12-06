@@ -1,5 +1,6 @@
 package org.megrez.agent
 
+import model.vcs.Subversion
 import org.mockito.Mockito._
 import org.scalatest.matchers.ShouldMatchers
 import org.jboss.netty.channel.MessageEvent
@@ -7,15 +8,14 @@ import actors.Actor._
 import actors._
 import org.mockito._
 import org.jboss.netty.handler.codec.http.websocket.{WebSocketFrame, DefaultWebSocketFrame}
-import org.megrez.vcs.Subversion
 import org.megrez.util.JSON
 import org.megrez.{JobAssignmentFuture, JobCompleted}
 
 class AgentHandlerTest extends HandlerTest with ShouldMatchers {
   describe("Agent handler") {
-    it("should receive job assignment and send message to worker and repsone to server") {
+    it("should receive job assignment and send message to worker and repsond to server") {
       val event = mock[MessageEvent]
-      val pipelineJson = """{"type" : "assignment", "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}, "workset" : {"revision" : 1} }], "job" : {"name" : "unit test", "resources" :[], "tasks" : [{ "type" : "cmd", "command": "ls"}], "artifacts" : [{"path" : "/target/**/*.jar", "tags" : ["artifact"]}] } }"""
+      val pipelineJson = """{"type" : "assignment", "buildId":1, "pipeline" : "pipeline", "materials" : [{ "material" : {"type" : "svn", "url" : "svn_url", "dest" : "dest"}, "workset" : {"revision" : 1} }], "tasks" : [{ "type" : "cmd", "command": "ls"}] }"""
       val message = new DefaultWebSocketFrame(pipelineJson)
       when(event.getMessage).thenReturn(message, Array[Any]())      
       handler.messageReceived(context, event)

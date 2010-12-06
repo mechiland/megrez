@@ -8,7 +8,7 @@ import java.io.File
 import actors.TIMEOUT
 import actors.Actor._
 import org.megrez._
-import util.Workspace
+import org.megrez.util.Workspace
 
 class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
 

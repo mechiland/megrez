@@ -47,4 +47,11 @@ class CommandLineTask(val command: String) extends Task {
   def cancel() {
     process.destroy
   }
+
+  override def equals(x: Any): Boolean = x match {
+    case that: CommandLineTask => this.command == that.command
+    case _ => false
+  }
+
+  override def toString = "CommandLineTask[command=" + command + "]"
 }
