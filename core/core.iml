@@ -17,8 +17,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="scala-library-2.8.0" level="application" />
     <orderEntry type="library" name="lib" level="project" />
+    <orderEntry type="library" name="scala-compiler-2.8.0" level="application" />
   </component>
 </module>
 
