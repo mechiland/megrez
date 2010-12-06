@@ -3,8 +3,7 @@ package org.megrez.server.core
 import actors.Actor
 import collection.mutable.{HashMap, HashSet}
 import org.megrez.server.AgentToDispatcher
-import collection.immutable.Set
-import org.megrez.server.model.{Pipeline, Material, Build, JobExecution}
+import org.megrez.server.model.{Build, JobExecution}
 import org.megrez.util.Logging
 import org.megrez.JobAssignmentFuture
 
@@ -44,39 +43,16 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
     }
   }
 
-  private def dispatchJobs {
-    jobAssignments.keys.map(dispatchJob).foreach(_ match {
-      case Some((agent: Actor, job: JobExecution)) =>
-        idleAgents.remove(agent)
-        jobInProgress.put(job, jobAssignments.get(job).get)
-        jobAssignments.remove(job)
-      case None =>
-    })
-    info("Total " + idleAgents.size + " idle agents and " + jobAssignments.size + " job waiting")
-  }
-
-  private def dispatchJob(job: JobExecution) = {
-    val agents = idleAgents.iterator
-    def assignJob: Option[Actor] = {
-      if (agents.hasNext) {
-        val agent = agents.next
-        val build: Build = jobAssignments.get(job).get
-        val pipeline: Pipeline = build.pipeline
-        val materials: Set[Material] = pipeline.materials
-        val jobAssignmentFuture: JobAssignmentFuture = new JobAssignmentFuture(build.id.toInt, pipeline.name, null, null)
-        assignedJobs.put(jobAssignmentFuture.buildId, job)
-        agent !? jobAssignmentFuture match {
-          case AgentToDispatcher.Confirm =>
-            Some(agent)
-          case AgentToDispatcher.Reject => assignJob
-        }
-      } else None
-    }
-
-    assignJob match {
-      case Some(agent: Actor) =>
-        Some(agent -> job)
-      case None => None
+  private def dispatchJobs() {
+    if (jobAssignments.size == 0) return
+    val (jobExecution, build) = jobAssignments.head
+    val idleAgent = idleAgents.head
+    idleAgent !? JobAssignmentFuture(build.id.toInt, build.pipeline.name, Map(), List()) match {
+      case AgentToDispatcher.Confirm =>
+        jobAssignments.remove(jobExecution)
+        idleAgents.remove(idleAgent)
+        jobInProgress.put(jobExecution, build)
+        assignedJobs.put(build.id.toInt, jobExecution)
     }
   }
 

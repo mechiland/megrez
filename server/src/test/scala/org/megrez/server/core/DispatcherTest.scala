@@ -22,33 +22,44 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
-        case jobAssignment: JobAssignmentFuture => jobAssignment.pipeline should equal("WGSN-bundles")
+        case jobAssignment: JobAssignmentFuture =>
+          jobAssignment.pipeline should equal("WGSN-bundles")
+          reply(AgentToDispatcher.Confirm)
         case TIMEOUT => fail
         case _ => fail
       }
     }
-    it("should send JobFinished message to scheduler if agent finished job") {
+
+    it("should send the job status to sheduler after job finished") {
       val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
       val build = Build(pipeline, Set(change))
 
       val dispatcher = new Dispatcher(self)
-      val assignJobs: List[Pair[Build, JobExecution]] = build.next.map((build, _))
-
       dispatcher ! AgentConnect(self)
-      dispatcher ! assignJobs
+      dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
-        case jobAssignment: JobAssignmentFuture => jobAssignment.pipeline should equal("WGSN-bundles")
-        reply(AgentToDispatcher.Confirm)
-        dispatcher ! AgentToDispatcher.JobFinished(self, new JobAssignmentFuture(jobAssignment.buildId, "WGSN-bundles", null, null))
+        case job: JobAssignmentFuture =>
+          job.pipeline should equal("WGSN-bundles")
+          reply(AgentToDispatcher.Confirm)
+          dispatcher ! AgentToDispatcher.JobFinished(self, job)
         case TIMEOUT => fail
         case _ => fail
       }
 
-      receiveWithin(5000) {
-        case JobFinished(build, operation) => build.pipeline.name should equal("WGSN-bundles")
+      receiveWithin(1000) {
+        case JobFinished(build, operation) =>
+          build.pipeline.name should equal("WGSN-bundles")
         case TIMEOUT => fail
-        case any: Any => println(any.toString)
+        case _ => fail
+      }
+
+      receiveWithin(1000) {
+        case job: JobAssignmentFuture =>
+          job.pipeline should equal("WGSN-bundles")
+          reply(AgentToDispatcher.Confirm)
+        case TIMEOUT => fail
+        case _ => fail
       }
     }
   }
