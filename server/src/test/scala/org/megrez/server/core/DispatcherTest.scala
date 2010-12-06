@@ -30,7 +30,28 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       }
     }
 
-    it("should send the job status to sheduler after job finished") {
+    it("should assign job when agent connect") {
+      val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
+
+      val dispatcher = new Dispatcher(null)
+      val build = Build(pipeline, Set(change))
+      dispatcher ! build.next.map((build, _))
+      dispatcher ! AgentConnect(self)
+
+      receiveWithin(1000) {
+        case jobAssignment: JobAssignmentFuture =>
+          jobAssignment.pipeline should equal("WGSN-bundles")
+          reply(AgentToDispatcher.Confirm)
+        case TIMEOUT => fail
+        case _ => fail
+      }
+    }
+
+    it("should try next agent if the job is rejected") {
+
+    }
+
+    it("should send the job status to sheduler and do another assigning after job finished") {
       val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
       val build = Build(pipeline, Set(change))
 

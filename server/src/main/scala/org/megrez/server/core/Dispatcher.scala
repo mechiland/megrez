@@ -44,7 +44,7 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
   }
 
   private def dispatchJobs() {
-    if (jobAssignments.size == 0) return
+    if (jobAssignments.size == 0 || idleAgents.size == 0) return
     val (jobExecution, build) = jobAssignments.head
     val idleAgent = idleAgents.head
     idleAgent !? JobAssignmentFuture(build.id.toInt, build.pipeline.name, Map(), List()) match {
