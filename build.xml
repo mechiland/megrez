@@ -13,6 +13,7 @@
 
     <target name="clean">
         <megrez target="clean"/>
+        <delete quiet="true" verbose="false" dir="target"/>
     </target>
 
     <target name="compile">
