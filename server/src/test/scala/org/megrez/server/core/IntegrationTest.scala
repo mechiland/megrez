@@ -2,7 +2,6 @@ package org.megrez.server.core
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{BeforeAndAfterEach, BeforeAndAfterAll, Spec}
-import org.megrez.server.{Neo4JSupport, IoSupport}
 import org.megrez.server.model._
 import data.{Plugin, Graph}
 import org.neo4j.graphdb.Node
@@ -12,10 +11,12 @@ import tasks.{Ant, CommandLine}
 import java.io.File
 import actors.Actor._
 import actors.TIMEOUT
+import org.megrez.JobAssignmentFuture
+import org.megrez.server.{AgentToDispatcher, Neo4JSupport, IoSupport}
 
 class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with IoSupport with Neo4JSupport {
-  describe("integration between Trigger and BuilderScheduler") {
-    it("should trigger build") {
+  describe("Integration Test") {
+    it("should trigger build between Trigger and BuilderScheduler") {
 
       val scheduler = new BuildScheduler(self)
       val trigger = new OnChanges(pipeline, workingDir, scheduler)
@@ -28,6 +29,22 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll wi
           jobs.head._2.job should equal(author)
           jobs.last._1.changes should equal(Set(change))
           jobs.last._2.job should equal(publish)
+        case TIMEOUT => fail
+        case _ => fail
+      }
+    }
+    it("should assign job to idle agent when trigger build"){
+
+      val dispatcher = new Dispatcher(null)
+      dispatcher ! AgentConnect(self)
+
+      val scheduler = new BuildScheduler(dispatcher)
+      val trigger = new OnChanges(pipeline, workingDir, scheduler)
+      trigger.start
+
+      receiveWithin(1000){
+         case jobAssignment: JobAssignmentFuture =>
+          jobAssignment.pipeline should equal("WGSN-bundles")
         case TIMEOUT => fail
         case _ => fail
       }
@@ -46,10 +63,10 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll wi
     material = Material(Map("source" -> changeSource))
     author = Job(Map("name" -> "author", "tasks" -> List()))
     publish = Job(Map("name" -> "publish", "tasks" -> List()))
-    val packageJob = Job(Map("name" -> "package", "tasks" -> List()))
+//    val packageJob = Job(Map("name" -> "package", "tasks" -> List()))
     val ut = Stage(Map("name" -> "UT", "jobs" -> List(author, publish)))
-    val packageStage = Stage(Map("name" -> "package", "jobs" -> List(packageJob)))
-    pipeline = Pipeline(Map("name" -> "WGSN-bundles", "materials" -> List(material), "stages" -> List(ut, packageStage)))
+//    val packageStage = Stage(Map("name" -> "package", "jobs" -> List(packageJob)))
+    pipeline = Pipeline(Map("name" -> "WGSN-bundles", "materials" -> List(material), "stages" -> List(ut)))
     change = Subversion.Revision(Map("revision" -> 42, "metarial" -> material))
   }
 
