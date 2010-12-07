@@ -42,7 +42,7 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
   }
 
   private def dispatchJobs() {
-    jobAssignments.map(dispatchJob(_)).foreach {
+    jobAssignments.map(dispatchJob).foreach {
       _ match {
         case Some(Triple(agent, jobExecution, build)) =>
           jobAssignments.remove(jobExecution)
@@ -58,21 +58,24 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
     val agents = idleAgents.iterator
     val (jobExecution, build) = jobAssignment
 
-    def assignJob(): Option[(Actor, JobExecution, Build)] = {
+    def assignJob(): Option[Actor] = {
       if (agents.hasNext) {
         val agent = agents.next
         agent !? JobAssignmentFuture(build.id.toInt, build.pipeline.name, Map(), List()) match {
           case AgentToDispatcher.Confirm =>
-            info("get confirm from agent")
-            Some(Triple(agent, jobExecution, build))
+            Some(agent)
           case AgentToDispatcher.Reject =>
-            info("get reject from agent")
             assignJob
         }
       } else None
     }
 
-    assignJob
+    assignJob match {
+      case Some(agent) =>
+        Some(Triple(agent, jobExecution, build))
+      case None =>
+        None
+    }
   }
 
   start
