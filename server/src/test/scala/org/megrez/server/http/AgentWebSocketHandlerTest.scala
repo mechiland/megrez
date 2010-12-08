@@ -7,7 +7,7 @@ import scala.actors.Actor._
 import org.mockito.Mockito._
 import org.jboss.netty.handler.codec.http.websocket.DefaultWebSocketFrame
 import actors.TIMEOUT
-import org.megrez.server.ToAgentManager
+import org.megrez.server.core.ToAgentManager
 import org.jboss.netty.channel.{Channel, MessageEvent, ChannelPipeline, ChannelHandlerContext}
 import org.scalatest.{BeforeAndAfterEach, Spec}
 import org.megrez.util.JSON

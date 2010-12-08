@@ -2,7 +2,6 @@ package org.megrez.server.core
 
 import actors.Actor
 import collection.mutable.{HashMap, HashSet}
-import org.megrez.server.AgentToDispatcher
 import org.megrez.server.model.{Build, JobExecution}
 import org.megrez.util.Logging
 import org.megrez.JobAssignmentFuture

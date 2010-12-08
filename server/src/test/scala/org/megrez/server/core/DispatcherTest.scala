@@ -9,7 +9,7 @@ import vcs.Subversion
 import scala.actors.Actor._
 import scala.actors.TIMEOUT
 import org.megrez.JobAssignmentFuture
-import org.megrez.server.{AgentToDispatcher, IoSupport, Neo4JSupport}
+import org.megrez.server.{IoSupport, Neo4JSupport}
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Dispatcher") {

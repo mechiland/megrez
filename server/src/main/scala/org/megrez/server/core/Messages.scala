@@ -1,11 +1,8 @@
-package org.megrez.server
+package org.megrez.server.core
 
 import actors._
-import core.AgentHandler
-import model.Build
 import java.util.UUID
 import org.megrez._
-
 object ToAgentManager {
   case class RemoteAgentConnected(val handler: AgentHandler)
 }
@@ -53,10 +50,4 @@ object DispatcherToScheduler {
   case class JobCompleted(val build: UUID, val job: Job)
   case class JobFailed(val build: UUID, val job: Job)
   case class BuildCanceled(val build: UUID, val assignments: Set[Job])
-}
-
-object SchedulerToBuildManager {
-  case class BuildFailed(build: Build)
-  case class BuildCompleted(build: Build)
-  case class BuildCanceled(build: Build)
 }

@@ -12,7 +12,7 @@ import java.io.File
 import actors.Actor._
 import actors.TIMEOUT
 import org.megrez.JobAssignmentFuture
-import org.megrez.server.{AgentToDispatcher, Neo4JSupport, IoSupport}
+import org.megrez.server.{Neo4JSupport, IoSupport}
 
 class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with IoSupport with Neo4JSupport {
   describe("Integration Test") {

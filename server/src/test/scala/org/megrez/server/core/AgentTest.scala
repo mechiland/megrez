@@ -8,7 +8,7 @@ import tasks.{CommandLine, Ant}
 import vcs.Subversion
 import org.scalatest.mock.MockitoSugar
 import scala.actors.Actor._
-import org.megrez.server.{AgentToDispatcher, IoSupport, Neo4JSupport}
+import org.megrez.server.{IoSupport, Neo4JSupport}
 import actors.TIMEOUT
 import org.mockito.Mockito._
 

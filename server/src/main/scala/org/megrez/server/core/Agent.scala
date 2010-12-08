@@ -4,7 +4,6 @@ import actors.Actor
 import actors.Actor._
 import org.megrez.server.model.{JobExecution, Build}
 import org.megrez.{JobAssignmentFuture, Stop}
-import org.megrez.server.AgentToDispatcher
 import org.megrez.util.JSON
 
 class Agent(val model: org.megrez.server.model.Agent, handler: AgentHandler, dispatcher: Actor) extends Actor {

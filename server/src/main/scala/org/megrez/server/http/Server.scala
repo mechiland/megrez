@@ -12,7 +12,7 @@ import org.jboss.netty.handler.codec.http.HttpHeaders.Values._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
 import org.jboss.netty.util._
 import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
-import org.megrez.server.ToAgentManager
+import org.megrez.server.core.ToAgentManager
 import actors.Actor
 import org.megrez.AgentMessage
 import org.megrez.util.{JSON, Logging}
