@@ -62,10 +62,8 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
       if (agents.hasNext) {
         val agent = agents.next
         agent !? JobAssignmentFuture(build.id.toInt, build.pipeline.name, Map(), List()) match {
-          case AgentToDispatcher.Confirm =>
-            Some(agent)
-          case AgentToDispatcher.Reject =>
-            assignJob
+          case AgentToDispatcher.Confirm => Some(agent)
+          case AgentToDispatcher.Reject => assignJob
         }
       } else None
     }
