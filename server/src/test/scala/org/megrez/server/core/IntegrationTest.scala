@@ -35,7 +35,7 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll wi
     it("should assign job to idle agent when trigger build") {
 
       val dispatcher = new Dispatcher(null)
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
 
       val scheduler = new BuildScheduler(dispatcher)
       val trigger = new OnChanges(pipeline, workingDir, scheduler)

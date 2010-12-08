@@ -1,8 +1,6 @@
 package org.megrez.server.core
 
 import actors._
-import java.util.UUID
-import org.megrez.{JobAssignment}
 import org.megrez.server.model.{JobExecution, Build, Pipeline, Change}
 
 object ToAgentManager {
