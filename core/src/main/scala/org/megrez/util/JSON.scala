@@ -129,7 +129,7 @@ object JSON {
 
   implicit object AgentMessageSerializer extends TypeBasedSerializer[AgentMessage]
 
-  implicit object JobAssignmentFutureSerializer extends JsonSerializer[JobAssignment] {
+  implicit object JobAssignmentSerializer extends JsonSerializer[JobAssignment] {
 
     private def readMaterial(json: Map[String, Any]): (ChangeSource, String) = {
       val vcs = readObject[ChangeSource](json)
@@ -172,7 +172,7 @@ object JSON {
   AgentMessageSerializer.register[JobCompleted]("jobcompleted")
   AgentMessageSerializer.register[JobFailed]("jobfailed")
   AgentMessageSerializer.register[ConsoleOutput]("consoleoutput")
-
+  AgentMessageSerializer.register[JobAssignment]("assignment")  
 
   implicit def map2Json(json: Map[String, Any]): JsonHelper = new JsonHelper(json)
 

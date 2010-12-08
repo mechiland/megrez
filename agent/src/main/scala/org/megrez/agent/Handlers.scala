@@ -13,7 +13,7 @@ import actors.Actor
 import org.megrez.util.Logging
 import org.megrez.{ArtifactStream, AgentMessage}
 import org.jboss.netty.buffer.{ChannelBuffers, ChannelBuffer}
-import util.JSON
+import org.megrez.util.JSON
 
 class HandshakeHandler(val server: URI, val callback: ServerHandler) extends SimpleChannelUpstreamHandler {
   override def channelConnected(context: ChannelHandlerContext, event: ChannelStateEvent) {

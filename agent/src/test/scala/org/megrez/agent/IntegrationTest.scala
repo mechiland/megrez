@@ -9,7 +9,7 @@ import scala.actors.Actor._
 import java.net.URI
 import io.Source
 import org.megrez.{ArtifactStream, ConsoleOutput, AgentMessage, JobCompleted}
-import util.JSON
+import org.megrez.util.JSON
 import org.megrez.util.FileWorkspace
 
 class IntegrationTest extends ServerIntegration with ShouldMatchers {

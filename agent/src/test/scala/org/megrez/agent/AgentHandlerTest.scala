@@ -1,6 +1,6 @@
 package org.megrez.agent
 
-import model.vcs.Subversion
+import org.megrez.vcs.Subversion
 import org.mockito.Mockito._
 import org.scalatest.matchers.ShouldMatchers
 import org.jboss.netty.channel.MessageEvent
