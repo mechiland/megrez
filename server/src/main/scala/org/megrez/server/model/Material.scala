@@ -12,9 +12,8 @@ class Material private(val node: Node) extends Entity {
   def getChange(workingDir: File): Option[Change] = {
     val dir = Option(destination).map(new File(workingDir, _)).getOrElse(workingDir)
     changeSource.getChange(dir, this).map {
-      change =>
-        write(Material.lastChange, change)
-        change
+      change => write(Material.lastChange, change)
+      change
     }
   }
 }

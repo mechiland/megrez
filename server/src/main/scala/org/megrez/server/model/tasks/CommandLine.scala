@@ -6,6 +6,8 @@ import org.neo4j.graphdb.Node
 
 class CommandLine private (val node : Node) extends Task {
   val command = read(CommandLine.command)
+
+  def toTask = new org.megrez.task.CommandLineTask(command)
 }
 
 object CommandLine extends Plugin(Task, "cmd") {

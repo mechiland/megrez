@@ -7,6 +7,9 @@ import org.neo4j.graphdb.Node
 class Ant private (val node : Node) extends Task {
   val target = read(Ant.target)
   val buildFile = read(Ant.buildFile)
+
+
+  def toTask = new org.megrez.task.AntTask(target, buildFile)
 }
 
 object Ant extends Plugin(Task, "ant") {

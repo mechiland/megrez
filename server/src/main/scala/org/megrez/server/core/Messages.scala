@@ -3,7 +3,7 @@ package org.megrez.server.core
 import actors._
 import java.util.UUID
 import org.megrez.server.model.{Build, Pipeline, Change}
-import org.megrez.{JobAssignmentFuture}
+import org.megrez.{JobAssignment}
 
 object ToAgentManager {
   case class RemoteAgentConnected(val handler: AgentHandler)
@@ -12,7 +12,7 @@ object ToAgentManager {
 object AgentToDispatcher {
   object Confirm
   object Reject
-  case class JobFinished(val agent: Actor, val assignment: JobAssignmentFuture, val isFailed: Boolean = false)
+  case class JobFinished(val agent: Actor, val assignment: JobAssignment, val isFailed: Boolean = false)
 }
 
 object TriggerToScheduler {

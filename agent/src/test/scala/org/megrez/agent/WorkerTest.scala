@@ -18,7 +18,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val version = mock[org.megrez.vcs.VersionControl]
       val task = mock[org.megrez.Task]
 
-      val assignment = JobAssignmentFuture(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
+      val assignment = JobAssignment(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
 
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
@@ -46,7 +46,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val version = mock[org.megrez.vcs.VersionControl]
       val task = mock[org.megrez.Task]
 
-      val assignment = JobAssignmentFuture(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
+      val assignment = JobAssignment(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
 
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
@@ -73,7 +73,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val version = mock[org.megrez.vcs.VersionControl]
       val task = mock[org.megrez.Task]
 
-      val assignment = JobAssignmentFuture(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
+      val assignment = JobAssignment(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
 
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
@@ -103,7 +103,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
 
       val task = mock[org.megrez.Task]
 
-      val assignment = JobAssignmentFuture(0, pipeline, Map((materialA, "destA") -> Some(5),
+      val assignment = JobAssignment(0, pipeline, Map((materialA, "destA") -> Some(5),
         (materialB, "destB") -> Some(4)), List(task))
 
       val pipelineDir = new File("pipeline")
@@ -133,7 +133,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val version = mock[org.megrez.vcs.VersionControl]
       val task = mock[org.megrez.Task]
 
-      val assignment = JobAssignmentFuture(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
+      val assignment = JobAssignment(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
 
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]
@@ -159,7 +159,7 @@ class WorkerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with M
       val version = mock[org.megrez.vcs.VersionControl]
       val task = mock[org.megrez.Task]
 
-      val assignment = JobAssignmentFuture(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
+      val assignment = JobAssignment(0, pipeline, Map((version, "$main") -> Some(5)), List(task))
 
       val pipelineDir = new File("pipeline")
       val workingDirectory = mock[Workspace]

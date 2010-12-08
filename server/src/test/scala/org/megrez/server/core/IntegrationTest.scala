@@ -11,7 +11,7 @@ import tasks.{Ant, CommandLine}
 import java.io.File
 import actors.Actor._
 import actors.TIMEOUT
-import org.megrez.JobAssignmentFuture
+import org.megrez.JobAssignment
 import org.megrez.server.{Neo4JSupport, IoSupport}
 import AgentManagerToDispatcher._
 
@@ -44,7 +44,7 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll wi
       trigger.start
 
       receiveWithin(1000){
-         case jobAssignment: JobAssignmentFuture =>
+         case jobAssignment: JobAssignment =>
           jobAssignment.pipeline should equal("WGSN-bundles")
         case TIMEOUT => fail
         case _ => fail
@@ -87,6 +87,8 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll wi
       Some(change)
 
     def changes(workingDir: File, previous: Option[Any]) = None
+
+    def toChangeSource = null
   }
 
   object MockChangeSource extends Plugin(ChangeSource, "mock") {

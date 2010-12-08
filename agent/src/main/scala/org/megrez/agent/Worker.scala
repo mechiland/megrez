@@ -13,7 +13,7 @@ class Worker(val workspace: Workspace) extends Actor with Logging {
   def act() {
     loop {
       react {
-        case (actor: Actor, assignment: JobAssignmentFuture) =>
+        case (actor: Actor, assignment: JobAssignment) =>
           try {
             val pipelineDir = workspace.createFolder(assignment.pipeline)
             updateMaterials(assignment)
@@ -79,7 +79,7 @@ class Worker(val workspace: Workspace) extends Actor with Logging {
     }
   }
 
-  private def updateMaterials(assignment: JobAssignmentFuture) {
+  private def updateMaterials(assignment: JobAssignment) {
     for (((source, destination), workset) <- assignment.sources)
       source match {
         case versionControl: VersionControl =>

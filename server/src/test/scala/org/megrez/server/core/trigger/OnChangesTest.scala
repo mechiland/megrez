@@ -120,6 +120,8 @@ class OnChangesTest extends Spec with ShouldMatchers with BeforeAndAfterAll with
       Some(Subversion.Revision(Map("revision" -> 42, "metarial" -> material)))
 
     def changes(workingDir: File, previous: Option[Any]) = None
+
+    def toChangeSource = null
   }
 
   object MockChangeSource extends Plugin(ChangeSource, "mock") {

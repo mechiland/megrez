@@ -5,10 +5,13 @@ import org.megrez.server.model.data.Plugin
 import java.io.File
 import org.megrez.server.model.{Material, Change, ChangeSource}
 
-class Git private (val node : Node) extends ChangeSource with org.megrez.model.vcs.Git {
+class Git private (val node : Node) extends ChangeSource {
   val url = read(Git.url)
 
   def getChange(workingDir: File, material : Material): Option[Change] = None
+
+
+  def toChangeSource = null
 }
 
 object Git extends Plugin(ChangeSource, "git") {

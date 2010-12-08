@@ -1,7 +1,7 @@
 package org.megrez.agent.util
 
 import org.megrez.agent.model.vcs.{Git, Subversion}
-import org.megrez.JobAssignmentFuture
+import org.megrez.JobAssignment
 
 object JSON {
   private val JsonParser = org.megrez.util.JSON
@@ -40,5 +40,5 @@ object JSON {
   
   ChangeSourceSerializer.register[Subversion]("svn")
   ChangeSourceSerializer.register[Git]("git")
-  AgentMessageSerializer.register[JobAssignmentFuture]("assignment")
+  AgentMessageSerializer.register[JobAssignment]("assignment")
 }

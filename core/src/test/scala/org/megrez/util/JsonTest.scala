@@ -57,12 +57,12 @@ class JsonTest extends Spec with ShouldMatchers {
   describe("Agent message serialization") {
 
     it("should serialize job assignment") {
-      val assignment = JobAssignmentFuture(1, "pipeline", Map((new Subversion("svn_url"), "dest") -> Some(5)), List(new CommandLineTask("ls")))
+      val assignment = JobAssignment(1, "pipeline", Map((new Subversion("svn_url"), "dest") -> Some(5)), List(new CommandLineTask("ls")))
       JSON.write(assignment) should equal("""{"materials":[{"material":{"type":"svn","url":"svn_url","dest":"dest"},"workset":{"revision":5}}],"pipeline":"pipeline","tasks":[{"type":"cmd","command":"ls"}],"type":"assignment","buildId":1}""")
     }
 
     it("should serialize job assignment for git") {
-      val assignment = JobAssignmentFuture(1, "pipeline", Map((new Git("git_url"), "dest") -> Some("abc")), List(new CommandLineTask("ls")))
+      val assignment = JobAssignment(1, "pipeline", Map((new Git("git_url"), "dest") -> Some("abc")), List(new CommandLineTask("ls")))
       JSON.write(assignment) should equal("""{"materials":[{"material":{"type":"git","url":"git_url","dest":"dest"},"workset":{"commit":"abc"}}],"pipeline":"pipeline","tasks":[{"type":"cmd","command":"ls"}],"type":"assignment","buildId":1}""")
     }
 

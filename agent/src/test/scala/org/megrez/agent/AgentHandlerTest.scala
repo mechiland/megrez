@@ -9,7 +9,7 @@ import actors._
 import org.mockito._
 import org.jboss.netty.handler.codec.http.websocket.{WebSocketFrame, DefaultWebSocketFrame}
 import org.megrez.util.JSON
-import org.megrez.{JobAssignmentFuture, JobCompleted}
+import org.megrez.{JobAssignment, JobCompleted}
 
 class AgentHandlerTest extends HandlerTest with ShouldMatchers {
   describe("Agent handler") {
@@ -21,7 +21,7 @@ class AgentHandlerTest extends HandlerTest with ShouldMatchers {
       handler.messageReceived(context, event)
 
       receiveWithin(1000) {
-        case (actor : Actor, assignment : JobAssignmentFuture) =>
+        case (actor : Actor, assignment : JobAssignment) =>
           assignment.pipeline should equal("pipeline")
           assignment.sources should have size(1)
           val ((source, destination), workset) = assignment.sources.head

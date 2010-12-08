@@ -18,6 +18,7 @@ object JSON {
     def toJson(obj: Map[String, Any]): String =
       obj.filter(keyValue => keyValue._2 != null).map(keyValue => "\"" + keyValue._1 + "\":" +
               (keyValue._2 match {
+                case long : Long => long
                 case string: String => "\"" + string + "\""
                 case set: Set[String] => set.map("\"" + _ + "\"").mkString("[", ",", "]")
                 case list: List[Map[String, Any]] => list.map(toJson).mkString("[", ",", "]")
@@ -128,7 +129,7 @@ object JSON {
 
   implicit object AgentMessageSerializer extends TypeBasedSerializer[AgentMessage]
 
-  implicit object JobAssignmentFutureSerializer extends JsonSerializer[JobAssignmentFuture] {
+  implicit object JobAssignmentFutureSerializer extends JsonSerializer[JobAssignment] {
 
     private def readMaterial(json: Map[String, Any]): (ChangeSource, String) = {
       val vcs = readObject[ChangeSource](json)
@@ -141,10 +142,10 @@ object JSON {
       material -> workset
     }
 
-    def read(json: Map[String, Any]) = JobAssignmentFuture((json / "buildId").asInstanceOf[Double].toInt, json / "pipeline", (json > ("materials", readMaterialWorkset)).toMap,
+    def read(json: Map[String, Any]) = JobAssignment((json / "buildId").asInstanceOf[Double].toInt, json / "pipeline", (json > ("materials", readMaterialWorkset)).toMap,
                                                           json > ("tasks", readObject[Task](_)))
 
-    def write(assignment: JobAssignmentFuture) =
+    def write(assignment: JobAssignment) =
       Map("type" -> "assignment", "buildId" -> assignment.buildId, "pipeline" -> assignment.pipeline,
         "materials" -> assignment.sources.map(keyValue =>
           Map("material" -> (writeObject(keyValue._1._1) + ("dest" -> keyValue._1._2)), "workset" -> ChangeSourceSerializer.writeWorkset(keyValue._1._1, keyValue._2))

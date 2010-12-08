@@ -8,7 +8,7 @@ import tasks.{Ant, CommandLine}
 import vcs.Subversion
 import scala.actors.Actor._
 import scala.actors.TIMEOUT
-import org.megrez.JobAssignmentFuture
+import org.megrez.JobAssignment
 import org.megrez.server.{IoSupport, Neo4JSupport}
 import AgentManagerToDispatcher._
 
@@ -23,7 +23,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
-        case jobAssignment: JobAssignmentFuture =>
+        case jobAssignment: JobAssignment =>
           jobAssignment.pipeline should equal("WGSN-bundles")
           reply(AgentToDispatcher.Confirm)
         case TIMEOUT => fail
@@ -40,7 +40,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       dispatcher ! AgentConnect(self)
 
       receiveWithin(1000) {
-        case jobAssignment: JobAssignmentFuture =>
+        case jobAssignment: JobAssignment =>
           jobAssignment.pipeline should equal("WGSN-bundles")
           reply(AgentToDispatcher.Confirm)
         case TIMEOUT => fail
@@ -56,7 +56,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
 
       val agent = actor {
         react {
-          case jobAssignment: JobAssignmentFuture =>
+          case jobAssignment: JobAssignment =>
             reply(AgentToDispatcher.Reject)
           case TIMEOUT => fail
           case _ => fail
@@ -69,7 +69,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
-        case jobAssignment: JobAssignmentFuture =>
+        case jobAssignment: JobAssignment =>
           jobAssignment.pipeline should equal("WGSN-bundles")
           reply(AgentToDispatcher.Confirm)
         case TIMEOUT => fail
@@ -86,7 +86,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
-        case job: JobAssignmentFuture =>
+        case job: JobAssignment =>
           job.pipeline should equal("WGSN-bundles")
           reply(AgentToDispatcher.Confirm)
           dispatcher ! AgentToDispatcher.JobFinished(self, job)

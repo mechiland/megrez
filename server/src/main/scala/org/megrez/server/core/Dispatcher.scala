@@ -4,13 +4,13 @@ import actors.Actor
 import collection.mutable.{HashMap, HashSet}
 import org.megrez.server.model.{Build, JobExecution}
 import org.megrez.util.Logging
-import org.megrez.JobAssignmentFuture
+import org.megrez.JobAssignment
 
 class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
   private val idleAgents = new HashSet[Actor]()
   private val jobAssignments = new HashMap[JobExecution, Build]()
   private val jobInProgress = new HashMap[JobExecution, Build]()
-  private val assignedJobs = new HashMap[Int, JobExecution]()
+  private val assignedJobs = new HashMap[Long, JobExecution]()
 
   def act() {
     loop {
@@ -60,7 +60,7 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
     def assignJob(): Option[Actor] = {
       if (agents.hasNext) {
         val agent = agents.next
-        agent !? JobAssignmentFuture(build.id.toInt, build.pipeline.name, Map(), List()) match {
+        agent !? JobAssignment(build.id.toInt, build.pipeline.name, Map(), List()) match {
           case AgentToDispatcher.Confirm => Some(agent)
           case AgentToDispatcher.Reject => assignJob
         }

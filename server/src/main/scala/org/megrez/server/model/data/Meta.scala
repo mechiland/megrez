@@ -17,8 +17,6 @@ trait Meta[EntityType <: Entity] {
 
   def apply(attributes: Map[String, Any]): EntityType = apply(updateAttribute(createNode, attributes))
 
-//  def apply(attributes: Pair[String, Any]*) : EntityType = apply(attributes.toMap)
-
   protected def createNode = graph.update(_.createNode)
 
   private def updateAttribute(node: Node, attributes: Map[String, Any]): Node = {
