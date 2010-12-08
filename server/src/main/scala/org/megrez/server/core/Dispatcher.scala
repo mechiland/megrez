@@ -4,16 +4,16 @@ import actors.Actor
 import collection.mutable.{HashMap, HashSet}
 import org.megrez.server.model.{Build, JobExecution}
 import org.megrez.util.Logging
+
 class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
   private val idleAgents = new HashSet[Actor]()
   private val jobAssignments = new HashMap[JobExecution, Build]()
   private val jobInProgress = new HashMap[JobExecution, Build]()
-  private val assignedJobs = new HashMap[Int, JobExecution]()
 
   def act() {
     loop {
       react {
-        case AgentConnect(agent) =>
+        case AgentManagerToDispatcher.AgentConnect(agent) =>
           idleAgents.add(agent)
           info("Agent idle for job, total " + idleAgents.size + " idle agents")
           dispatchJobs
@@ -73,4 +73,3 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
 
   start
 }
-case class AgentConnect(agent: Actor)

@@ -9,7 +9,6 @@ import vcs.Subversion
 import scala.actors.Actor._
 import scala.actors.TIMEOUT
 import org.megrez.server.{IoSupport, Neo4JSupport}
-import org.megrez.Stop
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Dispatcher") {
@@ -18,7 +17,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
 
       val dispatcher = new Dispatcher(null)
       val build = Build(simplePipeline, Set(change))
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
@@ -36,7 +35,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       val dispatcher = new Dispatcher(null)
       val build = Build(simplePipeline, Set(change))
       dispatcher ! build.next.map((build, _))
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
 
       receiveWithin(1000) {
         case jobExecution: JobExecution =>
@@ -62,8 +61,8 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
         }
       }
 
-      dispatcher ! AgentConnect(agent)
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(agent)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
 
       dispatcher ! build.next.map((build, _))
 
@@ -81,7 +80,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       val build = Build(simplePipeline, Set(change))
 
       val dispatcher = new Dispatcher(self)
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
@@ -130,7 +129,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       }
 
       val dispatcher = new Dispatcher(main)
-      dispatcher ! AgentConnect(agent)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(agent)
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
