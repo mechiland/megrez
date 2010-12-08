@@ -12,10 +12,12 @@ import org.jboss.netty.handler.codec.http.HttpHeaders.Values._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
 import org.jboss.netty.util._
 import websocket.{DefaultWebSocketFrame, WebSocketFrameDecoder, WebSocketFrameEncoder, WebSocketFrame}
-import org.megrez.server.{ToAgentManager, AgentHandler}
+import org.megrez.server.ToAgentManager
 import actors.Actor
 import org.megrez.AgentMessage
 import org.megrez.util.{JSON, Logging}
+import org.megrez.server.core.AgentHandler
+
 class Server(val routes: Route*) extends SimpleChannelUpstreamHandler with Logging {
   private val bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(newCachedThreadPool(), newCachedThreadPool()))
 
