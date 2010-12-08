@@ -2,43 +2,27 @@ package org.megrez.server.core
 
 import actors._
 import java.util.UUID
-import org.megrez._
+import org.megrez.server.model.{Build, Pipeline, Change}
+import org.megrez.{JobAssignmentFuture, JobAssignment}
+
 object ToAgentManager {
   case class RemoteAgentConnected(val handler: AgentHandler)
-}
-
-object ToAgent {
-  case class SetResources(val resources: Set[String])
-}
-object ToPipelineManager {
-  case class AddPipeline(val pipeline: Pipeline)
-  case class PipelineChanged(val pipeline: Pipeline)
-  case class RemovePipeline(val pipeline: Pipeline)
-  case class TriggerPipeline(val pipeline: Pipeline)
-}
-
-object ToBuildManager {
-  case class CompletedBuilds()
 }
 
 object AgentToDispatcher {
   object Confirm
   object Reject
   case class JobCompleted(val agent: Actor, val assignment: JobAssignment)
-  case class JobFinished(val agent: Actor, val assignment: JobAssignmentFuture, val isFailed : Boolean =false)
+  case class JobFinished(val agent: Actor, val assignment: JobAssignmentFuture, val isFailed: Boolean = false)
   case class JobFailed(val agent: Actor, val assignment: JobAssignment)
 }
 
 object TriggerToScheduler {
-  case class TrigBuild(val pipeline: Pipeline, val changes: Map[Material, Option[Any]])
-}
-
-object AgentManagerToScheduler {
-  case class CancelBuild(val build: UUID)
+  case class TriggerBuild(pipeline: Pipeline, changes: Set[Change])
 }
 
 object AgentManagerToDispatcher {
-  case class AgentConnect(val agent: Actor)
+  case class AgentConnect(agent: Actor)
 }
 
 object SchedulerToDispatcher {
@@ -47,7 +31,5 @@ object SchedulerToDispatcher {
 }
 
 object DispatcherToScheduler {
-  case class JobCompleted(val build: UUID, val job: Job)
-  case class JobFailed(val build: UUID, val job: Job)
-  case class BuildCanceled(val build: UUID, val assignments: Set[Job])
+  case class JobFinished(build: Build, operation: () => Unit)
 }

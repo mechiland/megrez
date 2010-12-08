@@ -2,17 +2,19 @@ package org.megrez.server.core
 
 import scala.actors.Actor
 import org.megrez.server.model.{Build, Change, Pipeline}
+import org.megrez.Stop
 
 class BuildScheduler(val dispatcher: Actor) extends Actor {
   def act() {
     loop {
       react {
-        case TriggerBuild(pipeline, changes) =>
+        case TriggerToScheduler.TriggerBuild(pipeline, changes) =>
           schedule(Build(pipeline, changes))
-        case JobFinished(build, operation) =>
+        case DispatcherToScheduler.JobFinished(build, operation) =>
           operation()
           schedule(build)
-        case "STOP" => exit
+        case Stop => exit
+        case _ =>
       }
     }
   }
@@ -24,6 +26,3 @@ class BuildScheduler(val dispatcher: Actor) extends Actor {
 
   start
 }
-
-case class TriggerBuild(val pipeline: Pipeline, val changes: Set[Change])
-case class JobFinished(val build: Build, val operation: () => Unit)

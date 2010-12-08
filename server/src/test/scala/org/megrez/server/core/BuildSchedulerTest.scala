@@ -9,6 +9,7 @@ import tasks.{Ant, CommandLine}
 import vcs.Subversion
 import scala.actors.Actor._
 import scala.actors.TIMEOUT
+import TriggerToScheduler._
 
 class BuildSchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Build scheduler") {
@@ -40,7 +41,7 @@ class BuildSchedulerTest extends Spec with ShouldMatchers with BeforeAndAfterAll
         case jobs: List[Pair[Build, JobExecution]] =>
           jobs.foreach {
             pair =>
-              scheduler ! JobFinished(pair._1, () => pair._2.completed)
+              scheduler ! DispatcherToScheduler.JobFinished(pair._1, () => pair._2.completed)
           }
         case TIMEOUT => fail
         case _ => fail

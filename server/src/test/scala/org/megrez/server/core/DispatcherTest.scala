@@ -10,6 +10,7 @@ import scala.actors.Actor._
 import scala.actors.TIMEOUT
 import org.megrez.JobAssignmentFuture
 import org.megrez.server.{IoSupport, Neo4JSupport}
+import AgentManagerToDispatcher._
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Dispatcher") {
@@ -94,7 +95,7 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       }
 
       receiveWithin(1000) {
-        case JobFinished(build, operation) =>
+        case DispatcherToScheduler.JobFinished(build, operation) =>
           build.pipeline.name should equal("WGSN-bundles")
         case TIMEOUT => fail
         case _ => fail

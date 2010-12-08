@@ -5,8 +5,8 @@ import actors.Actor._
 import java.io.File
 import java.util.TimerTask
 import org.megrez.Stop
-import org.megrez.server.core.TriggerBuild
 import org.megrez.server.model.Pipeline
+import org.megrez.server.core.TriggerToScheduler._
 
 class OnChanges(val pipeline: Pipeline, val workingDir: File, val scheduler: Actor) extends Trigger {
   private val buildTrigger = actor {

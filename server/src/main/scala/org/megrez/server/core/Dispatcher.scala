@@ -15,7 +15,7 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
   def act() {
     loop {
       react {
-        case AgentConnect(agent) =>
+        case AgentManagerToDispatcher.AgentConnect(agent) =>
           idleAgents.add(agent)
           info("Agent idle for job, total " + idleAgents.size + " idle agents")
           dispatchJobs
@@ -31,7 +31,7 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
             else
               jobExecution.failed
           }
-          buildScheduler ! JobFinished(jobInProgress.get(jobExecution).get, () => operation)
+          buildScheduler ! DispatcherToScheduler.JobFinished(jobInProgress.get(jobExecution).get, () => operation)
           jobInProgress.remove(jobExecution)
           idleAgents.add(agent)
           dispatchJobs
@@ -77,4 +77,3 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
 
   start
 }
-case class AgentConnect(agent: Actor)

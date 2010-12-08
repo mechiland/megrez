@@ -10,7 +10,7 @@ import org.megrez.server.model.tasks._
 import actors.TIMEOUT
 import java.io.File
 import org.neo4j.graphdb.Node
-import org.megrez.server.core.TriggerBuild
+import org.megrez.server.core.TriggerToScheduler._
 import org.scalatest.{BeforeAndAfterEach, Spec, BeforeAndAfterAll}
 
 class OnChangesTest extends Spec with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with IoSupport with Neo4JSupport {
