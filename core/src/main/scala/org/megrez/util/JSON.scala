@@ -79,12 +79,6 @@ object JSON {
 
   implicit object TaskSerializer extends TypeBasedSerializer[Task]
 
-  implicit object MaterialSerializer extends JsonSerializer[Material] {
-    def read(json: Map[String, Any]) = new Material(readObject[ChangeSource](json), json / "dest")
-
-    def write(material: Material): Map[String, Any] = writeObject[ChangeSource](material.source) ++ Map("dest" -> material.destination)
-  }
-
   implicit object SubversionSerializer extends JsonSerializer[Subversion] {
     def read(json: Map[String, Any]) = new Subversion(json / "url")
 
@@ -132,53 +126,7 @@ object JSON {
 
   TaskSerializer.register[AntTask]("ant")
 
-  implicit object JobSerializer extends JsonSerializer[Job] {
-    def read(json: Map[String, Any]) = new Job(json / "name", json / ("resources", _.toSet), json > ("tasks", readObject[Task](_)), json > ("artifacts", readObject[Artifact](_)))
-
-    def write(job: Job) = {
-      if (job.artifacts.isEmpty)
-        Map("name" -> job.name, "resources" -> job.resources, "tasks" -> job.tasks.map(writeObject(_)))
-      else
-        Map("name" -> job.name, "resources" -> job.resources, "tasks" -> job.tasks.map(writeObject(_)), "artifacts" -> job.artifacts.map(writeObject[Artifact](_)))
-    }
-  }
-
-  implicit object StageSerializer extends JsonSerializer[Pipeline.Stage] {
-    def read(json: Map[String, Any]) = new Pipeline.Stage(json / "name", (json > ("jobs", readObject[Job](_))).toSet)
-
-    def write(stage: Pipeline.Stage) = Map("name" -> stage.name, "jobs" -> stage.jobs.map(writeObject(_)).toList)
-  }
-
-  implicit object PipelineSerializer extends JsonSerializer[Pipeline] {
-    def read(json: Map[String, Any]) = new Pipeline(json / "name", (json > ("materials", readObject[Material](_))).toSet, json > ("stages", readObject[Pipeline.Stage](_)))
-
-    def write(pipeline: Pipeline) = Map("name" -> pipeline.name, "materials" -> pipeline.materials.map(writeObject(_)).toList, "stages" -> pipeline.stages.map(writeObject(_)))
-  }
-
-  implicit object ArtifactSerializer extends JsonSerializer[Artifact] {
-    def read(json: Map[String, Any]) = new Artifact(json / "path", json / ("tags", _.toSet))
-
-    def write(artifact: Artifact) = Map("path" -> artifact.path, "tags" -> artifact.tags)
-  }
-
   implicit object AgentMessageSerializer extends TypeBasedSerializer[AgentMessage]
-
-  implicit object JobAssignmentSerializer extends JsonSerializer[JobAssignment] {
-    private def readMaterials(json: Map[String, Any]) = {
-      val material = readObject[Material](json / "material")
-      val workset = ChangeSourceSerializer.readWorkset(material.source, json / "workset")
-      material -> workset
-    }
-
-    def read(json: Map[String, Any]) =
-      JobAssignment(json / "pipeline", (json > ("materials", readMaterials)).toMap, readObject[Job](json / "job"))
-
-    def write(assignment: JobAssignment) =
-      Map("type" -> "assignment", "pipeline" -> assignment.pipeline,
-        "materials" -> assignment.materials.map(keyValue =>
-          Map("material" -> writeObject(keyValue._1), "workset" -> ChangeSourceSerializer.writeWorkset(keyValue._1.source, keyValue._2))
-          ).toList, "job" -> writeObject(assignment.job))
-  }
 
   implicit object JobAssignmentFutureSerializer extends JsonSerializer[JobAssignmentFuture] {
 
@@ -220,7 +168,6 @@ object JSON {
     def write(message: ConsoleOutput) = Map("type" -> "consoleoutput", "content" -> URLEncoder.encode(message.output, "UTF-8"))
   }
 
-  AgentMessageSerializer.register[JobAssignment]("assignment")
   AgentMessageSerializer.register[JobCompleted]("jobcompleted")
   AgentMessageSerializer.register[JobFailed]("jobfailed")
   AgentMessageSerializer.register[ConsoleOutput]("consoleoutput")
