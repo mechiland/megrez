@@ -7,7 +7,6 @@ import org.megrez.server.model._
 import data.{Plugin, Graph}
 import org.megrez.server.model.vcs.Subversion
 import org.megrez.server.model.tasks._
-import org.megrez.server.trigger.Trigger
 import actors.TIMEOUT
 import java.io.File
 import org.neo4j.graphdb.Node

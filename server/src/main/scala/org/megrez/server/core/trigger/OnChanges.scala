@@ -2,7 +2,6 @@ package org.megrez.server.core.trigger
 
 import actors.Actor
 import actors.Actor._
-import org.megrez.server.trigger.Trigger
 import java.io.File
 import java.util.TimerTask
 import org.megrez.Stop

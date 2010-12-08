@@ -1,8 +1,8 @@
-package org.megrez.server.trigger
+package org.megrez.server.core.trigger
 
 import actors.Actor
-import java.util.{TimerTask, Timer}
 import org.megrez.util.Logging
+import java.util.{Timer, TimerTask}
 
 trait Trigger {
   def start
@@ -30,15 +30,3 @@ object Trigger extends Logging {
     task
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
