@@ -1,97 +1,107 @@
 package org.megrez.server.http
 
+import jersey.resources.Person
+import org.scalatest.{Spec, BeforeAndAfterEach}
 import org.scalatest.matchers.ShouldMatchers
+import org.megrez.server.HttpClientSupport
+import java.net.URI
+import java.io.File
+import org.jboss.netty.handler.codec.http.websocket.WebSocketFrame
+import org.jboss.netty.channel.{ChannelHandlerContext, MessageEvent, SimpleChannelUpstreamHandler, Channel}
+import actors.Actor._
+import actors.{TIMEOUT, Actor}
 
-import org.scalatest.{BeforeAndAfterEach, Spec}
-import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito._
-import org.mockito.Matchers._
+class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with HttpClientSupport {
+  describe("Server") {
+    it("should declare resource package") {
+      import Route._
 
-import org.jboss.netty.handler.codec.http.{HttpMethod, HttpVersion, DefaultHttpRequest}
-import org.jboss.netty.buffer._
-import org.jboss.netty.util._
-
-import scala.actors._
-import scala.actors.Actor._
-import Method._
-import Route._
-import org.jboss.netty.channel._
-
-class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with MockitoSugar {
-  describe("HTTP Server") {
-    it("should delegate to handler if path matched") {
-      val event = mock[MessageEvent]
-      when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/agent"), Array[Any]())
-      when(event.getChannel).thenReturn(channel)
-
-      val server = new Server(
-        path("/agent") -> actor {
-          react {
-            case _: Request =>
-              reply(HttpResponse.OK)
-          }
-        }
+      server = new Server(
+        resources("org.megrez.server.http.jersey.resources")
         )
 
-      server.messageReceived(context, event)
+      server.start(8051)
+
+      val (status, headers, content) = HttpClient.get(new URI("http://localhost:8051/helloworld"))
+      status should equal(200)
+      content should equal("hello world")
     }
 
-    it("should delegate to handler if GET request path matched") {
-      val event = mock[MessageEvent]
-      when(event.getMessage).thenReturn(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/agent"), Array[Any]())
-      when(event.getChannel).thenReturn(channel)
+    it("should declare multi resource packages") {
+      import Route._
 
-      val server = new Server(
-        get("/agent") -> actor {
-          react {
-            case request: Request =>
-              request.method should be === GET
-              request.uri should be === "/agent"
-              reply(HttpResponse.OK)
-          }
-        }
+      server = new Server(
+        resources("org.megrez.server.http.jersey.resources"),
+        resources("org.megrez.server.http.jersey.others")
         )
 
-      server.messageReceived(context, event)
+      server.start(8051)
+
+      val (_, _, contentFromHelloWorld) = HttpClient.get(new URI("http://localhost:8051/helloworld"))
+      contentFromHelloWorld should equal("hello world")
+
+      val (_, _, contentFromHelloWorld2) = HttpClient.get(new URI("http://localhost:8051/helloworld2"))
+      contentFromHelloWorld2 should equal("hello world 2")
     }
 
-    it("should delegate to handler if POST request path matched") {
-      val event = mock[MessageEvent]
-      var httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/pipeline")
-      httpRequest.setContent(ChannelBuffers.copiedBuffer("testContent", CharsetUtil.UTF_8));
-      when(event.getMessage).thenReturn(httpRequest, Array[Any]())
-      when(event.getChannel).thenReturn(channel)
+    it("should render template for resource if template specified") {
+      import Route._
 
-      val server = new Server(
-        post("/pipeline") -> actor {
-          react {
-            case request: Request =>
-              request.method should be === POST
-              request.uri should be === "/pipeline"
-              request.content should be === "testContent"
-              reply(HttpResponse.OK)
-          }
-        }
+
+      server = new Server(
+        resources("org.megrez.server.http.jersey.resources")
         )
 
-      server.messageReceived(context, event)
+      val url = classOf[ServerTest].getResource("/org/megrez/server/http/jersey/resources/people")
+      Representations.register[Person](new File(url.toURI))
+
+      server.start(8051)
+
+      val (_, _, content) = HttpClient.get(new URI("http://localhost:8051/people/lijian"))
+      content should equal("<p>lijian</p>")
+    }
+
+    it("should declare websocket") {
+      import Route._
+
+      def agent(channel: Channel, actor: Actor) = new SimpleChannelUpstreamHandler() {
+        override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
+          event.getMessage match {
+            case frame: WebSocketFrame =>
+              if (!frame.isBinary) actor ! frame.getTextData
+            case _ =>
+          }
+        }
+      }
+
+      server = new Server(
+        websocket("/agent", agent, self)
+        )
+
+      server.start(8051)
+
+      val client = new WebSocketClient(new URI("ws://localhost:8051/agent"), self)
+
+      try {
+        receiveWithin(1000) {
+          case "megrez-agent:1.0" =>
+          case TIMEOUT => fail
+          case _ => fail
+        }
+      } finally {
+        client.shutdown
+      }
     }
   }
 
-  var context: ChannelHandlerContext = _
-  var pipeline: ChannelPipeline = _
-  var channel: org.jboss.netty.channel.Channel = _
+  var server: Server = null
 
-  override def beforeEach() {
-    context = mock[ChannelHandlerContext]
-    pipeline = mock[ChannelPipeline]
-    channel = mock[org.jboss.netty.channel.Channel]
-    when(context.getPipeline).thenReturn(pipeline)
-    when(context.getChannel).thenReturn(channel)
-    val future: ChannelFuture = mock[ChannelFuture]
-    when(channel.write(any())).thenReturn(future)
+
+  override protected def beforeEach() {
+    server = null
   }
 
-  def is(string: String) = org.mockito.Matchers.eq(string)
-
+  override protected def afterEach() {
+    if (server != null) server.shutdown
+  }
 }

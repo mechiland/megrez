@@ -12,6 +12,8 @@ import org.jboss.netty.channel._
 import java.net.{URI, InetSocketAddress}
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.util.CharsetUtil
+import org.jboss.netty.handler.codec.http.HttpHeaders.{Values, Names}
+import websocket.{WebSocketFrameEncoder, WebSocketFrame, DefaultWebSocketFrame, WebSocketFrameDecoder}
 
 trait IoSupport {
   def delete(file: File) {

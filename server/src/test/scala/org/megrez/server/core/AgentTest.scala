@@ -34,7 +34,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val handler = mock[AgentHandler]
       agent = Agent(Map("resources" -> List("WINDOWS")))
       build = Build(pipeline, Set())
-
+      
       val agentActor = new org.megrez.server.core.Agent(agent, handler, self)
       agentActor ! (build, build.next.head)
       receiveWithin(1000) {
