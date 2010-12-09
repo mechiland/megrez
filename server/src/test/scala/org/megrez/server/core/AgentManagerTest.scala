@@ -5,11 +5,10 @@ import org.megrez.server.{IoSupport, Neo4JSupport}
 import org.scalatest.{Spec, BeforeAndAfterAll}
 import org.scalatest.matchers.ShouldMatchers
 import actors.Actor._
-import actors.{Actor, TIMEOUT}
+import actors.TIMEOUT
 import org.megrez.server.http.AgentWebSocketHandler
 import org.jboss.netty.channel.Channel
 import org.megrez.server.model.data.Graph
-import org.megrez.server.model.Agent
 
 class AgentManagerTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport with MockitoSugar {
   describe("AgentManager") {
@@ -29,7 +28,7 @@ class AgentManagerTest extends Spec with ShouldMatchers with BeforeAndAfterAll w
 
   override def beforeAll() {
     Neo4J.start
-    Graph.of(neo).consistOf(Agent)
+    Graph.of(neo).consistOf(org.megrez.server.model.Agent)
  }
 
   override def afterAll() {

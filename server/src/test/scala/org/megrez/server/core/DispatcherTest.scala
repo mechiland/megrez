@@ -107,21 +107,24 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
       val build = Build(complexPipeline, Set(change))
       val main = self
-      object Free
+      case class JobExecutionFinished(val jobExecution: JobExecution)
 
       val agent = actor {
-        var isBusy = false
+        var current: Option[JobExecution] = None
         loop {
           react {
             case jobExecution: JobExecution =>
-              if (!isBusy) {
-                reply(AgentToDispatcher.Confirm)
-                main ! jobExecution
-                isBusy = true
-              } else reply(AgentToDispatcher.Reject)
-            case Free =>
-              isBusy = false
-              reply(Free)
+              current match {
+                case None =>
+                  current = Some(jobExecution)
+                  reply(AgentToDispatcher.Confirm)
+                  main ! jobExecution
+                case Some(_) =>
+                  reply(AgentToDispatcher.Reject)
+              }
+            case JobExecutionFinished(jobExecution) =>
+              current = None
+              reply(jobExecution)
             case TIMEOUT => fail
             case _ => fail
           }
@@ -135,8 +138,8 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       receiveWithin(1000) {
         case jobExecution: JobExecution =>
           jobExecution.job.name should equal("compile")
-          agent !? Free match {
-            case Free =>
+          agent !? JobExecutionFinished(jobExecution) match {
+            case jobExecution: JobExecution =>
               dispatcher ! AgentToDispatcher.JobFinished(self, jobExecution)
           }
         case TIMEOUT => fail

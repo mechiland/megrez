@@ -3,7 +3,6 @@ package org.megrez.server.core
 import actors.Actor
 import org.megrez.{JobAssignment, Stop}
 import org.megrez.util.JSON
-import collection.mutable.HashSet
 import org.megrez.server.model.{Job, JobExecution, Build}
 
 class Agent(val model: org.megrez.server.model.Agent, handler: AgentHandler, dispatcher: Actor) extends Actor {
