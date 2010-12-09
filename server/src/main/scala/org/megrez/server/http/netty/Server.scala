@@ -18,7 +18,7 @@ class Server(val routes: Route*) {
   private def packages = routes.map(_ match {
     case ResourcePackage(packageName) => packageName
     case _ => ""
-  }).filter(!_.isEmpty).mkString(",")
+  }).filter(!_.isEmpty).mkString("", ",", ",org.megrez.server.http.netty")
 
   private val jerseyHandler = RuntimeDelegate.getInstance.createEndpoint(new PackagesResourceConfig(packageConfig), classOf[ChannelUpstreamHandler])
 
@@ -48,7 +48,7 @@ class Server(val routes: Route*) {
   }
 
   def shutdown {
-    channel.close.awaitUninterruptibly(30, TimeUnit.SECONDS)
-    bootstrap.releaseExternalResources
+    if (channel != null) channel.close.awaitUninterruptibly(30, TimeUnit.SECONDS)
+    if (bootstrap != null) bootstrap.releaseExternalResources
   }
 }
