@@ -6,6 +6,10 @@ import DynamicRelationshipType._
 
 class Agent private(val node: Node) extends Entity {
   val resources = reader(Agent.resources)
+
+  def setResources(resources : Set[String]) {
+    write(Agent.resources, resources)
+  }
 }
 
 object Agent extends Repository[Agent] {
