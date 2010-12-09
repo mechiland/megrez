@@ -2,8 +2,8 @@ package org.megrez.server.core
 
 import actors.Actor
 import org.megrez.util.JSON
-import org.megrez.{Stop, JobCompleted, JobFailed, JobAssignment}
 import org.megrez.server.model.{Job, JobExecution, Build}
+import org.megrez._
 
 class Agent(val model: org.megrez.server.model.Agent, handler: AgentHandler, dispatcher: Actor) extends Actor {
   private var currentJob: Option[JobExecution] = None
@@ -21,20 +21,22 @@ class Agent(val model: org.megrez.server.model.Agent, handler: AgentHandler, dis
           else {
             reply(AgentToDispatcher.Reject)
           }
-        case JobCompleted(result) =>
-          currentJob match {
-            case None =>
-            case _ =>
-              dispatcher ! AgentToDispatcher.JobFinished(this, currentJob.get, false)
-              currentJob = None
-          }
-        case JobFailed(reason) =>
-          currentJob match {
-            case None =>
-            case _ =>
-              dispatcher ! AgentToDispatcher.JobFinished(this, currentJob.get, true)
-              currentJob = None
-          }
+        case ConsoleOutput(output) => currentJob match {
+          case None =>
+          case Some(job) => job.appendConsoleOutput(output)
+        }
+        case JobCompleted(result) => currentJob match {
+          case None =>
+          case Some(job) =>
+            dispatcher ! AgentToDispatcher.JobFinished(this, job, false)
+            currentJob = None
+        }
+        case JobFailed(reason) => currentJob match {
+          case None =>
+          case Some(job) =>
+            dispatcher ! AgentToDispatcher.JobFinished(this, job, true)
+            currentJob = None
+        }
         case Stop => exit
         case _ =>
       }
