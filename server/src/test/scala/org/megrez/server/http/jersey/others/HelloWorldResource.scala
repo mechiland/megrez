@@ -1,4 +1,4 @@
-package org.megrez.server.http.netty.others
+package org.megrez.server.http.jersey.others
 
 import javax.ws.rs.{Produces, GET, Path}
 

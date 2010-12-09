@@ -1,4 +1,4 @@
-package org.megrez.server.http.netty
+package org.megrez.server.http
 
 import collection.mutable.HashMap
 import java.lang.{String, Class}
@@ -10,7 +10,6 @@ import org.antlr.stringtemplate.{AutoIndentWriter, StringTemplate}
 import java.io.{OutputStreamWriter, OutputStream, File}
 import javax.ws.rs.ext.{Provider, MessageBodyWriter}
 import javax.ws.rs.Produces
-import org.fusesource.scalate.TemplateEngine
 
 @Provider
 @Produces(Array("*/*"))

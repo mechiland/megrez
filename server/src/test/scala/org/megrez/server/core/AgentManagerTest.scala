@@ -9,6 +9,7 @@ import actors.TIMEOUT
 import org.megrez.server.http.AgentWebSocketHandler
 import org.jboss.netty.channel.Channel
 import org.megrez.server.model.data.Graph
+import org.megrez.server.http.AgentWebSocketHandler
 
 class AgentManagerTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport with MockitoSugar {
   describe("AgentManager") {
