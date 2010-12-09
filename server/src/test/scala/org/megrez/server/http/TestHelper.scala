@@ -31,7 +31,7 @@ class WebSocketClient(val server: URI, val test : Actor) extends SimpleChannelUp
     }
   })
 
-  val future = bootstrap.connect(new InetSocketAddress("localhost", 8080))
+  val future = bootstrap.connect(new InetSocketAddress(server.getHost, server.getPort))
 
   private var channel: Channel = _
 
@@ -79,6 +79,7 @@ class WebSocketClient(val server: URI, val test : Actor) extends SimpleChannelUp
 
   def shutdown {
     future.addListener(ChannelFutureListener.CLOSE)
+    bootstrap.releaseExternalResources
   }
 }
 

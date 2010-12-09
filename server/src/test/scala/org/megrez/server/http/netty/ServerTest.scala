@@ -4,8 +4,13 @@ import org.scalatest.{Spec, BeforeAndAfterEach}
 import org.scalatest.matchers.ShouldMatchers
 import org.megrez.server.HttpClientSupport
 import resources.Person
-import java.net.{URL, URI}
+import java.net.URI
 import java.io.File
+import org.jboss.netty.handler.codec.http.websocket.WebSocketFrame
+import org.jboss.netty.channel.{ChannelHandlerContext, MessageEvent, SimpleChannelUpstreamHandler, Channel}
+import actors.Actor._
+import org.megrez.server.http.WebSocketClient
+import actors.{TIMEOUT, Actor}
 
 class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with HttpClientSupport {
   describe("Server") {
@@ -45,7 +50,7 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with H
 
 
       server = new Server(
-        resources("org.megrez.server.http.netty.resources")        
+        resources("org.megrez.server.http.netty.resources")
         )
 
       val url = classOf[ServerTest].getResource("/org/megrez/server/http/netty/resources/people")
@@ -55,6 +60,38 @@ class ServerTest extends Spec with ShouldMatchers with BeforeAndAfterEach with H
 
       val (_, _, content) = HttpClient.get(new URI("http://localhost:8051/people/lijian"))
       content should equal("<p>lijian</p>")
+    }
+
+    it("should declare websocket") {
+      import Route._
+
+      def agent(channel: Channel, actor: Actor) = new SimpleChannelUpstreamHandler() {
+        override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
+          event.getMessage match {
+            case frame: WebSocketFrame =>
+              if (!frame.isBinary) actor ! frame.getTextData
+            case _ =>
+          }
+        }
+      }
+
+      server = new Server(
+        websocket("/agent", agent, self)
+        )
+
+      server.start(8051)
+
+      val client = new WebSocketClient(new URI("ws://localhost:8051/agent"), self)
+
+      try {
+        receiveWithin(1000) {
+          case "megrez-agent:1.0" =>
+          case TIMEOUT => fail
+          case _ => fail
+        }
+      } finally {
+        client.shutdown
+      }
     }
   }
 
