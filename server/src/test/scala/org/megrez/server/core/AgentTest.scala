@@ -42,6 +42,30 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
         case _ => fail
       }
     }
+
+    it("should reject job when agent is running another job currently") {
+      val handler = mock[AgentHandler]
+      agent = Agent(Map("resources" -> List("ubuntu")))
+      build = Build(pipeline, Set())
+
+      val agentActor = new org.megrez.server.core.Agent(agent, handler, self)
+
+      val jobExecution = build.next.head
+      
+      agentActor ! (build, jobExecution)
+      receiveWithin(1000) {
+        case AgentToDispatcher.Confirm =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
+      agentActor ! (build, jobExecution)
+      receiveWithin(1000) {
+        case AgentToDispatcher.Reject =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+    }
   }
 
   var pipeline: Pipeline = null
