@@ -12,6 +12,7 @@ import org.megrez.server.{IoSupport, Neo4JSupport}
 import actors.TIMEOUT
 import org.mockito.Mockito._
 import collection.mutable.HashSet
+import org.megrez.{JobCompleted, JobFailed}
 
 class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport with MockitoSugar {
   describe("Agent") {
@@ -33,11 +34,51 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val handler = mock[AgentHandler]
       agent = Agent(Map("resources" -> List("WINDOWS")))
       build = Build(pipeline, Set())
-      
+
       val agentActor = new org.megrez.server.core.Agent(agent, handler, self)
       agentActor ! (build, build.next.head)
       receiveWithin(1000) {
         case AgentToDispatcher.Reject =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+    }
+    it("should send job execution result when job compelete") {
+      val handler = mock[AgentHandler]
+      agent = Agent(Map("resources" -> List("ubuntu")))
+      build = Build(pipeline, Set())
+
+      val agentActor = new org.megrez.server.core.Agent(agent, handler, self)
+      agentActor ! (build, build.next.head)
+      agentActor ! JobCompleted("done")
+
+       receiveWithin(1000) {
+        case AgentToDispatcher.Confirm =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+      receiveWithin(1000) {
+        case AgentToDispatcher.JobFinished(agent, jobExecution, isFailed) => isFailed should equal(false)
+        case TIMEOUT => fail
+        case _ => fail
+      }
+    }
+    it("should send job execution result when job failed") {
+      val handler = mock[AgentHandler]
+      agent = Agent(Map("resources" -> List("ubuntu")))
+      build = Build(pipeline, Set())
+
+      val agentActor = new org.megrez.server.core.Agent(agent, handler, self)
+      agentActor ! (build, build.next.head)
+      agentActor ! JobFailed("error")
+
+       receiveWithin(1000) {
+        case AgentToDispatcher.Confirm =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+      receiveWithin(1000) {
+        case AgentToDispatcher.JobFinished(agent, jobExecution, isFailed) => isFailed should equal(true)
         case TIMEOUT => fail
         case _ => fail
       }

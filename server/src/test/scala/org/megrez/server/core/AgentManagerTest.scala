@@ -5,7 +5,7 @@ import org.megrez.server.{IoSupport, Neo4JSupport}
 import org.scalatest.{Spec, BeforeAndAfterAll}
 import org.scalatest.matchers.ShouldMatchers
 import actors.Actor._
-import actors.{Actor, TIMEOUT}
+import actors.TIMEOUT
 import org.megrez.server.http.AgentWebSocketHandler
 import org.jboss.netty.channel.Channel
 import org.megrez.server.model.data.Graph
