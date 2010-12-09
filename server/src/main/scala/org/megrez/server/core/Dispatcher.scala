@@ -4,13 +4,11 @@ import actors.Actor
 import collection.mutable.{HashMap, HashSet}
 import org.megrez.server.model.{Build, JobExecution}
 import org.megrez.util.Logging
-import org.megrez.JobAssignment
 
 class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
   private val idleAgents = new HashSet[Actor]()
   private val jobAssignments = new HashMap[JobExecution, Build]()
   private val jobInProgress = new HashMap[JobExecution, Build]()
-  private val assignedJobs = new HashMap[Long, JobExecution]()
 
   def act() {
     loop {
@@ -23,9 +21,8 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
           info("Job scheduled for build " + jobs.head._1 + " " + jobs.size + " jobs")
           jobs.foreach((item: Pair[Build, JobExecution]) => jobAssignments.put(item._2, item._1))
           dispatchJobs
-        case AgentToDispatcher.JobFinished(agent, jobAssignmentFuture, isFailed) =>
+        case AgentToDispatcher.JobFinished(agent, jobExecution, isFailed) =>
           info("Job finished")
-          val jobExecution = assignedJobs.get(jobAssignmentFuture.buildId).get
           val operation = {
             if (!isFailed) jobExecution.completed
             else
@@ -47,7 +44,6 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
           jobAssignments.remove(jobExecution)
           idleAgents.remove(agent)
           jobInProgress.put(jobExecution, build)
-          assignedJobs.put(build.id.toInt, jobExecution)
         case None =>
       }
     }
@@ -60,7 +56,7 @@ class Dispatcher(val buildScheduler: Actor) extends Actor with Logging {
     def assignJob(): Option[Actor] = {
       if (agents.hasNext) {
         val agent = agents.next
-        agent !? JobAssignment(build.id.toInt, build.pipeline.name, Map(), List()) match {
+        agent !? jobExecution match {
           case AgentToDispatcher.Confirm => Some(agent)
           case AgentToDispatcher.Reject => assignJob
         }

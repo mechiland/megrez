@@ -11,9 +11,7 @@ import tasks.{Ant, CommandLine}
 import java.io.File
 import actors.Actor._
 import actors.TIMEOUT
-import org.megrez.JobAssignment
 import org.megrez.server.{Neo4JSupport, IoSupport}
-import AgentManagerToDispatcher._
 
 class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with IoSupport with Neo4JSupport {
   describe("Integration Test") {
@@ -36,15 +34,15 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll wi
     }
     it("should assign job to idle agent when trigger build"){
       val dispatcher = new Dispatcher(null)
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
 
       val scheduler = new BuildScheduler(dispatcher)
       val trigger = new OnChanges(pipeline, workingDir, scheduler)
       trigger.start
 
-      receiveWithin(1000){
-         case jobAssignment: JobAssignment =>
-          jobAssignment.pipeline should equal("WGSN-bundles")
+      receiveWithin(1000) {
+        case job: JobExecution =>
+          List("author", "publish").contains(job.job.name)
         case TIMEOUT => fail
         case _ => fail
       }
@@ -63,9 +61,7 @@ class IntegrationTest extends Spec with ShouldMatchers with BeforeAndAfterAll wi
     material = Material(Map("source" -> changeSource))
     author = Job(Map("name" -> "author", "tasks" -> List()))
     publish = Job(Map("name" -> "publish", "tasks" -> List()))
-//    val packageJob = Job(Map("name" -> "package", "tasks" -> List()))
     val ut = Stage(Map("name" -> "UT", "jobs" -> List(author, publish)))
-//    val packageStage = Stage(Map("name" -> "package", "jobs" -> List(packageJob)))
     pipeline = Pipeline(Map("name" -> "WGSN-bundles", "materials" -> List(material), "stages" -> List(ut)))
     change = Subversion.Revision(Map("revision" -> 42, "metarial" -> material))
   }

@@ -8,9 +8,7 @@ import tasks.{Ant, CommandLine}
 import vcs.Subversion
 import scala.actors.Actor._
 import scala.actors.TIMEOUT
-import org.megrez.JobAssignment
 import org.megrez.server.{IoSupport, Neo4JSupport}
-import AgentManagerToDispatcher._
 
 class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport {
   describe("Dispatcher") {
@@ -18,13 +16,13 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
 
       val dispatcher = new Dispatcher(null)
-      val build = Build(pipeline, Set(change))
-      dispatcher ! AgentConnect(self)
+      val build = Build(simplePipeline, Set(change))
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
-        case jobAssignment: JobAssignment =>
-          jobAssignment.pipeline should equal("WGSN-bundles")
+        case jobExecution: JobExecution =>
+          jobExecution.job.name should equal("package")
           reply(AgentToDispatcher.Confirm)
         case TIMEOUT => fail
         case _ => fail
@@ -35,13 +33,13 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
 
       val dispatcher = new Dispatcher(null)
-      val build = Build(pipeline, Set(change))
+      val build = Build(simplePipeline, Set(change))
       dispatcher ! build.next.map((build, _))
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
 
       receiveWithin(1000) {
-        case jobAssignment: JobAssignment =>
-          jobAssignment.pipeline should equal("WGSN-bundles")
+        case jobExecution: JobExecution =>
+          jobExecution.job.name should equal("package")
           reply(AgentToDispatcher.Confirm)
         case TIMEOUT => fail
         case _ => fail
@@ -52,44 +50,44 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
       val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
 
       val dispatcher = new Dispatcher(null)
-      val build = Build(pipeline, Set(change))
+      val build = Build(simplePipeline, Set(change))
 
       val agent = actor {
         react {
-          case jobAssignment: JobAssignment =>
+          case jobExecution: JobExecution =>
             reply(AgentToDispatcher.Reject)
           case TIMEOUT => fail
           case _ => fail
         }
       }
 
-      dispatcher ! AgentConnect(agent)
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(agent)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
 
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
-        case jobAssignment: JobAssignment =>
-          jobAssignment.pipeline should equal("WGSN-bundles")
+        case jobExecution: JobExecution =>
+          jobExecution.job.name should equal("package")
           reply(AgentToDispatcher.Confirm)
         case TIMEOUT => fail
         case _ => fail
       }
     }
 
-    it("should send the job status to sheduler and do another assigning after job finished") {
+    it("should notify sheduler when job finished") {
       val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
-      val build = Build(pipeline, Set(change))
+      val build = Build(simplePipeline, Set(change))
 
       val dispatcher = new Dispatcher(self)
-      dispatcher ! AgentConnect(self)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(self)
       dispatcher ! build.next.map((build, _))
 
       receiveWithin(1000) {
-        case job: JobAssignment =>
-          job.pipeline should equal("WGSN-bundles")
+        case jobExecution: JobExecution =>
+          jobExecution.job.name should equal("package")
           reply(AgentToDispatcher.Confirm)
-          dispatcher ! AgentToDispatcher.JobFinished(self, job)
+          dispatcher ! AgentToDispatcher.JobFinished(self, jobExecution)
         case TIMEOUT => fail
         case _ => fail
       }
@@ -104,9 +102,67 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
     }
   }
 
-  var pipeline: Pipeline = null
+  describe("Dispatcher with multiple jobs and agents in queue") {
+    it("should notify sheduler and trigger another job assigning when job finished") {
+      val change = Subversion.Revision(Map("revision" -> 1, "metarial" -> material))
+      val build = Build(complexPipeline, Set(change))
+      val main = self
+      object Free
+
+      val agent = actor {
+        var isBusy = false
+        loop {
+          react {
+            case jobExecution: JobExecution =>
+              if (!isBusy) {
+                reply(AgentToDispatcher.Confirm)
+                main ! jobExecution
+                isBusy = true
+              } else reply(AgentToDispatcher.Reject)
+            case Free =>
+              isBusy = false
+              reply(Free)
+            case TIMEOUT => fail
+            case _ => fail
+          }
+        }
+      }
+
+      val dispatcher = new Dispatcher(main)
+      dispatcher ! AgentManagerToDispatcher.AgentConnect(agent)
+      dispatcher ! build.next.map((build, _))
+
+      receiveWithin(1000) {
+        case jobExecution: JobExecution =>
+          jobExecution.job.name should equal("compile")
+          agent !? Free match {
+            case Free =>
+              dispatcher ! AgentToDispatcher.JobFinished(self, jobExecution)
+          }
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
+      receiveWithin(1000) {
+        case DispatcherToScheduler.JobFinished(build, operation) =>
+          build.pipeline.name should equal("Complex Pipeline")
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
+      receiveWithin(1000) {
+        case jobExecution: JobExecution =>
+          jobExecution.job.name should equal("unitTest")
+        case TIMEOUT => fail
+        case _ => fail
+      }
+
+    }
+  }
+
+  var simplePipeline: Pipeline = null
+  var complexPipeline: Pipeline = null
   var material: Material = null
-  var packageJob: Job = null
 
   override def beforeAll() {
     Neo4J.start
@@ -115,9 +171,14 @@ class DispatcherTest extends Spec with ShouldMatchers with BeforeAndAfterAll wit
 
     val changeSource = ChangeSource(Map("type" -> "svn", "url" -> "svn_url"))
     material = Material(Map("source" -> changeSource))
-    packageJob = Job(Map("name" -> "package", "tasks" -> List()))
+    val packageJob = Job(Map("name" -> "package", "tasks" -> List()))
     val packageStage = Stage(Map("name" -> "package", "jobs" -> List(packageJob)))
-    pipeline = Pipeline(Map("name" -> "WGSN-bundles", "materials" -> List(material), "stages" -> List(packageStage)))
+    simplePipeline = Pipeline(Map("name" -> "WGSN-bundles", "materials" -> List(material), "stages" -> List(packageStage)))
+
+    val compileJob = Job(Map("name" -> "compile", "tasks" -> List()))
+    val unitTestJob = Job(Map("name" -> "unitTest", "tasks" -> List()))
+    val buildStage = Stage(Map("name" -> "build", "jobs" -> List(compileJob, unitTestJob)))
+    complexPipeline = Pipeline(Map("name" -> "Complex Pipeline", "materials" -> List(material), "stages" -> List(buildStage, packageStage)))
   }
 
   override def afterAll() {
