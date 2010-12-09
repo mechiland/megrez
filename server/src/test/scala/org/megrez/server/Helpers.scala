@@ -5,6 +5,13 @@ import org.neo4j.graphdb.GraphDatabaseService
 import org.neo4j.kernel.EmbeddedGraphDatabase
 import io.Source
 import java.util.UUID
+import java.util.concurrent.Executors
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
+import org.jboss.netty.bootstrap.ClientBootstrap
+import org.jboss.netty.channel._
+import java.net.{URI, InetSocketAddress}
+import org.jboss.netty.handler.codec.http._
+import org.jboss.netty.util.CharsetUtil
 
 trait IoSupport {
   def delete(file: File) {
@@ -76,5 +83,55 @@ trait SvnSupport {
       case _ => throw new Exception(Source.fromInputStream(cmd.getErrorStream).mkString)
     }
   }
+}
 
+trait HttpClientSupport {
+  object HttpClient {
+    import scala.collection.JavaConversions._
+
+    def bootstrap(handler: SimpleChannelUpstreamHandler) = {
+      val httpClientBootstrap = new ClientBootstrap(
+        new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()))
+
+      httpClientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+        def getPipeline = {
+          val pipeline = Channels.pipeline
+          pipeline.addLast("codec", new HttpClientCodec())
+          pipeline.addLast("inflater", new HttpContentDecompressor())
+          pipeline.addLast("aggregator", new HttpChunkAggregator(1048576))
+          pipeline.addLast("handler", handler)
+          pipeline
+        }
+      })
+      httpClientBootstrap
+    }
+
+    def get(uri: URI) = {
+      var status  = 200
+      var headers : Map[String, List[String]] = Map()
+      var content = ""
+      val httpClientBootstrap = bootstrap(new SimpleChannelUpstreamHandler() {
+        override def messageReceived(context: ChannelHandlerContext, event: MessageEvent) {
+          event.getMessage match {
+            case response : HttpResponse =>
+              headers = response.getHeaderNames.map(name => name -> response.getHeaders(name).toList).toMap
+              val buffer = response.getContent()
+              content = if (buffer.readable) buffer.toString(CharsetUtil.UTF_8) else ""
+              status = response.getStatus.getCode
+            case _ =>
+          }
+        }
+      })
+      val future = httpClientBootstrap.connect(new InetSocketAddress(uri.getHost, uri.getPort))
+      val channel = future.awaitUninterruptibly.getChannel
+      val request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri.toASCIIString())
+      request.setHeader(HttpHeaders.Names.HOST, uri.getHost)
+      request.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE)
+      request.setHeader(HttpHeaders.Names.ACCEPT_ENCODING, HttpHeaders.Values.GZIP)
+      channel.write(request)
+      channel.getCloseFuture.awaitUninterruptibly
+      httpClientBootstrap.releaseExternalResources
+      (status, headers, content)
+    }
+  }
 }

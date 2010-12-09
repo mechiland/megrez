@@ -44,16 +44,21 @@
             </classpath>
         </taskdef>
         <fsc srcdir="${src.dir}"
-                destdir="${build.classes}"
-                classpathref="classpath.build"
-                deprecation="on"
-                force="changed">
+             destdir="${build.classes}"
+             classpathref="classpath.build"
+             deprecation="on"
+             force="changed">
         </fsc>
         <javac srcdir="${src.dir}"
                destdir="${build.classes}"
                classpathref="classpath.build"
                includeAntRuntime="no"
                debug="on"/>
+        <copy todir="${build.classes}">
+            <fileset dir="${src.dir}">
+                <include name="META-INF/**/*"/>
+            </fileset>
+        </copy>
     </target>
 
     <target name="test" depends="compile">
@@ -61,9 +66,9 @@
             <classpath refid="classpath.test"/>
         </taskdef>
         <fsc srcdir="${test.dir}"
-                destdir="${build.test}"
-                classpathref="classpath.test"
-                force="changed">
+             destdir="${build.test}"
+             classpathref="classpath.test"
+             force="changed">
         </fsc>
         <scalatest haltonfailure="true" fork="false">
             <runpath>

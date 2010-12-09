@@ -10,17 +10,22 @@ class JobExecution private(val node: Node) extends Entity {
   val status = reader(JobExecution.status)
 
   def start = write(JobExecution.status, Running)
+
   def completed = write(JobExecution.status, Completed)
+
   def failed = write(JobExecution.status, Failed)
+
+  def appendConsoleOutput(output: String) = write(JobExecution.consoleOutput, read(JobExecution.consoleOutput) + output)
 }
 
 object JobExecution extends Meta[JobExecution] {
   val job = reference("job", Job, DynamicRelationshipType.withName("FOR_JOB"))
+  val consoleOutput = property[String]("consoleOutput")
   val status = enum("status", Status)
 
   def apply(node: Node) = new JobExecution(node)
 
-  def apply(job: Job) : JobExecution = JobExecution(Map("job" -> job, "status" -> Status.Scheduled))
+  def apply(job: Job): JobExecution = JobExecution(Map("job" -> job, "status" -> Status.Scheduled))
 
   object Status extends Enumeration {
     type Status = Value
