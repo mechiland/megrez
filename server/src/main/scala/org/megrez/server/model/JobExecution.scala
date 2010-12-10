@@ -14,8 +14,12 @@ class JobExecution private(val node: Node) extends Entity {
   def completed = write(JobExecution.status, Completed)
 
   def failed = write(JobExecution.status, Failed)
-
-  def appendConsoleOutput(output: String) = write(JobExecution.consoleOutput, read(JobExecution.consoleOutput) + output)
+  
+  def consoleOutput:String = read(JobExecution.consoleOutput) match{
+    case null => ""
+    case console:String => console
+  }
+  def appendConsoleOutput(output: String) = write(JobExecution.consoleOutput, consoleOutput+output)
 }
 
 object JobExecution extends Meta[JobExecution] {

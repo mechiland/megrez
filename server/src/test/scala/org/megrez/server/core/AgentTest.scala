@@ -12,7 +12,7 @@ import org.megrez.server.{IoSupport, Neo4JSupport}
 import actors.TIMEOUT
 import org.mockito.Mockito._
 import collection.mutable.HashSet
-import org.megrez.{JobCompleted, JobFailed}
+import org.megrez._
 
 class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoSupport with Neo4JSupport with MockitoSugar {
   describe("Agent") {
@@ -34,7 +34,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       val handler = mock[AgentHandler]
       agent = Agent(Map("resources" -> List("WINDOWS")))
       build = Build(pipeline, Set())
-      
+
       val agentActor = new org.megrez.server.core.Agent(agent, handler, self)
       agentActor ! (build, build.next.head)
       receiveWithin(1000) {
@@ -52,7 +52,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       agentActor ! (build, build.next.head)
       agentActor ! JobCompleted("done")
 
-       receiveWithin(1000) {
+      receiveWithin(1000) {
         case AgentToDispatcher.Confirm =>
         case TIMEOUT => fail
         case _ => fail
@@ -72,7 +72,7 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
       agentActor ! (build, build.next.head)
       agentActor ! JobFailed("error")
 
-       receiveWithin(1000) {
+      receiveWithin(1000) {
         case AgentToDispatcher.Confirm =>
         case TIMEOUT => fail
         case _ => fail
@@ -83,11 +83,28 @@ class AgentTest extends Spec with ShouldMatchers with BeforeAndAfterAll with IoS
         case _ => fail
       }
     }
+    it("should save console result to neo4j") {
+      val handler = mock[AgentHandler]
+      agent = Agent(Map("resources" -> List("ubuntu")))
+      build = Build(pipeline, Set())
+
+      val agentActor = new org.megrez.server.core.Agent(agent, handler, self)
+      val job: JobExecution = build.next.head
+      agentActor ! (build, job)
+
+      receiveWithin(1000) {
+        case AgentToDispatcher.Confirm =>
+        case TIMEOUT => fail
+        case _ => fail
+      }
+      agentActor ! ConsoleOutput("console")
+      Thread.sleep(1000)
+      job.consoleOutput should equal("console")
+    }
   }
 
   var pipeline: Pipeline = null
   var material: Material = null
-  var change: Change = null
   var author: Job = null
   var publish: Job = null
   var packageJob: Job = null

@@ -31,6 +31,14 @@ class JobExecutionTest extends Spec with ShouldMatchers with BeforeAndAfterAll w
       execution.failed
       execution.status() should equal(JobExecution.Status.Failed)
     }
+
+    it("should set and get consoleoutput"){
+       val execution = JobExecution(job)
+      val executionTarget = execution
+      executionTarget.appendConsoleOutput("console")
+
+      execution.consoleOutput should equal("console")
+    }
   }
 
   var job: Job = null
