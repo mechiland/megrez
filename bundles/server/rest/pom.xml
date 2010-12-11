@@ -37,40 +37,55 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>4.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-            <version>4.2.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
             <version>2.8.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>com.weiglewilczek.scala-lang-osgi</groupId>
+            <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>2.8.0</version>
+            <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>4.2.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.compendium</artifactId>
+            <version>4.2.0</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-core</artifactId>
             <version>1.4</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
             <version>1.4</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.5</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>megrez</groupId>
+            <artifactId>megrez.server.core</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -79,7 +94,6 @@
             <version>4.4</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest</artifactId>
@@ -99,8 +113,10 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Bundle-Activator>org.megrez.server.rest.Activator</Bundle-Activator>
-                        <Export-Package>org.megrez.server.rest;org.megrez.server.rest.resources</Export-Package>
+                        <Bundle-Activator>org.megrez.server.rest.osgi.Activator</Bundle-Activator>
+                        <Export-Package>org.megrez.server.rest.resources;org.megrez.server.rest.providers
+                        </Export-Package>
+                        <Private-Package>org.megrez.server.rest.osgi</Private-Package>
                         <Import-Package>*</Import-Package>
                     </instructions>
                 </configuration>
